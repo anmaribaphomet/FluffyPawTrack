@@ -1,0 +1,133 @@
+package com.example.fluffypawtrack.ui.home
+
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
+import com.example.fluffypawtrack.ui.components.BottomNavBar
+import com.example.fluffypawtrack.ui.components.BottomNavBarHeight
+import com.example.fluffypawtrack.ui.components.CardCallToAction
+import com.example.fluffypawtrack.ui.components.HomeDestination
+import com.example.fluffypawtrack.ui.components.HomeHeader
+import com.example.fluffypawtrack.ui.components.HomeHeaderHeight
+import com.example.fluffypawtrack.ui.components.HouseCard
+import com.example.fluffypawtrack.ui.components.HouseCardEars
+import com.example.fluffypawtrack.ui.components.placeAt
+import com.example.fluffypawtrack.ui.theme.FluffyPalette
+import com.example.fluffypawtrack.ui.theme.FluffyPawTrackTheme
+import fluffypawtrack.shared.generated.resources.Res
+import fluffypawtrack.shared.generated.resources.ic_camera
+import fluffypawtrack.shared.generated.resources.ic_heart
+import fluffypawtrack.shared.generated.resources.img_cat_phone
+import fluffypawtrack.shared.generated.resources.img_dog_adopt
+import org.jetbrains.compose.resources.painterResource
+
+/** Pantalla INICIO (Figma nodo 11:69). */
+@Composable
+fun HomeScreen(
+    modifier: Modifier = Modifier,
+    onProfileClick: () -> Unit = {},
+    onReportAnimal: () -> Unit = {},
+    onSeeAdoptions: () -> Unit = {},
+    onNavigate: (HomeDestination) -> Unit = {},
+) {
+    var selected by remember { mutableStateOf(HomeDestination.Inicio) }
+
+    Box(modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
+        Column(
+            Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(top = HomeHeaderHeight, bottom = 234.dp),
+        ) {
+            Text(
+                text = "¡Hola, amante de los\nanimales!",
+                modifier = Modifier.fillMaxWidth(),
+                style = MaterialTheme.typography.headlineSmall,
+                color = FluffyPalette.TitleOrange,
+                textAlign = TextAlign.Center,
+            )
+            ReportAnimalCard(onReportAnimal)
+            Spacer(Modifier.height(7.dp))
+            AdoptionCard(onSeeAdoptions)
+        }
+
+        HomeHeader(onProfileClick = onProfileClick, modifier = Modifier.align(Alignment.TopCenter))
+
+        BottomNavBar(
+            selected = selected,
+            onSelect = {
+                selected = it
+                onNavigate(it)
+            },
+            modifier = Modifier.align(Alignment.BottomCenter).height(BottomNavBarHeight),
+        )
+    }
+}
+
+@Composable
+private fun ReportAnimalCard(onClick: () -> Unit) {
+    HouseCard(ears = HouseCardEars.Soft, bodyHeight = 157.dp) {
+        Image(
+            painter = painterResource(Res.drawable.img_cat_phone),
+            contentDescription = null,
+            modifier = Modifier.placeAt(8.dp, 10.dp, 125.dp, 116.dp),
+        )
+        CardCallToAction(
+            title = "¿Encontraste un animalito?",
+            description = "Ayúdanos a encontrarle un hogar o un refugio donde pueda estar a salvo",
+            actionText = "Reportar un animal",
+            actionIcon = painterResource(Res.drawable.ic_camera),
+            onAction = onClick,
+            modifier = Modifier.padding(start = 115.dp, top = 35.dp, bottom = 14.dp),
+        )
+    }
+}
+
+@Composable
+private fun AdoptionCard(onClick: () -> Unit) {
+    HouseCard(ears = HouseCardEars.Pointy, bodyHeight = 163.dp) {
+        Image(
+            painter = painterResource(Res.drawable.img_dog_adopt),
+            contentDescription = null,
+            modifier = Modifier.placeAt((-22).dp, 25.dp, 198.dp, 107.dp),
+        )
+        CardCallToAction(
+            title = "¡Dales una\noportunidad!",
+            description = "Checa en el mapa los centros de adopción y conoce a los animalitos que esperan una nueva familia",
+            actionText = "Ver adopciones",
+            actionIcon = painterResource(Res.drawable.ic_heart),
+            actionIconSize = 17.dp,
+            onAction = onClick,
+            titleStyle = MaterialTheme.typography.titleLarge,
+            modifier = Modifier.padding(start = 115.dp, top = 12.dp, bottom = 8.dp),
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun HomeScreenPreview() {
+    FluffyPawTrackTheme {
+        HomeScreen()
+    }
+}

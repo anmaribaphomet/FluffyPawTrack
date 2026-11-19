@@ -1,49 +1,68 @@
 package com.example.fluffypawtrack
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.safeContentPadding
-import androidx.compose.material3.Button
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
-import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.ExperimentalComposeUiApi
+import androidx.compose.ui.backhandler.BackHandler
 import androidx.compose.ui.tooling.preview.Preview
-import org.jetbrains.compose.resources.painterResource
+import com.example.fluffypawtrack.model.AppNotification
+import com.example.fluffypawtrack.ui.components.HomeDestination
+import com.example.fluffypawtrack.ui.home.HomeScreen
+import com.example.fluffypawtrack.ui.notifications.NotificationsScreen
+import com.example.fluffypawtrack.ui.profile.ProfileScreen
+import com.example.fluffypawtrack.ui.theme.FluffyPawTrackTheme
 
-import fluffypawtrack.shared.generated.resources.Res
-import fluffypawtrack.shared.generated.resources.compose_multiplatform
+/** Pantallas de la app. Navegación simple basada en estado (sin librería de navegación). */
+enum class AppScreen { Home, Profile, Notifications }
 
 @Composable
 @Preview
 fun App() {
-    MaterialTheme {
-        var showContent by remember { mutableStateOf(false) }
-        Column(
-            modifier = Modifier
-                .background(MaterialTheme.colorScheme.primaryContainer)
-                .safeContentPadding()
-                .fillMaxSize(),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            Button(onClick = { showContent = !showContent }) {
-                Text("Click me!")
+    FluffyPawTrackTheme {
+        var screen by rememberSaveable { mutableStateOf(AppScreen.Home) }
+        val goHome = { screen = AppScreen.Home }
+
+        // Aún no hay backend: la lista empieza vacía y aquí se conectará la fuente real.
+        var notifications by remember { mutableStateOf(emptyList<AppNotification>()) }
+
+        when (screen) {
+            AppScreen.Home -> HomeScreen(
+                onProfileClick = { screen = AppScreen.Profile },
+                onNavigate = { destination ->
+                    if (destination == HomeDestination.Notificaciones) screen = AppScreen.Notifications
+                },
+            )
+            AppScreen.Profile -> {
+                SystemBackHandler(onBack = goHome)
+                ProfileScreen(onBack = goHome)
             }
-            AnimatedVisibility(showContent) {
-                val greeting = remember { Greeting().greet() }
-                Column(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                ) {
-                    Image(painterResource(Res.drawable.compose_multiplatform), null)
-                    Text("Compose: $greeting")
-                }
+            AppScreen.Notifications -> {
+                SystemBackHandler(onBack = goHome)
+                NotificationsScreen(
+                    notifications = notifications,
+                    onBack = goHome,
+                    onNotificationClick = { tapped ->
+                        notifications = notifications.map { if (it.id == tapped.id) it.copy(isRead = true) else it }
+                    },
+                )
             }
         }
     }
+}
+
+/**
+ * Botón/gesto "atrás" del sistema en Android y gesto de regreso en iOS.
+ *
+ * `BackHandler` de compose-ui-backhandler está deprecado en favor de `NavigationBackHandler`
+ * (artefacto navigationevent-compose); se mantiene aquí para no sumar otra dependencia.
+ */
+@Suppress("DEPRECATION")
+@OptIn(ExperimentalComposeUiApi::class)
+@Composable
+private fun SystemBackHandler(onBack: () -> Unit) {
+    BackHandler(onBack = onBack)
 }
