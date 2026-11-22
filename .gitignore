@@ -33,3 +33,6 @@ Pods/
 
 # Local AI agent tooling
 .atl/
+
+# Claude Code agent worktrees
+.claude/worktrees/
