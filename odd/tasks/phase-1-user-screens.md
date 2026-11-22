@@ -1,0 +1,41 @@
+# Phase 1 — All user screens with fake data
+
+Objective: every citizen (`user`) screen working on the fake repositories, including login and registration. Target: Monday, Nov 23, 2026.
+Branch: `master` (commit per unit, push at phase end). Parallel units run in isolated git worktrees and are merged by the parent. Test runner: `./gradlew :shared:testAndroidHostTest`, then `./gradlew :androidApp:assembleDebug`.
+
+## Specs
+
+- S1 (roadmap): "Fase 1: TODAS las pantallas del usuario funcionando con datos fake, incluidos login y registro (meta del lunes 23)."
+- S2 (order, L2): "navegación y datos fake → mapa → flujo de reporte → cuenta y Mis reportes → adopciones → login y registro → solicitudes de contacto → ajustes".
+- S3 Map — `docs/REQUIREMENTS.md` RF-02: reports, adoptions, affiliated shelters, vets and safe points; "Un pin de color distinto por categoría"; filters "Todos, cada categoría de reporte, Adopciones y Lugares de apoyo"; "Búsqueda en el mapa"; tapping a pin opens a detail sheet "con foto, descripción, categoría, prioridad, estado y fecha". Figma: MAPA (11:277).
+- S4 New report — RF-01: category (6 options), photo (camera or gallery), GPS location with permission dialog and optional reference, description, priority (suggested by category, locked to urgent for "Estado crítico o moribundo"), summary → modal "¡Reporte publicado!" → "Ver mapa". Figma screens 10–16.
+- S5 Account — RF-08: personal info, "Mis reportes" (history with Editar and Eliminar, Figma 17–18), Favoritos, counters Reportes / Atendidos / Favoritos.
+- S6 Adoptions — RF-06 user side: centers map → center detail → animal detail → favorites → "Formulario de adopción" (Figma 6–7, nodes 301:731, 309:770).
+- S7 Auth — RF-08: "Registro e inicio de sesión con correo y contraseña. *No hay pantalla en Figma: se diseña con el mismo estilo.*" Plus splash/loading with the logo (Figma 1–2) and anonymous report option (§4).
+- S8 Contact requests — RF-05 user side: "Es mi mascota" form (message 20–500 chars, optional photo) and screen "Solicitudes de contacto" with tabs Enviadas / Recibidas.
+- S9 Settings — RF-08: "idioma (ES), modo oscuro, notificaciones, accesibilidad, permisos, FAQ y Contáctanos" (Figma 265:73).
+- S10 Notifications — RF-03 UI: list from the repository and "Marcar todas como leídas".
+- S11 Affiliation request screen (REQUIREMENTS §6 "Común").
+- S12: UI copy in neutral Spanish; follow `docs/design-system.md`; `assembleDebug` passes before done; push at phase end.
+
+## Tasks
+
+| ID | Specs | Route | Status | Commit |
+|---|---|---|---|---|
+| T0 | S12 | inline | done — shared deps (MapLibre, activity-compose), permissions, demo session | (prep commit) |
+| T1 | S3 | delegated W1 (worktree) | in progress | |
+| T2 | S4 | delegated W2 (worktree) | in progress | |
+| T3 | S5, S9 | delegated W3 (worktree) | in progress | |
+| T4 | S7 | delegated W4 (worktree) | in progress | |
+| T5 | S6 | batch 2 (needs T1 map) | pending | |
+| T6 | S8, S11 | batch 2 (needs T1 detail sheet) | pending | |
+| T7 | S10 | inline | pending | |
+| T8 | S1, S12 | inline — wire routes, merge, build, push | pending | |
+
+Route evidence: writer trigger (a) — four independent units with disjoint edit surfaces, each several files, launched together; worktrees because they share the `shared` compilation unit. Parent owns `Routes.kt`, `AppNavHost.kt`, Gradle files and the manifest.
+
+## Log
+
+- L1 (2026-11-22, user): "ok empieza la fase 1 ahora"
+- L2 (2026-11-22, user, earlier): "1. Sí, ese orden está bien." (order in S2)
+- L3: T0 prep: MapLibre Android 13.7.1 (Maven Central), activity-compose in shared androidMain, INTERNET + location permissions, `FakeAuthRepository(initialUser)` with demo session until login exists.
