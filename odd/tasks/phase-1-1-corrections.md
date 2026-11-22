@@ -27,9 +27,9 @@ Branch: `master`, one commit per point, push at the end. Test runner: `./gradlew
 | T1 | SA | inline | done — RED/GREEN on Login/Register VM tests | 216967a |
 | T2 | SE | inline | done — RED/GREEN LabelsTest | a12f46f |
 | T3 | SB | inline | done — emulator: search below wave | see log |
-| T1b | SA | inline (after T4, shares FakeRepositories.kt) | pending — review follow-up | |
-| T4 | SF, S1 | delegated (context backstop) | pending | |
-| T5 | SC | delegated (context backstop) | pending | |
+| T1b | SA | delegated (worktree, parallel with T5) | in progress | |
+| T4 | SF, S1 | delegated (context backstop) | done — 152/152 tests; 19 Commons images (licenses/SAMPLE_IMAGES.md) | d2fe939 |
+| T5 | SC | delegated (worktree, parallel with T1b) | in progress | |
 | T6 | SD, S3 | delegated (context backstop) | pending | |
 | T7 | SG, S2 | delegated (context backstop) | pending | |
 | T8 | S9 | inline — build, emulator, push | pending | |
