@@ -70,7 +70,31 @@ object SampleData {
         isAnonymous = false,
     )
 
-    val users: List<UserProfile> = listOf(demoUser, otherUser, demoAffiliate)
+    /** Demo admin account (role `admin`); signs in with [DEMO_PASSWORD]. */
+    val demoAdmin = UserProfile(
+        id = "user-admin",
+        email = "admin@correo.com",
+        firstName = "Sofía",
+        lastName = "Encinas",
+        phone = "6620009001",
+        role = Role.Admin,
+        organizationId = null,
+        isAnonymous = false,
+    )
+
+    /** Sends the contact request Patitas receives on [reports] "report-7". */
+    private val petOwner = UserProfile(
+        id = "user-3",
+        email = "daniela@correo.com",
+        firstName = "Daniela",
+        lastName = "Robles",
+        phone = "6620000004",
+        role = Role.User,
+        organizationId = null,
+        isAnonymous = false,
+    )
+
+    val users: List<UserProfile> = listOf(demoUser, otherUser, demoAffiliate, demoAdmin, petOwner)
 
     val organizations: List<Organization> = listOf(
         Organization(
@@ -270,6 +294,21 @@ object SampleData {
             assignedOrganizationId = "org-patitas",
             createdAt = Instant.parse("2026-11-15T12:00:00Z"),
         ),
+        // A case in progress of the demo affiliate's organization.
+        Report(
+            id = "report-7",
+            reporterId = otherUser.id,
+            category = ReportCategory.PossiblyLost,
+            priority = Priority.Medium,
+            description = "Perrita café con collar azul, asustada pero se deja tocar.",
+            photoUrl = "res:sample_report_street_dog",
+            location = GeoPoint(29.0790, -110.9450),
+            address = "Calle Rosales 120, Col. Centro",
+            reference = "Junto a la farmacia",
+            status = ReportStatus.OnTheWay,
+            assignedOrganizationId = "org-patitas",
+            createdAt = Instant.parse("2026-11-22T09:30:00Z"),
+        ),
     )
 
     val adoptionListings: List<AdoptionListing> = listOf(
@@ -378,6 +417,20 @@ object SampleData {
             status = ContactRequestStatus.Pending,
             statusNote = null,
             createdAt = Instant.parse("2026-11-21T19:00:00Z"),
+        ),
+        // Received by Patitas: the shelter decides on the case it took (RF-05 "Receptor").
+        ContactRequest(
+            id = "request-3",
+            reportId = "report-7",
+            requesterId = petOwner.id,
+            requesterFirstName = petOwner.firstName,
+            recipientUserId = null,
+            recipientOrganizationId = "org-patitas",
+            message = "Creo que es mi perrita Canela; se escapó ayer cerca del centro con su collar azul.",
+            photoUrl = null,
+            status = ContactRequestStatus.Pending,
+            statusNote = null,
+            createdAt = Instant.parse("2026-11-22T10:00:00Z"),
         ),
     )
 
