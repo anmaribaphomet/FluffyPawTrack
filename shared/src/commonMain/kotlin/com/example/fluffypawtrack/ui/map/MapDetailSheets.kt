@@ -67,13 +67,18 @@ fun ReportDetailSheetContent(
 
 /** Detail of a support place: shelter, adoption center, vet, or safe point. */
 @Composable
-internal fun PlaceDetailSheetContent(organization: Organization, modifier: Modifier = Modifier) {
+internal fun PlaceDetailSheetContent(
+    organization: Organization,
+    modifier: Modifier = Modifier,
+    actions: @Composable ColumnScope.() -> Unit = {},
+) {
     Column(modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(10.dp)) {
         SheetTitle(organization.name, PinColors.SupportPlace)
         DetailRow("Tipo", organization.type.label)
         DetailRow("Dirección", organization.address)
         DetailRow("Horario", organization.schedule)
         DetailRow("Teléfono", organization.phone)
+        actions()
     }
 }
 
@@ -83,6 +88,7 @@ internal fun AdoptionDetailSheetContent(
     listing: AdoptionListing,
     organization: Organization,
     modifier: Modifier = Modifier,
+    actions: @Composable ColumnScope.() -> Unit = {},
 ) {
     Column(modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(10.dp)) {
         PhotoPlaceholder()
@@ -91,6 +97,7 @@ internal fun AdoptionDetailSheetContent(
         DetailRow("Raza", listing.breed)
         DetailRow("Edad", listing.age)
         DetailRow("Centro", organization.name)
+        actions()
     }
 }
 

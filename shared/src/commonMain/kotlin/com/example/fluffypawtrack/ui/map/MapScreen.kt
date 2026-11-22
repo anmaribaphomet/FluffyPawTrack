@@ -54,18 +54,27 @@ import fluffypawtrack.shared.generated.resources.map_ic_close
 import fluffypawtrack.shared.generated.resources.map_ic_filter
 import fluffypawtrack.shared.generated.resources.map_ic_search
 import org.jetbrains.compose.resources.painterResource
+import com.example.fluffypawtrack.domain.model.Report
+import com.example.fluffypawtrack.domain.model.Organization
+import com.example.fluffypawtrack.domain.model.AdoptionListing
+import androidx.compose.foundation.layout.ColumnScope
 
 /**
  * Map screen (Figma MAPA, node 11:277) wired to its ViewModel.
  *
  * @param initialFilter filter applied when the screen opens, e.g. [MapFilter.Adoptions]
  *   when it is opened from the adoption flow.
+ * @param reportActions, placeActions, adoptionActions extra buttons at the end of each
+ *   detail sheet (e.g. "Es mi mascota", "Ver ficha"), supplied by the navigation host.
  */
 @Composable
 fun MapRoute(
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
     initialFilter: MapFilter = MapFilter.All,
+    reportActions: @Composable ColumnScope.(Report) -> Unit = {},
+    placeActions: @Composable ColumnScope.(Organization) -> Unit = {},
+    adoptionActions: @Composable ColumnScope.(AdoptionListing) -> Unit = {},
 ) {
     val container = LocalAppContainer.current
     val viewModel = viewModel {
@@ -85,6 +94,9 @@ fun MapRoute(
         onPinClick = viewModel::onPinClick,
         onDismissDetail = viewModel::onDismissDetail,
         modifier = modifier,
+        reportActions = reportActions,
+        placeActions = placeActions,
+        adoptionActions = adoptionActions,
     )
 }
 
@@ -97,6 +109,9 @@ fun MapScreen(
     onPinClick: (String) -> Unit,
     onDismissDetail: () -> Unit,
     modifier: Modifier = Modifier,
+    reportActions: @Composable ColumnScope.(Report) -> Unit = {},
+    placeActions: @Composable ColumnScope.(Organization) -> Unit = {},
+    adoptionActions: @Composable ColumnScope.(AdoptionListing) -> Unit = {},
 ) {
     var filtersOpen by remember { mutableStateOf(false) }
     Box(modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
@@ -158,9 +173,11 @@ fun MapScreen(
         state.selected?.let { item ->
             MapDetailSheet(onClose = onDismissDetail, modifier = Modifier.align(Alignment.BottomCenter)) {
                 when (item) {
-                    is MapItem.Report -> ReportDetailSheetContent(item.report)
-                    is MapItem.Place -> PlaceDetailSheetContent(item.organization)
-                    is MapItem.Adoption -> AdoptionDetailSheetContent(item.listing, item.organization)
+                    is MapItem.Report -> ReportDetailSheetContent(item.report) { reportActions(item.report) }
+                    is MapItem.Place -> PlaceDetailSheetContent(item.organization) { placeActions(item.organization) }
+                    is MapItem.Adoption -> AdoptionDetailSheetContent(item.listing, item.organization) {
+                        adoptionActions(item.listing)
+                    }
                 }
             }
         }
