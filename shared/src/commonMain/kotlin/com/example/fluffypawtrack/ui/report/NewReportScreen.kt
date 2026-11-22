@@ -51,6 +51,7 @@ import com.example.fluffypawtrack.di.LocalAppContainer
 import com.example.fluffypawtrack.domain.model.Priority
 import com.example.fluffypawtrack.domain.model.ReportCategory
 import com.example.fluffypawtrack.platform.rememberLocationRequester
+import com.example.fluffypawtrack.platform.rememberReverseGeocoder
 import com.example.fluffypawtrack.platform.rememberPhotoLaunchers
 import com.example.fluffypawtrack.ui.components.PillActionButton
 import com.example.fluffypawtrack.ui.components.ProfileHeader
@@ -73,7 +74,10 @@ import org.jetbrains.compose.resources.painterResource
 @Composable
 fun NewReportRoute(onBack: () -> Unit, onSeeMap: () -> Unit, modifier: Modifier = Modifier) {
     val container = LocalAppContainer.current
-    val viewModel = viewModel { NewReportViewModel(container.reportRepository, container.authRepository) }
+    val reverseGeocoder = rememberReverseGeocoder()
+    val viewModel = viewModel {
+        NewReportViewModel(container.reportRepository, container.authRepository, reverseGeocoder)
+    }
     val state by viewModel.uiState.collectAsStateWithLifecycle()
 
     val requestLocation = rememberLocationRequester(viewModel::onLocationResult)

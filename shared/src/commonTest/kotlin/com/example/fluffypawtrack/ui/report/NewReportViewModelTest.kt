@@ -6,6 +6,7 @@ import com.example.fluffypawtrack.data.fake.SampleData
 import com.example.fluffypawtrack.domain.model.GeoPoint
 import com.example.fluffypawtrack.domain.model.Priority
 import com.example.fluffypawtrack.domain.model.ReportCategory
+import com.example.fluffypawtrack.platform.ReverseGeocoder
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
@@ -37,10 +38,58 @@ class NewReportViewModelTest {
         Dispatchers.resetMain()
     }
 
-    private fun viewModel(signedIn: Boolean = true) = NewReportViewModel(
+    private fun viewModel(
+        signedIn: Boolean = true,
+        geocoder: ReverseGeocoder = ReverseGeocoder { null },
+    ) = NewReportViewModel(
         reportRepository = reports,
         authRepository = FakeAuthRepository(initialUser = if (signedIn) SampleData.demoUser else null),
+        reverseGeocoder = geocoder,
     )
+
+    private fun goToLocation(vm: NewReportViewModel) {
+        vm.selectCategory(ReportCategory.Street)
+        vm.next()
+        vm.onPhotoSelected("memory://photo/1")
+        vm.next()
+    }
+
+    @Test
+    fun gpsFixStoresTheCoordinatesAndTheGeocodedAddress() = runTest {
+        val point = GeoPoint(29.0729, -110.9559)
+        val vm = viewModel(geocoder = { if (it == point) "Blvd. Hidalgo 45, Centro, Hermosillo" else null })
+        goToLocation(vm)
+        vm.onLocationResult(point)
+        assertEquals(LocationStatus.Found, vm.uiState.value.locationStatus)
+        assertEquals(point, vm.uiState.value.location)
+        assertEquals("Blvd. Hidalgo 45, Centro, Hermosillo", vm.uiState.value.address)
+
+        vm.next()
+        vm.onDescriptionChange("Perrito en la banqueta")
+        vm.next()
+        vm.submit()
+        val published = assertNotNull(vm.uiState.value.publishedReport)
+        assertEquals(point, published.location)
+        assertEquals("Blvd. Hidalgo 45, Centro, Hermosillo", published.address)
+    }
+
+    @Test
+    fun gpsFixWithoutAGeocodedAddressShowsTheCoordinates() = runTest {
+        val vm = viewModel(geocoder = { null })
+        goToLocation(vm)
+        vm.onLocationResult(GeoPoint(29.0729, -110.9559))
+        assertEquals(GeoPoint(29.0729, -110.9559), vm.uiState.value.location)
+        assertEquals("29.07290, -110.95590", vm.uiState.value.address)
+        assertTrue(vm.uiState.value.canContinue)
+    }
+
+    @Test
+    fun aFailingGeocoderFallsBackToTheCoordinates() = runTest {
+        val vm = viewModel(geocoder = { error("service unavailable") })
+        goToLocation(vm)
+        vm.onLocationResult(GeoPoint(29.0729, -110.9559))
+        assertEquals("29.07290, -110.95590", vm.uiState.value.address)
+    }
 
     @Test
     fun selectingACategorySuggestsItsPriority() {

@@ -9,3 +9,12 @@ import com.example.fluffypawtrack.domain.model.GeoPoint
  */
 @Composable
 expect fun rememberLocationRequester(onResult: (GeoPoint?) -> Unit): () -> Unit
+
+/** Turns coordinates into a readable street address; returns null when none is available. */
+fun interface ReverseGeocoder {
+    suspend fun addressFor(point: GeoPoint): String?
+}
+
+/** Platform geocoder for the current context; Android uses `android.location.Geocoder`. */
+@Composable
+expect fun rememberReverseGeocoder(): ReverseGeocoder

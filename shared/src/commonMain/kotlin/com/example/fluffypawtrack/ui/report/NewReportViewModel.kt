@@ -10,6 +10,8 @@ import com.example.fluffypawtrack.domain.model.ReportCategory
 import com.example.fluffypawtrack.domain.model.ReportRules
 import com.example.fluffypawtrack.domain.repository.AuthRepository
 import com.example.fluffypawtrack.domain.repository.ReportRepository
+import com.example.fluffypawtrack.platform.ReverseGeocoder
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -58,6 +60,7 @@ data class NewReportUiState(
 class NewReportViewModel(
     private val reportRepository: ReportRepository,
     private val authRepository: AuthRepository,
+    private val reverseGeocoder: ReverseGeocoder = ReverseGeocoder { null },
 ) : ViewModel() {
 
     private val state = MutableStateFlow(NewReportUiState())
@@ -82,7 +85,11 @@ class NewReportViewModel(
         state.update { it.copy(locationStatus = LocationStatus.Locating) }
     }
 
-    /** GPS result; null means permission denied or no fix, so the user types the address. */
+    /**
+     * GPS result; null means permission denied or no fix, so the user types the address.
+     * A fix stores the coordinates and shows them until the reverse geocoder finds a street
+     * address (S2); the coordinates are always what "Cómo llegar" uses.
+     */
     fun onLocationResult(point: GeoPoint?) {
         state.update { current ->
             if (point == null) {
@@ -93,6 +100,27 @@ class NewReportViewModel(
                 )
             } else {
                 current.copy(locationStatus = LocationStatus.Found, location = point, address = point.describe())
+            }
+        }
+        if (point != null) resolveAddress(point)
+    }
+
+    private fun resolveAddress(point: GeoPoint) {
+        viewModelScope.launch {
+            val address = try {
+                reverseGeocoder.addressFor(point)?.trim()?.takeIf { it.isNotEmpty() }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (_: Exception) {
+                null
+            } ?: return@launch
+            state.update { current ->
+                // Ignore a late answer for a fix that was replaced or abandoned.
+                if (current.locationStatus == LocationStatus.Found && current.location == point) {
+                    current.copy(address = address)
+                } else {
+                    current
+                }
             }
         }
     }
@@ -160,7 +188,7 @@ class NewReportViewModel(
     }
 }
 
-/** "29.07290, -110.95590" until a reverse geocoder exists. */
+/** "29.07290, -110.95590": shown when the reverse geocoder finds no address. */
 private fun GeoPoint.describe(): String = "${latitude.format5()}, ${longitude.format5()}"
 
 private fun Double.format5(): String {
