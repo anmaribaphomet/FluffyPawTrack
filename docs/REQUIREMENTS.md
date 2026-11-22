@@ -233,7 +233,7 @@ Las solicitudes aceptadas, rechazadas o canceladas **ya no cambian de estado**.
 - **Metodología:** Scrum con iteraciones cortas. Se hace commit al terminar cada unidad de trabajo.
 
 ## 9. Decisiones ya tomadas
-- **Tarjetas de Inicio:** se mantiene el café `brown-300` y se usa texto grande o en negrita para cumplir el contraste. El diseño no cambia.
+- **Tarjetas de Inicio:** se mantiene el café `brown-300`. El texto que va directo sobre la tarjeta usa `title-card` (Inter 20 Bold) o un tamaño mayor para cumplir el contraste, y los botones van sobre píldoras blancas. **Excepción aceptada:** las descripciones de las tarjetas se quedan en tamaño `body`, como en Figma, y no cumplen el contraste AA (4.13:1). El diseño no cambia. Ver `docs/design-system.md`.
 - **Persona e idioma:** la UI y las respuestas al equipo van en **español neutro, sin voseo**.
 - **Git:** por ahora se trabaja en `master` y se hace push al terminar cada fase. `.atl/` está en `.gitignore`.
 - **Reporte anónimo:** sí, con Supabase anonymous sign-in.
