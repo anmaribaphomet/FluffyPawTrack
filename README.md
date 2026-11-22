@@ -12,6 +12,20 @@ This is a Kotlin Multiplatform project targeting Android, iOS.
     Similarly, if you want to edit the Desktop (JVM) specific part, the [jvmMain](./shared/src/jvmMain/kotlin)
     folder is the appropriate location.
 
+### Local setup
+
+The app reads its Supabase settings from `local.properties` at the project root. That file
+is gitignored; never put real values in a versioned file. Add these two keys (placeholders shown):
+
+```properties
+SUPABASE_URL=https://<project>.supabase.co
+SUPABASE_PUBLISHABLE_KEY=sb_publishable_...
+```
+
+Use only the publishable key, never the secret key or the database password. If either key
+is missing, the build still succeeds (with a Gradle warning) and the app runs on the fake
+repositories.
+
 ### Running the apps
 
 Use the run configurations provided by the run widget in your IDE's toolbar. You can also use these commands and options:

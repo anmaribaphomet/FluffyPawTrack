@@ -1,3 +1,4 @@
+import java.util.Properties
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
@@ -10,6 +11,23 @@ kotlin {
         jvmTarget = JvmTarget.JVM_11
     }
 }
+// Supabase settings come from the gitignored local.properties, never from versioned files.
+val localProperties = Properties().apply {
+    val file = rootProject.file("local.properties")
+    if (file.exists()) file.inputStream().use { load(it) }
+}
+
+fun supabaseSetting(key: String): String {
+    val value = localProperties.getProperty(key)?.trim().orEmpty()
+    if (value.isEmpty()) {
+        logger.warn("w: $key is missing from local.properties; the app will use the fake repositories.")
+    }
+    return value
+}
+
+val supabaseUrl = supabaseSetting("SUPABASE_URL")
+val supabasePublishableKey = supabaseSetting("SUPABASE_PUBLISHABLE_KEY")
+
 dependencies {
     implementation(project(":shared"))
 
@@ -29,6 +47,9 @@ android {
         targetSdk = libs.versions.android.targetSdk.get().toInt()
         versionCode = 1
         versionName = "1.0"
+
+        buildConfigField("String", "SUPABASE_URL", "\"$supabaseUrl\"")
+        buildConfigField("String", "SUPABASE_PUBLISHABLE_KEY", "\"$supabasePublishableKey\"")
     }
     packaging {
         resources {
@@ -50,5 +71,6 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
