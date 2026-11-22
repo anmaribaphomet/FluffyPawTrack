@@ -177,9 +177,13 @@ class FakeOrganizationRepository : OrganizationRepository {
         phone: String,
         email: String,
         description: String,
+        photoUrl: String,
     ): Result<Organization> {
         if (listOf(name, address, phone, email, description).any { it.isBlank() }) {
             return Result.failure(IllegalArgumentException("Completa todos los datos de la organización"))
+        }
+        if (photoUrl.isBlank()) {
+            return Result.failure(IllegalArgumentException("Agrega una foto del lugar o su logo"))
         }
         val requested = Organization(
             id = "org-new-${nextAffiliationId++}",
@@ -193,6 +197,7 @@ class FakeOrganizationRepository : OrganizationRepository {
             phone = phone.trim(),
             email = email.trim().lowercase(),
             social = null,
+            photoUrl = photoUrl,
             status = OrganizationStatus.Pending,
             active = true,
         )
@@ -201,8 +206,15 @@ class FakeOrganizationRepository : OrganizationRepository {
     }
 }
 
-class FakeAdoptionRepository : AdoptionRepository {
-    private val listings = MutableStateFlow(SampleData.adoptionListings)
+/** Rejects listings without photos: every animal in adoption needs at least one. */
+class FakeAdoptionRepository(
+    initialListings: List<AdoptionListing> = SampleData.adoptionListings,
+) : AdoptionRepository {
+    init {
+        require(initialListings.all { it.photoUrls.isNotEmpty() }) { "Every adoption listing needs at least one photo" }
+    }
+
+    private val listings = MutableStateFlow(initialListings)
 
     override fun observeAvailableListings(): Flow<List<AdoptionListing>> =
         listings.map { list -> list.filter { it.status == ListingStatus.Available } }

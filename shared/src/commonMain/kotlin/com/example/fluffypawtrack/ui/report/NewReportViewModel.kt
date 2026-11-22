@@ -47,8 +47,8 @@ data class NewReportUiState(
     val canContinue: Boolean
         get() = when (step) {
             ReportStep.Category -> category != null
-            // RF-01 allows reports without a photo in the domain (photoUrl is nullable).
-            ReportStep.Photo -> true
+            // RF-01: the photo of the animal is required.
+            ReportStep.Photo -> photoRef != null
             ReportStep.Location -> location != null && address.isNotBlank()
             ReportStep.Details -> description.isNotBlank() && priority != null
             ReportStep.Summary -> !isSubmitting && publishedReport == null
@@ -131,6 +131,7 @@ class NewReportViewModel(
         val category = current.category ?: return
         val priority = current.priority ?: return
         val location = current.location ?: return
+        val photo = current.photoRef ?: return
         if (current.step != ReportStep.Summary || !current.canContinue) return
         state.update { it.copy(isSubmitting = true, errorMessage = null) }
         viewModelScope.launch {
@@ -138,7 +139,7 @@ class NewReportViewModel(
                 category = category,
                 priority = priority,
                 description = current.description.trim(),
-                photoUrl = current.photoRef,
+                photoUrl = photo,
                 location = location,
                 address = current.address.trim(),
                 reference = current.reference.trim().ifEmpty { null },

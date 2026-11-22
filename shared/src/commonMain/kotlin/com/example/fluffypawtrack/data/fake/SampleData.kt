@@ -21,7 +21,8 @@ import kotlin.time.Instant
 
 /**
  * Demo data for Hermosillo, Sonora. Phone numbers, emails, and people are fictional;
- * place names follow the Figma design.
+ * place names follow the Figma design. Every report, place and listing has an image: `res:` refs
+ * point to bundled sample photos (credits in `licenses/SAMPLE_IMAGES.md`).
  */
 @OptIn(ExperimentalTime::class)
 object SampleData {
@@ -67,6 +68,7 @@ object SampleData {
             phone = "6620001000",
             email = "contacto@imbpa.example",
             social = null,
+            photoUrl = "res:sample_place_municipal_shelter",
             status = OrganizationStatus.Approved,
             active = true,
         ),
@@ -81,6 +83,7 @@ object SampleData {
             phone = "6620002000",
             email = "hola@petcare.example",
             social = null,
+            photoUrl = "res:sample_place_vet_exam",
             status = OrganizationStatus.Approved,
             active = true,
         ),
@@ -95,6 +98,7 @@ object SampleData {
             phone = "6620003000",
             email = "adopciones@patitas.example",
             social = "patitascallejerashmo",
+            photoUrl = "res:sample_place_adoption_center",
             status = OrganizationStatus.Approved,
             active = true,
         ),
@@ -109,6 +113,7 @@ object SampleData {
             phone = "6620004000",
             email = "contacto@huellitas.example",
             social = null,
+            photoUrl = "res:sample_place_dog_refuge",
             status = OrganizationStatus.Approved,
             active = true,
         ),
@@ -123,6 +128,7 @@ object SampleData {
             phone = "6620005000",
             email = "puntoseguro@zaragoza.example",
             social = null,
+            photoUrl = "res:sample_place_plaza",
             status = OrganizationStatus.Approved,
             active = true,
         ),
@@ -138,6 +144,7 @@ object SampleData {
             phone = "6620006000",
             email = "rescate@norte.example",
             social = null,
+            photoUrl = "res:sample_place_shelter_kennels",
             status = OrganizationStatus.Pending,
             active = true,
         ),
@@ -153,6 +160,7 @@ object SampleData {
             phone = "6620007000",
             email = "citas@vetsur.example",
             social = null,
+            photoUrl = "res:sample_place_vet_clinic",
             status = OrganizationStatus.Approved,
             active = false,
         ),
@@ -165,7 +173,7 @@ object SampleData {
             category = ReportCategory.Street,
             priority = Priority.Low,
             description = "Perro mediano color café, se ve tranquilo pero delgado.",
-            photoUrl = null,
+            photoUrl = "res:sample_report_street_dog",
             location = GeoPoint(29.0815, -110.9790),
             address = "Av. Juan Romero 148, Col. Jesús García, 83140",
             reference = null,
@@ -179,7 +187,7 @@ object SampleData {
             category = ReportCategory.PossiblyLost,
             priority = Priority.Medium,
             description = "Gata blanca con collar rojo, muy cariñosa. Parece tener dueño.",
-            photoUrl = null,
+            photoUrl = "res:sample_report_white_cat",
             location = GeoPoint(29.0950, -110.9520),
             address = "Calle Pino Suárez 210, Col. Centenario",
             reference = "Frente a la tienda de la esquina",
@@ -193,7 +201,7 @@ object SampleData {
             category = ReportCategory.Injured,
             priority = Priority.High,
             description = "Perro con una pata trasera lastimada, cojea al caminar.",
-            photoUrl = null,
+            photoUrl = "res:sample_report_injured_dog",
             location = GeoPoint(29.1020, -110.9680),
             address = "Blvd. Luis Encinas y Reforma",
             reference = "Cerca de la parada del camión",
@@ -207,7 +215,7 @@ object SampleData {
             category = ReportCategory.Critical,
             priority = Priority.Urgent,
             description = "Cachorro muy débil, no se levanta. Necesita atención inmediata.",
-            photoUrl = null,
+            photoUrl = "res:sample_report_weak_puppy",
             location = GeoPoint(29.0600, -110.9400),
             address = "Calle Garmendia 80, Col. San Benito",
             reference = null,
@@ -221,7 +229,7 @@ object SampleData {
             category = ReportCategory.PossiblyLost,
             priority = Priority.Medium,
             description = "Perro labrador amarillo con placa sin nombre.",
-            photoUrl = null,
+            photoUrl = "res:sample_report_labrador",
             location = GeoPoint(29.0880, -110.9300),
             address = "Blvd. Navarrete 350, Col. Valle Escondido",
             reference = "Afuera del parque",
@@ -235,7 +243,7 @@ object SampleData {
             category = ReportCategory.Abandoned,
             priority = Priority.Medium,
             description = "Dos gatitos dejados en una caja.",
-            photoUrl = null,
+            photoUrl = "res:sample_report_kittens_box",
             location = GeoPoint(29.0700, -111.0000),
             address = "Calle Dr. Paliza 15, Col. Centenario",
             reference = null,
@@ -255,7 +263,7 @@ object SampleData {
             age = "2 años",
             vaccination = "Esquema completo",
             description = "Juguetona y buena con niños.",
-            photoUrls = emptyList(),
+            photoUrls = listOf("res:sample_listing_canela_1", "res:sample_listing_canela_2"),
             status = ListingStatus.Available,
         ),
         AdoptionListing(
@@ -267,7 +275,7 @@ object SampleData {
             age = "8 meses",
             vaccination = "Primera dosis",
             description = "Tranquilo, ideal para departamento.",
-            photoUrls = emptyList(),
+            photoUrls = listOf("res:sample_listing_michi_1", "res:sample_listing_michi_2"),
             status = ListingStatus.Available,
         ),
         AdoptionListing(
@@ -279,7 +287,7 @@ object SampleData {
             age = "4 años",
             vaccination = "Esquema completo",
             description = "Le encanta caminar; necesita patio.",
-            photoUrls = emptyList(),
+            photoUrls = listOf("res:sample_listing_toby"),
             status = ListingStatus.Available,
         ),
         AdoptionListing(
@@ -291,7 +299,7 @@ object SampleData {
             age = "1 año",
             vaccination = "Esquema completo",
             description = "Ya encontró un hogar.",
-            photoUrls = emptyList(),
+            photoUrls = listOf("res:sample_listing_luna"),
             status = ListingStatus.Adopted,
         ),
     )

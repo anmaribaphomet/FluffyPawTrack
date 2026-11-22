@@ -6,9 +6,11 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -27,6 +29,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.fluffypawtrack.data.fake.SampleData
 import com.example.fluffypawtrack.di.LocalAppContainer
 import com.example.fluffypawtrack.domain.model.AdoptionListing
+import com.example.fluffypawtrack.ui.common.PhotoThumbnail
 import com.example.fluffypawtrack.ui.theme.FluffyColors
 import com.example.fluffypawtrack.ui.theme.FluffyPawTrackTheme
 import com.example.fluffypawtrack.ui.theme.FluffyShadows
@@ -85,9 +88,11 @@ private fun FavoriteRow(listing: AdoptionListing, onClick: () -> Unit, onRemove:
             .clip(FluffyShapes.OptionRow)
             .background(FluffyColors.Peach200)
             .clickable(role = Role.Button, onClick = onClick)
-            .padding(start = 16.dp, top = 8.dp, bottom = 8.dp, end = 4.dp),
+            .padding(start = 12.dp, top = 8.dp, bottom = 8.dp, end = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
+        PhotoThumbnail(listing.photoUrls.first(), contentDescription = null)
+        Spacer(Modifier.width(12.dp))
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
             Text(listing.name, style = MaterialTheme.typography.bodyLarge, color = FluffyColors.Brown900)
             Text(

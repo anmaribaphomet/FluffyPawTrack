@@ -80,6 +80,22 @@ class NewReportViewModelTest {
     }
 
     @Test
+    fun cannotLeaveThePhotoStepWithoutAPhoto() {
+        val vm = viewModel()
+        vm.selectCategory(ReportCategory.Street)
+        vm.next()
+        assertEquals(ReportStep.Photo, vm.uiState.value.step)
+        assertFalse(vm.uiState.value.canContinue)
+        vm.next()
+        assertEquals(ReportStep.Photo, vm.uiState.value.step)
+
+        vm.onPhotoSelected("memory://photo/7")
+        assertTrue(vm.uiState.value.canContinue)
+        vm.next()
+        assertEquals(ReportStep.Location, vm.uiState.value.step)
+    }
+
+    @Test
     fun cannotLeaveTheDetailsStepWithoutADescription() {
         val vm = viewModel()
         goToDetails(vm)
@@ -97,6 +113,7 @@ class NewReportViewModelTest {
         val vm = viewModel()
         vm.selectCategory(ReportCategory.Street)
         vm.next()
+        vm.onPhotoSelected("memory://photo/1")
         vm.next()
         vm.onLocationResult(null)
         assertTrue(vm.uiState.value.isManualAddress)
@@ -125,6 +142,7 @@ class NewReportViewModelTest {
         assertEquals(Priority.High, published.priority)
         assertEquals("Perrito herido en la pata", published.description)
         assertEquals("Frente a la tienda", published.reference)
+        assertEquals("memory://photo/1", published.photoUrl)
         assertTrue(reports.observeReportsBy(SampleData.demoUser.id).first().any { it.id == published.id })
     }
 

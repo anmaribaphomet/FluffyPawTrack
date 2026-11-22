@@ -43,6 +43,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.fluffypawtrack.data.fake.SampleData
 import com.example.fluffypawtrack.di.LocalAppContainer
 import com.example.fluffypawtrack.domain.model.Report
+import com.example.fluffypawtrack.ui.common.PhotoThumbnail
 import com.example.fluffypawtrack.domain.model.ReportStatus
 import com.example.fluffypawtrack.ui.common.formatDateTime
 import com.example.fluffypawtrack.ui.common.label
@@ -140,7 +141,9 @@ private fun ReportRow(position: Int, report: Report, onOpen: () -> Unit) {
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(position.twoDigits(), style = MaterialTheme.typography.titleLarge, color = FluffyColors.Brown900)
-            Spacer(Modifier.width(16.dp))
+            Spacer(Modifier.width(12.dp))
+            PhotoThumbnail(report.photoUrl, contentDescription = null)
+            Spacer(Modifier.width(12.dp))
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 CategoryLine(report)
                 StatusLine(report.status)

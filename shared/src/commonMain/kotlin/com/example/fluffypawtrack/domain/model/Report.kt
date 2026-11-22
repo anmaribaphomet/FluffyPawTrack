@@ -28,7 +28,8 @@ data class Report(
     val category: ReportCategory,
     val priority: Priority,
     val description: String,
-    val photoUrl: String?,
+    /** Required photo of the animal (RF-01); see `ui/common/AppImage` for the reference formats. */
+    val photoUrl: String,
     val location: GeoPoint,
     val address: String,
     val reference: String?,
@@ -42,7 +43,8 @@ data class NewReport(
     val category: ReportCategory,
     val priority: Priority,
     val description: String,
-    val photoUrl: String?,
+    /** Required: the flow cannot leave the photo step without it. */
+    val photoUrl: String,
     val location: GeoPoint,
     val address: String,
     val reference: String?,

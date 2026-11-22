@@ -1,6 +1,5 @@
 package com.example.fluffypawtrack.ui.map
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -18,6 +17,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -28,6 +28,7 @@ import com.example.fluffypawtrack.domain.model.ReportCategory
 import com.example.fluffypawtrack.domain.model.ReportStatus
 import com.example.fluffypawtrack.domain.model.Organization
 import com.example.fluffypawtrack.domain.model.Report
+import com.example.fluffypawtrack.ui.common.AppImage
 import com.example.fluffypawtrack.ui.common.PinColors
 import com.example.fluffypawtrack.ui.common.formatDateTime
 import com.example.fluffypawtrack.ui.common.label
@@ -35,9 +36,6 @@ import com.example.fluffypawtrack.ui.common.pinColor
 import com.example.fluffypawtrack.ui.theme.FluffyColors
 import com.example.fluffypawtrack.ui.theme.FluffyPawTrackTheme
 import com.example.fluffypawtrack.ui.theme.FluffyShapes
-import fluffypawtrack.shared.generated.resources.Res
-import fluffypawtrack.shared.generated.resources.ic_camera
-import org.jetbrains.compose.resources.painterResource
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
 
@@ -53,7 +51,7 @@ fun ReportDetailSheetContent(
     actions: @Composable ColumnScope.() -> Unit = {},
 ) {
     Column(modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        PhotoPlaceholder()
+        SheetPhoto(report.photoUrl, "Foto del reporte")
         SheetTitle(report.category.label, report.category.pinColor)
         Text(report.description, style = MaterialTheme.typography.bodyMedium, color = FluffyColors.Brown900)
         DetailRow("Prioridad", report.priority.label)
@@ -73,6 +71,7 @@ internal fun PlaceDetailSheetContent(
     actions: @Composable ColumnScope.() -> Unit = {},
 ) {
     Column(modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        SheetPhoto(organization.photoUrl, "Foto de ${organization.name}")
         SheetTitle(organization.name, PinColors.SupportPlace)
         DetailRow("Tipo", organization.type.label)
         DetailRow("Dirección", organization.address)
@@ -91,7 +90,7 @@ internal fun AdoptionDetailSheetContent(
     actions: @Composable ColumnScope.() -> Unit = {},
 ) {
     Column(modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        PhotoPlaceholder()
+        SheetPhoto(listing.photoUrls.first(), "Foto de ${listing.name}")
         SheetTitle(listing.name, PinColors.Adoption)
         DetailRow("Especie", listing.species)
         DetailRow("Raza", listing.breed)
@@ -102,20 +101,12 @@ internal fun AdoptionDetailSheetContent(
 }
 
 @Composable
-private fun PhotoPlaceholder() {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(140.dp)
-            .background(FluffyColors.Cream100, FluffyShapes.Card),
-        contentAlignment = Alignment.Center,
-    ) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Image(painterResource(Res.drawable.ic_camera), contentDescription = null, modifier = Modifier.size(36.dp))
-            Spacer(Modifier.height(6.dp))
-            Text("Sin foto", style = MaterialTheme.typography.labelLarge, color = FluffyColors.Brown900)
-        }
-    }
+private fun SheetPhoto(ref: String, contentDescription: String) {
+    AppImage(
+        ref,
+        contentDescription = contentDescription,
+        modifier = Modifier.fillMaxWidth().height(160.dp).clip(FluffyShapes.Card),
+    )
 }
 
 @Composable
@@ -155,7 +146,7 @@ private fun ReportDetailSheetContentPreview() {
         category = ReportCategory.Injured,
         priority = Priority.High,
         description = "Perro con una pata trasera lastimada, cojea al caminar.",
-        photoUrl = null,
+        photoUrl = "res:sample_report_injured_dog",
         location = GeoPoint(29.1020, -110.9680),
         address = "Blvd. Luis Encinas y Reforma",
         reference = "Cerca de la parada del camión",

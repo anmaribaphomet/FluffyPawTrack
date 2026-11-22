@@ -89,7 +89,7 @@ fun AnimalDetailScreen(
             }
             return@AccountScaffold
         }
-        ListingPhotoPlaceholder(height = 200.dp)
+        ListingGallery(listing, height = 220.dp)
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             Text(
                 "${listing.species} · ${listing.breed}",

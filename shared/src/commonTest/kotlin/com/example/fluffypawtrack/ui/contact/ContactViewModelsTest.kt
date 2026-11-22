@@ -248,7 +248,7 @@ class ContactViewModelsTest {
         category = com.example.fluffypawtrack.domain.model.ReportCategory.PossiblyLost,
         priority = com.example.fluffypawtrack.domain.model.Priority.Medium,
         description = "Perrita negra con suéter azul",
-        photoUrl = null,
+        photoUrl = "memory://photo/1",
         location = com.example.fluffypawtrack.domain.model.GeoPoint(29.08, -110.96),
         address = "Calle Matamoros 120",
         reference = null,

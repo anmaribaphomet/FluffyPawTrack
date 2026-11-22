@@ -33,7 +33,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import com.example.fluffypawtrack.domain.model.Priority
 import com.example.fluffypawtrack.domain.model.ReportCategory
-import com.example.fluffypawtrack.platform.PhotoPreview
+import com.example.fluffypawtrack.ui.common.AppImage
 import com.example.fluffypawtrack.ui.common.label
 import com.example.fluffypawtrack.ui.components.PillActionButton
 import com.example.fluffypawtrack.ui.theme.FluffyColors
@@ -114,12 +114,17 @@ internal fun PhotoStep(photoRef: String?, onTakePhoto: () -> Unit, onPickPhoto: 
             contentAlignment = Alignment.Center,
         ) {
             if (photoRef != null) {
-                PhotoPreview(photoRef, contentDescription = "Foto del animal", modifier = Modifier.fillMaxSize())
+                AppImage(photoRef, contentDescription = "Foto del animal", modifier = Modifier.fillMaxSize())
             } else {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Image(painterResource(Res.drawable.ic_camera), contentDescription = null, modifier = Modifier.size(48.dp))
                     Spacer(Modifier.height(8.dp))
-                    Text("Aún no hay foto", style = MaterialTheme.typography.bodySmall, color = FluffyColors.Brown900)
+                    // The photo is required (RF-01): "Siguiente" stays disabled until there is one.
+                    Text(
+                        "Agrega una foto para continuar",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = FluffyColors.Brown900,
+                    )
                 }
             }
         }
@@ -267,7 +272,7 @@ internal fun SummaryStep(state: NewReportUiState) {
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         state.photoRef?.let { ref ->
-            PhotoPreview(
+            AppImage(
                 ref,
                 contentDescription = "Foto del animal",
                 modifier = Modifier.fillMaxWidth().height(180.dp).clip(FluffyShapes.Card),
@@ -278,7 +283,6 @@ internal fun SummaryStep(state: NewReportUiState) {
         SummaryRow("Descripción", state.description.trim())
         SummaryRow("Ubicación", state.address.trim())
         if (state.reference.isNotBlank()) SummaryRow("Referencia", state.reference.trim())
-        if (state.photoRef == null) SummaryRow("Foto", "Sin foto")
     }
 }
 

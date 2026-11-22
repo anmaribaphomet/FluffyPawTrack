@@ -18,8 +18,9 @@ data class AffiliationErrors(
     val phone: String? = null,
     val email: String? = null,
     val description: String? = null,
+    val photo: String? = null,
 ) {
-    val hasErrors: Boolean get() = listOf(name, address, phone, email, description).any { it != null }
+    val hasErrors: Boolean get() = listOf(name, address, phone, email, description, photo).any { it != null }
 }
 
 data class AffiliationRequestUiState(
@@ -29,6 +30,8 @@ data class AffiliationRequestUiState(
     val phone: String = "",
     val email: String = "",
     val description: String = "",
+    /** Required photo of the place or its logo (local reference from the photo picker). */
+    val photoRef: String? = null,
     val errors: AffiliationErrors = AffiliationErrors(),
     /** Form-level error from the repository. */
     val message: String? = null,
@@ -55,6 +58,7 @@ internal fun validateAffiliation(state: AffiliationRequestUiState) = Affiliation
         else -> null
     },
     description = if (state.description.isBlank()) "Describe brevemente a tu organización" else null,
+    photo = if (state.photoRef == null) "Agrega una foto del lugar o su logo" else null,
 )
 
 /** Affiliation request form for shelters, rescuers and adoption centers. */
@@ -79,11 +83,16 @@ class AffiliationRequestViewModel(
     fun onDescriptionChange(value: String) =
         state.update { it.copy(description = value, errors = it.errors.copy(description = null)) }
 
+    fun onPhotoSelected(ref: String) = state.update { it.copy(photoRef = ref, errors = it.errors.copy(photo = null)) }
+
+    fun onPhotoRemoved() = state.update { it.copy(photoRef = null) }
+
     fun onSubmit() {
         val current = state.value
         if (current.isSubmitting) return
         val errors = validateAffiliation(current)
-        if (errors.hasErrors) {
+        val photo = current.photoRef
+        if (errors.hasErrors || photo == null) {
             state.update { it.copy(errors = errors) }
             return
         }
@@ -96,6 +105,7 @@ class AffiliationRequestViewModel(
                 phone = digitsOf(current.phone),
                 email = current.email.trim(),
                 description = current.description.trim(),
+                photoUrl = photo,
             )
                 .onSuccess { org -> state.update { it.copy(isSubmitting = false, submitted = org) } }
                 .onFailure { e ->

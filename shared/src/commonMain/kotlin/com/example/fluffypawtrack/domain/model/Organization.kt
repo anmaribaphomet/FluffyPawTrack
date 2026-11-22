@@ -16,6 +16,8 @@ data class Organization(
     val phone: String,
     val email: String,
     val social: String?,
+    /** Required photo of the place or its logo; see `ui/common/AppImage` for the reference formats. */
+    val photoUrl: String,
     val status: OrganizationStatus,
     val active: Boolean,
 )

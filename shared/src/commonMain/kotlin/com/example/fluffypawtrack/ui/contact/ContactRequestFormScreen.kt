@@ -17,7 +17,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.fluffypawtrack.di.LocalAppContainer
-import com.example.fluffypawtrack.platform.PhotoPreview
+import com.example.fluffypawtrack.ui.common.AppImage
 import com.example.fluffypawtrack.platform.rememberPhotoLaunchers
 import com.example.fluffypawtrack.ui.account.AccountCard
 import com.example.fluffypawtrack.ui.account.AccountScaffold
@@ -106,7 +106,7 @@ fun ContactRequestFormScreen(
         Text("Foto de tu mascota (opcional)", style = MaterialTheme.typography.labelLarge, color = FluffyColors.Brown900)
         val photo = state.photoRef
         if (photo != null) {
-            PhotoPreview(
+            AppImage(
                 photo,
                 contentDescription = "Foto de tu mascota",
                 modifier = Modifier.fillMaxWidth().height(180.dp).clip(RoundedCornerShape(16.dp)),

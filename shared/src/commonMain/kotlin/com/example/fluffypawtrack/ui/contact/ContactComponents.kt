@@ -24,9 +24,8 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.unit.dp
 import com.example.fluffypawtrack.domain.model.ContactRequestStatus
 import com.example.fluffypawtrack.domain.model.Report
-import com.example.fluffypawtrack.platform.PhotoPreview
+import com.example.fluffypawtrack.ui.common.AppImage
 import com.example.fluffypawtrack.ui.common.label
-import com.example.fluffypawtrack.ui.common.pinColor
 import com.example.fluffypawtrack.ui.theme.FluffyColors
 import com.example.fluffypawtrack.ui.theme.FluffyShapes
 
@@ -54,19 +53,14 @@ internal fun StatusChip(status: ContactRequestStatus, modifier: Modifier = Modif
     )
 }
 
-/** Report photo, or a tile in the category's pin color when the report has none. */
+/** Report photo, or a neutral tile when the report no longer exists. */
 @Composable
 internal fun ReportThumbnail(report: Report?, modifier: Modifier = Modifier) {
     val shape = RoundedCornerShape(12.dp)
-    val photo = report?.photoUrl
-    if (photo != null) {
-        PhotoPreview(photo, contentDescription = "Foto del reporte", modifier = modifier.size(56.dp).clip(shape))
+    if (report != null) {
+        AppImage(report.photoUrl, contentDescription = "Foto del reporte", modifier = modifier.size(56.dp).clip(shape))
     } else {
-        Box(
-            modifier
-                .size(56.dp)
-                .background(report?.category?.pinColor ?: FluffyColors.Neutral300, shape),
-        )
+        Box(modifier.size(56.dp).background(FluffyColors.Neutral300, shape))
     }
 }
 

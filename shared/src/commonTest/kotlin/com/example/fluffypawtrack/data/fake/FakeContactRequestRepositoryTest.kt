@@ -60,7 +60,7 @@ class FakeContactRequestRepositoryTest {
         category = ReportCategory.PossiblyLost,
         priority = Priority.Medium,
         description = "Perrita negra con suéter azul",
-        photoUrl = null,
+        photoUrl = "memory://photo/1",
         location = GeoPoint(29.08, -110.96),
         address = "Calle Matamoros 120",
         reference = null,

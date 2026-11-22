@@ -21,11 +21,13 @@ class FakeAffiliationRequestTest {
             phone = "6620009999",
             email = "Rescate@Huellas.example",
             description = "Rescatistas independientes del sur de la ciudad.",
+            photoUrl = "content://media/picker/0/1",
         ).getOrThrow()
 
         assertEquals(OrganizationStatus.Pending, requested.status)
         assertEquals(OrganizationType.Shelter, requested.type)
         assertEquals("rescate@huellas.example", requested.email)
+        assertEquals("content://media/picker/0/1", requested.photoUrl)
         assertEquals(requested, repository.getOrganization(requested.id))
         assertFalse(repository.observeActiveOrganizations().first().any { it.id == requested.id })
     }
@@ -33,10 +35,19 @@ class FakeAffiliationRequestTest {
     @Test
     fun affiliationRequestNeedsEveryField() = runTest {
         val result = FakeOrganizationRepository().requestAffiliation(
-            OrganizationType.AdoptionCenter, "Nombre", "", "6620009999", "a@b.example", "Descripción",
+            OrganizationType.AdoptionCenter, "Nombre", "", "6620009999", "a@b.example", "Descripción", "memory://photo/1",
         )
         assertTrue(result.isFailure)
         assertEquals("Completa todos los datos de la organización", result.exceptionOrNull()?.message)
+    }
+
+    @Test
+    fun affiliationRequestNeedsAPlacePhoto() = runTest {
+        val result = FakeOrganizationRepository().requestAffiliation(
+            OrganizationType.Vet, "Nombre", "Dirección", "6620009999", "a@b.example", "Descripción", " ",
+        )
+        assertTrue(result.isFailure)
+        assertEquals("Agrega una foto del lugar o su logo", result.exceptionOrNull()?.message)
     }
 
     @Test

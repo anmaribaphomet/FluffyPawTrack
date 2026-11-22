@@ -34,6 +34,7 @@ class AffiliationRequestViewModelTest {
         onPhoneChange("662 000 9999")
         onEmailChange("rescate@huellas.example")
         onDescriptionChange("Rescatistas independientes del sur de la ciudad.")
+        onPhotoSelected("content://media/picker/0/9")
     }
 
     @Test
@@ -57,6 +58,7 @@ class AffiliationRequestViewModelTest {
         assertEquals("Ingresa un teléfono de 10 dígitos", errors.phone)
         assertEquals("Ingresa el correo", errors.email)
         assertEquals("Describe brevemente a tu organización", errors.description)
+        assertEquals("Agrega una foto del lugar o su logo", errors.photo)
         assertNull(vm.uiState.value.submitted)
         assertEquals(before, repository.observeActiveOrganizations().first())
     }
@@ -74,6 +76,21 @@ class AffiliationRequestViewModelTest {
     }
 
     @Test
+    fun aRequestWithoutAPlacePhotoIsNotSent() = runTest {
+        val vm = AffiliationRequestViewModel(FakeOrganizationRepository())
+        vm.fillValid()
+        vm.onPhotoRemoved()
+        vm.onSubmit()
+        assertEquals("Agrega una foto del lugar o su logo", vm.uiState.value.errors.photo)
+        assertNull(vm.uiState.value.submitted)
+
+        vm.onPhotoSelected("memory://photo/2")
+        assertNull(vm.uiState.value.errors.photo)
+        vm.onSubmit()
+        assertEquals("memory://photo/2", assertNotNull(vm.uiState.value.submitted).photoUrl)
+    }
+
+    @Test
     fun validSubmitCreatesPendingOrganizationOffTheMap() = runTest {
         val repository = FakeOrganizationRepository()
         val vm = AffiliationRequestViewModel(repository)
@@ -84,6 +101,7 @@ class AffiliationRequestViewModelTest {
         assertEquals(OrganizationStatus.Pending, submitted.status)
         assertEquals(OrganizationType.AdoptionCenter, submitted.type)
         assertEquals("6620009999", submitted.phone)
+        assertEquals("content://media/picker/0/9", submitted.photoUrl)
         assertFalse(repository.observeActiveOrganizations().first().any { it.id == submitted.id })
     }
 }

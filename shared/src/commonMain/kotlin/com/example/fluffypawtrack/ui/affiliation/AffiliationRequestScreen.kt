@@ -5,10 +5,12 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
@@ -24,15 +26,22 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.fluffypawtrack.di.LocalAppContainer
 import com.example.fluffypawtrack.domain.model.OrganizationType
+import com.example.fluffypawtrack.platform.rememberPhotoLaunchers
 import com.example.fluffypawtrack.ui.account.AccountCard
 import com.example.fluffypawtrack.ui.account.AccountScaffold
 import com.example.fluffypawtrack.ui.auth.AuthErrorMessage
 import com.example.fluffypawtrack.ui.auth.AuthPrimaryButton
 import com.example.fluffypawtrack.ui.auth.AuthTextField
+import com.example.fluffypawtrack.ui.common.AppImage
 import com.example.fluffypawtrack.ui.common.label
+import com.example.fluffypawtrack.ui.components.PillActionButton
 import com.example.fluffypawtrack.ui.contact.MultilineField
 import com.example.fluffypawtrack.ui.theme.FluffyColors
 import com.example.fluffypawtrack.ui.theme.FluffyShapes
+import fluffypawtrack.shared.generated.resources.Res
+import fluffypawtrack.shared.generated.resources.ic_add
+import fluffypawtrack.shared.generated.resources.ic_camera
+import org.jetbrains.compose.resources.painterResource
 
 /** Affiliation request (REQUIREMENTS §6 "Común"). [onDone] closes the confirmation. */
 @Composable
@@ -51,6 +60,8 @@ fun AffiliationRequestRoute(onBack: () -> Unit, onDone: () -> Unit, modifier: Mo
         onPhoneChange = viewModel::onPhoneChange,
         onEmailChange = viewModel::onEmailChange,
         onDescriptionChange = viewModel::onDescriptionChange,
+        onPhotoSelected = viewModel::onPhotoSelected,
+        onRemovePhoto = viewModel::onPhotoRemoved,
         onSubmit = viewModel::onSubmit,
         modifier = modifier,
     )
@@ -67,9 +78,12 @@ fun AffiliationRequestScreen(
     onPhoneChange: (String) -> Unit,
     onEmailChange: (String) -> Unit,
     onDescriptionChange: (String) -> Unit,
+    onPhotoSelected: (String) -> Unit,
+    onRemovePhoto: () -> Unit,
     onSubmit: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val launchers = rememberPhotoLaunchers(onPhotoSelected)
     AccountScaffold(title = "Solicitud de afiliación", onBack = onBack, modifier = modifier) {
         val submitted = state.submitted
         if (submitted != null) {
@@ -137,6 +151,24 @@ fun AffiliationRequestScreen(
             error = state.errors.description,
             supportingText = "A qué se dedican, qué animales reciben y su horario",
         )
+
+        // Required: a photo of the place or its logo (REQUIREMENTS §8).
+        Text("Foto del lugar o logo", style = MaterialTheme.typography.labelLarge, color = FluffyColors.Brown900)
+        val photo = state.photoRef
+        if (photo != null) {
+            AppImage(
+                photo,
+                contentDescription = "Foto del lugar",
+                modifier = Modifier.fillMaxWidth().height(180.dp).clip(FluffyShapes.Card),
+            )
+            TextButton(onClick = onRemovePhoto) {
+                Text("Quitar foto", style = MaterialTheme.typography.labelLarge, color = FluffyColors.Brown900)
+            }
+        } else {
+            PillActionButton("Tomar foto", painterResource(Res.drawable.ic_camera), onClick = launchers.takePhoto)
+            PillActionButton("Elegir de la galería", painterResource(Res.drawable.ic_add), onClick = launchers.pickFromGallery)
+        }
+        state.errors.photo?.let { AuthErrorMessage(it) }
 
         state.message?.let { AuthErrorMessage(it) }
 

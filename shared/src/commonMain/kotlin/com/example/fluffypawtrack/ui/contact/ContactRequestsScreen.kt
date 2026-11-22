@@ -27,7 +27,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.fluffypawtrack.di.LocalAppContainer
 import com.example.fluffypawtrack.domain.model.ContactDetails
-import com.example.fluffypawtrack.platform.PhotoPreview
+import com.example.fluffypawtrack.ui.common.AppImage
 import com.example.fluffypawtrack.ui.account.AccountCard
 import com.example.fluffypawtrack.ui.account.AccountScaffold
 import com.example.fluffypawtrack.ui.account.LabeledValue
@@ -173,7 +173,7 @@ private fun ReceivedRequestCard(
         CardHeader(item, title = item.request.requesterFirstName)
         Text(item.request.message, style = MaterialTheme.typography.bodyMedium, color = FluffyColors.Brown900)
         item.request.photoUrl?.let { photo ->
-            PhotoPreview(
+            AppImage(
                 photo,
                 contentDescription = "Foto enviada por ${item.request.requesterFirstName}",
                 modifier = Modifier.fillMaxWidth().height(160.dp).clip(RoundedCornerShape(12.dp)),

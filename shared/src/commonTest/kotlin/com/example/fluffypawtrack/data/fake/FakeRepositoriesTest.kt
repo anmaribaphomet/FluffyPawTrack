@@ -22,7 +22,7 @@ class FakeRepositoriesTest {
         category = ReportCategory.Injured,
         priority = Priority.High,
         description = "Perro con una pata lastimada",
-        photoUrl = null,
+        photoUrl = "memory://photo/1",
         location = GeoPoint(29.0892, -110.9613),
         address = "Blvd. Kino 100, Hermosillo",
         reference = null,
@@ -124,6 +124,20 @@ class FakeRepositoriesTest {
         assertTrue(shown.isNotEmpty())
         assertTrue(shown.all { it.status == OrganizationStatus.Approved && it.active })
         assertTrue(shown.size < SampleData.organizations.size, "sample data should include hidden places")
+    }
+
+    @Test
+    fun everySampleReportPlaceAndListingHasAnImage() {
+        assertTrue(SampleData.reports.all { it.photoUrl.isNotBlank() })
+        assertTrue(SampleData.organizations.all { it.photoUrl.isNotBlank() })
+        assertTrue(SampleData.adoptionListings.all { listing -> listing.photoUrls.isNotEmpty() })
+        assertTrue(SampleData.adoptionListings.any { it.photoUrls.size >= 2 }, "one listing should show a gallery")
+    }
+
+    @Test
+    fun adoptionRepositoryRejectsListingsWithoutPhotos() {
+        val withoutPhotos = SampleData.adoptionListings.first().copy(photoUrls = emptyList())
+        kotlin.test.assertFailsWith<IllegalArgumentException> { FakeAdoptionRepository(listOf(withoutPhotos)) }
     }
 
     @Test

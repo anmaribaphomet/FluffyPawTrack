@@ -70,9 +70,12 @@ interface OrganizationRepository {
         phone: String,
         email: String,
         description: String,
+        /** Required photo of the place or its logo. */
+        photoUrl: String,
     ): Result<Organization>
 }
 
+/** Every listing it returns has at least one photo. */
 interface AdoptionRepository {
     fun observeAvailableListings(): Flow<List<AdoptionListing>>
 
