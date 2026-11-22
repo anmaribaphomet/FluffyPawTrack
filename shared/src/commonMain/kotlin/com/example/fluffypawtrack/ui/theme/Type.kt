@@ -48,15 +48,27 @@ internal fun fluffyTypography(): Typography {
         lineHeight = lineHeight.sp,
         letterSpacing = 0.sp,
     )
+    val display = style(32, 40, FontWeight.SemiBold)
+    val headline = style(24, 32, FontWeight.SemiBold)
+    val title = style(20, 28, FontWeight.SemiBold)
+    val body = style(14, 20, FontWeight.Normal)
+    val label = style(12, 16, FontWeight.SemiBold)
+    // Slots outside the table reuse the closest token so nothing falls back to the default font.
     return Typography(
-        displaySmall = style(32, 40, FontWeight.SemiBold),
-        headlineSmall = style(24, 32, FontWeight.SemiBold),
-        titleLarge = style(20, 28, FontWeight.SemiBold),
+        displayLarge = display,
+        displayMedium = display,
+        displaySmall = display,
+        headlineLarge = headline,
+        headlineMedium = headline,
+        headlineSmall = headline,
+        titleLarge = title,
         titleMedium = style(20, 28, FontWeight.Bold),
+        titleSmall = title,
         bodyLarge = style(16, 24, FontWeight.SemiBold),
-        bodyMedium = style(14, 20, FontWeight.Normal),
-        labelLarge = style(12, 16, FontWeight.SemiBold),
+        bodyMedium = body,
         bodySmall = style(12, 16, FontWeight.Normal, FontStyle.Italic),
+        labelLarge = label,
+        labelMedium = label,
         labelSmall = style(10, 14, FontWeight.SemiBold),
     )
 }

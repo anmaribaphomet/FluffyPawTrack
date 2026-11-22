@@ -5,6 +5,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.lifecycle.compose.dropUnlessResumed
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -23,22 +24,25 @@ fun AppNavHost(navController: NavHostController = rememberNavController()) {
     NavHost(navController = navController, startDestination = Route.Home) {
         composable<Route.Home> {
             HomeScreen(
-                onProfileClick = { navController.navigate(Route.Profile) },
+                // dropUnlessResumed ignores taps while a transition is running (double taps).
+                onProfileClick = dropUnlessResumed { navController.navigate(Route.Profile) },
                 onNavigate = { destination ->
                     when (destination) {
-                        HomeDestination.Notificaciones -> navController.navigate(Route.Notifications)
+                        HomeDestination.Notificaciones -> navController.navigate(Route.Notifications) {
+                            launchSingleTop = true
+                        }
                         else -> Unit // Remaining tabs arrive in Phase 1.
                     }
                 },
             )
         }
         composable<Route.Profile> {
-            ProfileScreen(onBack = { navController.popBackStack() })
+            ProfileScreen(onBack = dropUnlessResumed { navController.popBackStack() })
         }
         composable<Route.Notifications> {
             NotificationsScreen(
                 notifications = notifications,
-                onBack = { navController.popBackStack() },
+                onBack = dropUnlessResumed { navController.popBackStack() },
                 onNotificationClick = { tapped ->
                     notifications = notifications.map { if (it.id == tapped.id) it.copy(isRead = true) else it }
                 },

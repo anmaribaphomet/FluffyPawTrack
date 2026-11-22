@@ -158,7 +158,25 @@ class FakeRepositoriesTest {
     fun contactRequestsAreSplitIntoSentAndReceived() = runTest {
         val repository = FakeContactRequestRepository()
         val userId = SampleData.demoUser.id
-        assertTrue(repository.observeSent(userId).first().all { it.requesterId == userId })
-        assertTrue(repository.observeReceived(userId).first().all { it.recipientUserId == userId })
+        assertEquals(listOf("request-1"), repository.observeSent(userId).first().map { it.id })
+        assertEquals(listOf("request-2"), repository.observeReceived(userId).first().map { it.id })
+    }
+
+    @Test
+    fun markAsReadOnlyChangesThatNotification() = runTest {
+        val repository = FakeNotificationRepository()
+        val userId = SampleData.demoUser.id
+
+        repository.markAsRead("notification-2")
+
+        val byId = repository.observeNotifications(userId).first().associateBy { it.id }
+        assertTrue(byId.getValue("notification-2").isRead)
+        assertFalse(byId.getValue("notification-3").isRead)
+    }
+
+    @Test
+    fun signInIgnoresEmailCaseAndSpaces() = runTest {
+        val user = FakeAuthRepository().signIn("  DEMO@Correo.com ", SampleData.DEMO_PASSWORD).getOrThrow()
+        assertEquals(SampleData.demoUser, user)
     }
 }
