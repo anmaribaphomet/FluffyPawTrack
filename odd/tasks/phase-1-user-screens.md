@@ -30,7 +30,7 @@ Branch: `master` (commit per unit, push at phase end). Parallel units run in iso
 | T5 | S6 | delegated W5 (worktree) | done — merged and wired (map "Ver ficha" / "Ver centro") | de9e869 |
 | T6 | S8, S11 | delegated W6 (worktree) | done — merged and wired (map "Es mi mascota", Cuenta → Solicitudes, Login → afiliación) | d45eaf5, d62506f, c075a09 |
 | T7 | S10 | inline | done — RED compile, GREEN 4/4, emulator checked | see log |
-| T8 | S1, S12 | inline — wire routes, merge, build, push | pending | |
+| T8 | S1, S12 | inline — wire routes, merge, build, push | done — 144/144 tests, assembleDebug OK, pushed | see push |
 
 Route evidence: writer trigger (a) — four independent units with disjoint edit surfaces, each several files, launched together; worktrees because they share the `shared` compilation unit. Parent owns `Routes.kt`, `AppNavHost.kt`, Gradle files and the manifest.
 
@@ -44,3 +44,4 @@ Route evidence: writer trigger (a) — four independent units with disjoint edit
 - L6: Open decisions reported by W2 (kept as built): photo optional; GPS address saved as coordinates; anonymous-session users send their anonymous id.
 - L7: Native review for batch 1 (user granted) stopped with `lens_context_budget_exceeded` (64 files, ~5,700 lines): no review authority created. Splitting would rewrite committed history; deferred — Phase 2 real auth will use small commits so review fits.
 - L8: Batch 2 writers hit the usage limit and were resumed. W5 and W6 merged without conflicts; 144/144 tests, assembleDebug OK. Added entry points: "Solicitudes de contacto" row in Cuenta, affiliation link on Login. W6 added `ReportRepository.closeReport` and `OrganizationRepository.requestAffiliation`; received requests for organizations are listed in Phase 3 (affiliate side).
+- L9: Emulator pass on batch 2: adoptions map → "Ver ficha" → animal detail (favorite toggles) → prefilled adoption form; "Es mi mascota" blocks a second active request ("Ya tienes una solicitud activa en este reporte"); Recibidas shows first name only, Aceptar reveals full contact data. Fixed: AppContainer now per process (session and fake data survived nothing after reopening the app). Known: Home "Ver adopciones" hidden under the green wave until scrolling (Phase 4); native review could not run (size), see L7.

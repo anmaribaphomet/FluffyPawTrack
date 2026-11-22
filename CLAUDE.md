@@ -105,18 +105,18 @@ Rules:
 - [x] `assembleDebug` passes; push
 
 ### Phase 1 — All user screens with fake data (target: Monday, Nov 23, 2026)
-- [ ] Splash, login, and registration
-- [ ] Home wired to navigation
-- [ ] Map: pins by category, filters, search, pin detail sheet
-- [ ] New report flow: category → photo → location (with permission dialog) →
+- [x] Splash, login, and registration
+- [x] Home wired to navigation
+- [x] Map: pins by category, filters, search, pin detail sheet
+- [x] New report flow: category → photo → location (with permission dialog) →
       description and priority → summary → "¡Reporte publicado!"
-- [ ] Adoptions: centers map → center detail → animal detail → adoption form
-- [ ] Notifications with "Marcar todas como leídas"
-- [ ] Account: personal info, My reports (edit, delete), Favorites, counters
-- [ ] Contact requests: Sent and Received tabs, "Es mi mascota" form
-- [ ] Affiliation request screen
-- [ ] Settings
-- [ ] `assembleDebug` passes; push
+- [x] Adoptions: centers map → center detail → animal detail → adoption form
+- [x] Notifications with "Marcar todas como leídas"
+- [x] Account: personal info, My reports (edit, delete), Favorites, counters
+- [x] Contact requests: Sent and Received tabs, "Es mi mascota" form
+- [x] Affiliation request screen
+- [x] Settings
+- [x] `assembleDebug` passes; push
 
 ### Phase 2 — Supabase
 - [ ] Add `supabase-kt`; read credentials from `local.properties`
@@ -133,6 +133,7 @@ Rules:
 - [ ] Affiliate: nearby reports inbox, take case and change status, my cases,
       received contact requests, adoption listings, organization profile and preferences
 - [ ] Admin: affiliation requests, places directory (CRUD), report supervision
+- [ ] Affiliates see contact requests received by their organization (Recibidas)
 - [ ] `assembleDebug` passes; push
 
 ### Phase 4 — Notifications and polish
@@ -142,4 +143,5 @@ Rules:
       `POST_NOTIFICATIONS` permission screen
 - [ ] Polish: accessibility, empty and error states, Figma copy fixes
 - [ ] Bottom-nav labels must not clip at large font scales ("Notificaciones" clips at 1.3)
+- [ ] Home: the "Ver adopciones" button sits under the green wave until the user scrolls
 - [ ] `assembleDebug` passes; push
