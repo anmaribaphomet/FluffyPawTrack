@@ -10,6 +10,7 @@ import com.example.fluffypawtrack.domain.model.ContactRequestStatus
 import com.example.fluffypawtrack.domain.model.InvalidAuthDataException
 import com.example.fluffypawtrack.domain.model.ListingStatus
 import com.example.fluffypawtrack.domain.model.NewReport
+import com.example.fluffypawtrack.domain.model.NotificationType
 import com.example.fluffypawtrack.domain.model.Organization
 import com.example.fluffypawtrack.domain.model.OrganizationStatus
 import com.example.fluffypawtrack.domain.model.OrganizationType
@@ -207,15 +208,20 @@ class FakeOrganizationRepository : OrganizationRepository {
     }
 }
 
-/** Rejects listings without photos: every animal in adoption needs at least one. */
+/**
+ * Rejects listings without photos: every animal in adoption needs at least one.
+ * [findUser] stands in for the `profiles` table when checking who marks an animal as adopted.
+ */
 class FakeAdoptionRepository(
     initialListings: List<AdoptionListing> = SampleData.adoptionListings,
+    private val findUser: (String) -> UserProfile? = { id -> SampleData.users.firstOrNull { it.id == id } },
 ) : AdoptionRepository {
     init {
         require(initialListings.all { it.photoUrls.isNotEmpty() }) { "Every adoption listing needs at least one photo" }
     }
 
     private val listings = MutableStateFlow(initialListings)
+    private val adoptedListeners = mutableListOf<suspend (AdoptionListing) -> Unit>()
 
     override fun observeAvailableListings(): Flow<List<AdoptionListing>> =
         listings.map { list -> list.filter { it.status == ListingStatus.Available } }
@@ -224,6 +230,30 @@ class FakeAdoptionRepository(
         listings.map { list -> list.filter { it.organizationId == organizationId } }
 
     override suspend fun getListing(id: String): AdoptionListing? = listings.value.firstOrNull { it.id == id }
+
+    override suspend fun markAdopted(listingId: String, affiliateUserId: String): Result<AdoptionListing> {
+        val listing = getListing(listingId)
+            ?: return Result.failure(IllegalStateException("El animal no existe"))
+        val affiliate = findUser(affiliateUserId)
+        if (affiliate?.role != Role.Affiliate || affiliate.organizationId != listing.organizationId) {
+            return Result.failure(IllegalStateException("Solo el centro de este animal puede marcarlo como adoptado"))
+        }
+        if (listing.status == ListingStatus.Adopted) {
+            return Result.failure(IllegalStateException("Este animal ya fue marcado como adoptado"))
+        }
+        val adopted = listing.copy(status = ListingStatus.Adopted)
+        listings.update { list -> list.map { if (it.id == listingId) adopted else it } }
+        adoptedListeners.forEach { it(adopted) }
+        return Result.success(adopted)
+    }
+
+    /**
+     * Lets [FakeAdoptionRequestRepository] reject the pending requests of an adopted animal.
+     * Supabase does the same in one transaction (an RPC or trigger on `adoption_listings`).
+     */
+    internal fun addAdoptedListener(listener: suspend (AdoptionListing) -> Unit) {
+        adoptedListeners += listener
+    }
 }
 
 class FakeFavoritesRepository : FavoritesRepository {
@@ -241,8 +271,10 @@ class FakeFavoritesRepository : FavoritesRepository {
     }
 }
 
-class FakeNotificationRepository : NotificationRepository {
+@OptIn(ExperimentalTime::class)
+class FakeNotificationRepository(private val clock: Clock = Clock.System) : NotificationRepository {
     private val notifications = MutableStateFlow(SampleData.notifications)
+    private var nextId = 1
 
     override fun observeNotifications(userId: String): Flow<List<AppNotification>> =
         notifications.map { it[userId].orEmpty() }
@@ -257,6 +289,23 @@ class FakeNotificationRepository : NotificationRepository {
         notifications.update { all ->
             all + (userId to all[userId].orEmpty().map { it.copy(isRead = true) })
         }
+    }
+
+    override suspend fun notify(
+        userId: String,
+        title: String,
+        message: String,
+        type: NotificationType,
+    ): AppNotification {
+        val created = AppNotification(
+            id = "notification-new-${nextId++}",
+            title = title,
+            message = message,
+            receivedAt = clock.now(),
+            type = type,
+        )
+        notifications.update { all -> all + (userId to all[userId].orEmpty() + created) }
+        return created
     }
 }
 

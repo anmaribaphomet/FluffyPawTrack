@@ -1,9 +1,12 @@
 package com.example.fluffypawtrack.domain.repository
 
 import com.example.fluffypawtrack.domain.model.AdoptionListing
+import com.example.fluffypawtrack.domain.model.AdoptionRequest
 import com.example.fluffypawtrack.domain.model.AppNotification
 import com.example.fluffypawtrack.domain.model.ContactDetails
 import com.example.fluffypawtrack.domain.model.ContactRequest
+import com.example.fluffypawtrack.domain.model.NewAdoptionRequest
+import com.example.fluffypawtrack.domain.model.NotificationType
 import com.example.fluffypawtrack.domain.model.NewReport
 import com.example.fluffypawtrack.domain.model.Organization
 import com.example.fluffypawtrack.domain.model.OrganizationType
@@ -82,6 +85,39 @@ interface AdoptionRepository {
     fun observeListingsBy(organizationId: String): Flow<List<AdoptionListing>>
 
     suspend fun getListing(id: String): AdoptionListing?
+
+    /**
+     * An affiliate of the listing's center marks the animal as adopted. Its pending adoption
+     * requests become rejected with "El animal ya fue adoptado" and their requesters are notified.
+     */
+    suspend fun markAdopted(listingId: String, affiliateUserId: String): Result<AdoptionListing>
+}
+
+/**
+ * RF-06 adoption requests (`adoption_requests` table). Failures carry a readable Spanish message.
+ *
+ * RLS intent for Phase 2: a user reads, inserts and cancels only their own rows
+ * (`requester_id = auth.uid()`, role `user`, not anonymous); affiliates read and answer only the
+ * rows of their organization (`organization_id` = their profile's organization). A partial unique
+ * index on (listing_id, requester_id) where status in ('pending', 'approved') keeps one active
+ * request per animal.
+ */
+interface AdoptionRequestRepository {
+    /** Requires a non-anonymous `user` account and an available listing; at most one active request each. */
+    suspend fun submit(requesterId: String?, request: NewAdoptionRequest): Result<AdoptionRequest>
+
+    /** The requester withdraws a pending request. */
+    suspend fun cancel(requestId: String, userId: String): Result<AdoptionRequest>
+
+    /** An affiliate of the center approves a pending request and the requester is notified. */
+    suspend fun approve(requestId: String, affiliateUserId: String): Result<AdoptionRequest>
+
+    /** An affiliate of the center rejects a pending request with a required [reason]. */
+    suspend fun reject(requestId: String, affiliateUserId: String, reason: String): Result<AdoptionRequest>
+
+    fun observeByRequester(userId: String): Flow<List<AdoptionRequest>>
+
+    fun observeByOrganization(organizationId: String): Flow<List<AdoptionRequest>>
 }
 
 interface FavoritesRepository {
@@ -97,6 +133,9 @@ interface NotificationRepository {
     suspend fun markAsRead(notificationId: String)
 
     suspend fun markAllAsRead(userId: String)
+
+    /** Creates an in-app notification for [userId]. Phase 4 also sends it as an FCM push. */
+    suspend fun notify(userId: String, title: String, message: String, type: NotificationType): AppNotification
 }
 
 interface ContactRequestRepository {
