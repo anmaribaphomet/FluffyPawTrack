@@ -27,9 +27,9 @@ Branch: `master`, one commit per point, push at the end. Test runner: `./gradlew
 | T1 | SA | inline | done — RED/GREEN on Login/Register VM tests | 216967a |
 | T2 | SE | inline | done — RED/GREEN LabelsTest | a12f46f |
 | T3 | SB | inline | done — emulator: search below wave | see log |
-| T1b | SA | delegated (worktree, parallel with T5) | in progress | |
+| T1b | SA | delegated (worktree) | done — 156 tests | f0e0f5e |
 | T4 | SF, S1 | delegated (context backstop) | done — 152/152 tests; 19 Commons images (licenses/SAMPLE_IMAGES.md) | d2fe939 |
-| T5 | SC | delegated (worktree, parallel with T1b) | in progress | |
+| T5 | SC | delegated (worktree) | done — 157 tests; nav hooks removed by parent | 31c095a + cleanup |
 | T6 | SD, S3 | delegated (context backstop) | pending | |
 | T7 | SG, S2 | delegated (context backstop) | pending | |
 | T8 | S9 | inline — build, emulator, push | pending | |
@@ -41,3 +41,4 @@ Route evidence: T4–T7 touch shared screens (adoptions, map sheets, SampleData)
 - L1 (2026-11-22, user): "Revisé la Fase 2 y hay correcciones. Antes de programar, actualiza docs/REQUIREMENTS.md y el CLAUDE.md con estos cambios. Después impleméntalos y haz un commit por cada punto." (full message with points A–G and decisions 1–3; quoted in Specs)
 - L2: T3 emulator evidence: map opened after demo login; search pill and Filtros start below the header wave (screenshot 8:24, top 150 dp + 8 dp), no overlap with logo or "Regresar".
 - L3: Native review of A/E/B + docs (lineage review-1c59285481371975, 4 lenses, user granted) approved and acknowledged; non-blocking findings. Follow-up T1b: show "Datos inválidos, intenta de nuevo." only for invalid data (typed domain error), keep a separate generic message for connection/server failures; remove dead per-field register errors and readableMessage leftovers; rename stale test; fix the CLAUDE.md FCM bullet.
+- L4: Native review of F + T1b (lineage review-b197610350b2854f, 4 lenses, user granted) approved and acknowledged. Fixed now: listing cover photo guarded (coverPhotoUrl, blank ref → placeholder). Remaining suggestions (AppImage contentScale on local photos, shared photo-error constant, gallery width constant) are minor and left for polish.
