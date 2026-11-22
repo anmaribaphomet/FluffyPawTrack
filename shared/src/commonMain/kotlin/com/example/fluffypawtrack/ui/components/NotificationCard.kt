@@ -22,8 +22,8 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.example.fluffypawtrack.model.AppNotification
-import com.example.fluffypawtrack.model.NotificationType
+import com.example.fluffypawtrack.domain.model.AppNotification
+import com.example.fluffypawtrack.domain.model.NotificationType
 import com.example.fluffypawtrack.ui.theme.FluffyPalette
 import com.example.fluffypawtrack.ui.theme.FluffyPawTrackTheme
 import com.example.fluffypawtrack.ui.theme.FluffyShapes

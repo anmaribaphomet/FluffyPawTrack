@@ -9,7 +9,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.example.fluffypawtrack.model.AppNotification
+import com.example.fluffypawtrack.domain.model.AppNotification
 import com.example.fluffypawtrack.ui.components.HomeDestination
 import com.example.fluffypawtrack.ui.home.HomeScreen
 import com.example.fluffypawtrack.ui.notifications.NotificationsScreen

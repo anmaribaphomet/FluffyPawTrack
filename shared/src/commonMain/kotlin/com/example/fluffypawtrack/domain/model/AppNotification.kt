@@ -1,4 +1,4 @@
-package com.example.fluffypawtrack.model
+package com.example.fluffypawtrack.domain.model
 
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant

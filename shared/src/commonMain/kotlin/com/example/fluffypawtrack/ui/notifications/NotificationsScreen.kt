@@ -24,8 +24,8 @@ import androidx.compose.ui.draw.dropShadow
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.example.fluffypawtrack.model.AppNotification
-import com.example.fluffypawtrack.model.NotificationType
+import com.example.fluffypawtrack.domain.model.AppNotification
+import com.example.fluffypawtrack.domain.model.NotificationType
 import com.example.fluffypawtrack.ui.components.NotificationCard
 import com.example.fluffypawtrack.ui.components.ProfileHeader
 import com.example.fluffypawtrack.ui.theme.FluffyPalette
