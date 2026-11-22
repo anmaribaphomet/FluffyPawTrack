@@ -21,21 +21,26 @@ import com.example.fluffypawtrack.domain.model.ListingStatus
 import com.example.fluffypawtrack.ui.account.AccountCard
 import com.example.fluffypawtrack.ui.account.AccountScaffold
 import com.example.fluffypawtrack.ui.account.LabeledValue
-import com.example.fluffypawtrack.ui.auth.AuthPrimaryButton
 import com.example.fluffypawtrack.ui.common.AppImage
 import com.example.fluffypawtrack.ui.common.label
 import com.example.fluffypawtrack.ui.theme.FluffyShapes
 import com.example.fluffypawtrack.ui.theme.FluffyColors
 import com.example.fluffypawtrack.ui.theme.FluffyPawTrackTheme
 
-/** "Centro de Adopción": a center's info and its available animals (Figma 309:770). */
+/**
+ * "Centro de Adopción": a center's info and, below it, "Animales en adopción" with one
+ * collapsed card per available animal (Figma 309:770, SC). The adoption form opens only from
+ * an animal's "Quiero adoptarlo", never from here.
+ */
 @Composable
 fun CenterDetailRoute(
     organizationId: String,
     onBack: () -> Unit,
     onListingClick: (String) -> Unit,
-    onAdoptionForm: (organizationId: String, listingId: String?) -> Unit,
     modifier: Modifier = Modifier,
+    @Suppress("UNUSED_PARAMETER")
+    // Ignored compatibility shim: The center no longer opens the adoption form (SC); remove this argument from the caller.
+    onAdoptionForm: (organizationId: String, listingId: String?) -> Unit = { _, _ -> },
 ) {
     val container = LocalAppContainer.current
     val viewModel = viewModel(key = "center-$organizationId") {
@@ -46,7 +51,6 @@ fun CenterDetailRoute(
         state = state,
         onBack = onBack,
         onListingClick = onListingClick,
-        onAdoptionForm = { onAdoptionForm(organizationId, null) },
         modifier = modifier,
     )
 }
@@ -56,7 +60,6 @@ fun CenterDetailScreen(
     state: CenterDetailUiState,
     onBack: () -> Unit,
     onListingClick: (String) -> Unit,
-    onAdoptionForm: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val organization = state.organization
@@ -101,7 +104,6 @@ fun CenterDetailScreen(
             LabeledValue("Correo", organization.email)
             LabeledValue("Redes sociales", organization.social)
         }
-        AuthPrimaryButton(text = "Formulario de adopción", onClick = onAdoptionForm)
         Text(
             "Animales en adopción",
             style = MaterialTheme.typography.titleMedium,
@@ -115,8 +117,8 @@ fun CenterDetailScreen(
                 color = FluffyColors.Brown900,
             )
         }
-        state.listings.forEach { listing ->
-            ListingRow(listing, onClick = { onListingClick(listing.id) })
+        state.animalCards.forEach { card ->
+            AnimalCardRow(card, onClick = { onListingClick(card.listingId) })
         }
     }
 }
@@ -133,7 +135,6 @@ private fun CenterDetailScreenPreview() {
             ),
             onBack = {},
             onListingClick = {},
-            onAdoptionForm = {},
         )
     }
 }

@@ -21,7 +21,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.example.fluffypawtrack.domain.model.AdoptionListing
 import com.example.fluffypawtrack.domain.model.GeoPoint
 import com.example.fluffypawtrack.domain.model.Priority
 import com.example.fluffypawtrack.domain.model.ReportCategory
@@ -68,34 +67,16 @@ fun ReportDetailSheetContent(
 internal fun PlaceDetailSheetContent(
     organization: Organization,
     modifier: Modifier = Modifier,
+    pinColor: Color = PinColors.SupportPlace,
     actions: @Composable ColumnScope.() -> Unit = {},
 ) {
     Column(modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(10.dp)) {
         SheetPhoto(organization.photoUrl, "Foto de ${organization.name}")
-        SheetTitle(organization.name, PinColors.SupportPlace)
+        SheetTitle(organization.name, pinColor)
         DetailRow("Tipo", organization.type.label)
         DetailRow("Dirección", organization.address)
         DetailRow("Horario", organization.schedule)
         DetailRow("Teléfono", organization.phone)
-        actions()
-    }
-}
-
-/** Detail of an animal available for adoption. */
-@Composable
-internal fun AdoptionDetailSheetContent(
-    listing: AdoptionListing,
-    organization: Organization,
-    modifier: Modifier = Modifier,
-    actions: @Composable ColumnScope.() -> Unit = {},
-) {
-    Column(modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        SheetPhoto(listing.photoUrls.first(), "Foto de ${listing.name}")
-        SheetTitle(listing.name, PinColors.Adoption)
-        DetailRow("Especie", listing.species)
-        DetailRow("Raza", listing.breed)
-        DetailRow("Edad", listing.age)
-        DetailRow("Centro", organization.name)
         actions()
     }
 }

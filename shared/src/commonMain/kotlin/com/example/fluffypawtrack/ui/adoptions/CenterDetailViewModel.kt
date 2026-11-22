@@ -13,11 +13,30 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.stateIn
 
+/** Collapsed card of one available animal in the center detail (SC). */
+data class AnimalCard(
+    val listingId: String,
+    val name: String,
+    val species: String,
+    val breed: String,
+    val age: String,
+    /** First of the listing's photos. */
+    val coverPhotoUrl: String,
+)
+
+/**
+ * Center detail: the center's info and its available animals. The adoption form is not
+ * offered here; it only opens from "Quiero adoptarlo" on a specific animal (SC).
+ */
 data class CenterDetailUiState(
     val organization: Organization? = null,
     val listings: List<AdoptionListing> = emptyList(),
     val loaded: Boolean = false,
-)
+) {
+    val animalCards: List<AnimalCard> = listings.map {
+        AnimalCard(it.id, it.name, it.species, it.breed, it.age, it.photoUrls.first())
+    }
+}
 
 class CenterDetailViewModel(
     organizationId: String,

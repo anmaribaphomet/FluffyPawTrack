@@ -65,8 +65,9 @@ import androidx.compose.foundation.layout.ColumnScope
  *
  * @param initialFilter filter applied when the screen opens, e.g. [MapFilter.Adoptions]
  *   when it is opened from the adoption flow.
- * @param reportActions, placeActions, adoptionActions extra buttons at the end of each
- *   detail sheet (e.g. "Es mi mascota", "Ver ficha"), supplied by the navigation host.
+ * @param reportActions, placeActions extra buttons at the end of each detail sheet
+ *   (e.g. "Es mi mascota", "Ver centro"), supplied by the navigation host. Adoption centers
+ *   use the place sheet and [placeActions].
  */
 @Composable
 fun MapRoute(
@@ -75,6 +76,8 @@ fun MapRoute(
     initialFilter: MapFilter = MapFilter.All,
     reportActions: @Composable ColumnScope.(Report) -> Unit = {},
     placeActions: @Composable ColumnScope.(Organization) -> Unit = {},
+    @Suppress("UNUSED_PARAMETER")
+    // Ignored compatibility shim: Adoption listings are no longer pinned (SC); remove this argument from the caller.
     adoptionActions: @Composable ColumnScope.(AdoptionListing) -> Unit = {},
 ) {
     val container = LocalAppContainer.current
@@ -97,7 +100,6 @@ fun MapRoute(
         modifier = modifier,
         reportActions = reportActions,
         placeActions = placeActions,
-        adoptionActions = adoptionActions,
     )
 }
 
@@ -112,7 +114,6 @@ fun MapScreen(
     modifier: Modifier = Modifier,
     reportActions: @Composable ColumnScope.(Report) -> Unit = {},
     placeActions: @Composable ColumnScope.(Organization) -> Unit = {},
-    adoptionActions: @Composable ColumnScope.(AdoptionListing) -> Unit = {},
 ) {
     var filtersOpen by remember { mutableStateOf(false) }
     Box(modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
@@ -176,8 +177,8 @@ fun MapScreen(
                 when (item) {
                     is MapItem.Report -> ReportDetailSheetContent(item.report) { reportActions(item.report) }
                     is MapItem.Place -> PlaceDetailSheetContent(item.organization) { placeActions(item.organization) }
-                    is MapItem.Adoption -> AdoptionDetailSheetContent(item.listing, item.organization) {
-                        adoptionActions(item.listing)
+                    is MapItem.AdoptionCenter -> PlaceDetailSheetContent(item.organization, pinColor = item.color) {
+                        placeActions(item.organization)
                     }
                 }
             }
