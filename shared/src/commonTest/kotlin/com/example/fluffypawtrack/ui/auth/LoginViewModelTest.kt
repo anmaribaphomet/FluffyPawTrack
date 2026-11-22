@@ -47,7 +47,7 @@ class LoginViewModelTest {
     }
 
     @Test
-    fun wrongPasswordShowsReadableError() = runTest {
+    fun wrongPasswordShowsTheInvalidDataMessage() = runTest {
         viewModel.onEmailChange("demo@correo.com")
         viewModel.onPasswordChange("wrong-password")
 
@@ -57,6 +57,46 @@ class LoginViewModelTest {
         assertEquals(INVALID_DATA_MESSAGE, state.errorMessage)
         assertNull(state.result)
         assertNull(repository.currentUser.value)
+    }
+
+    @Test
+    fun unknownEmailShowsTheSameMessageAsWrongPassword() = runTest {
+        viewModel.onEmailChange("demo@correo.com")
+        viewModel.onPasswordChange("wrong-password")
+        viewModel.onSubmit()
+        val wrongPasswordMessage = viewModel.uiState.value.errorMessage
+
+        viewModel.onEmailChange("nadie@correo.com")
+        viewModel.onPasswordChange("demo1234")
+        viewModel.onSubmit()
+
+        assertEquals(INVALID_DATA_MESSAGE, wrongPasswordMessage)
+        assertEquals(wrongPasswordMessage, viewModel.uiState.value.errorMessage)
+        assertNull(repository.currentUser.value)
+    }
+
+    @Test
+    fun connectionFailureShowsTheConnectionMessage() = runTest {
+        val failing = LoginViewModel(FailingAuthRepository())
+        failing.onEmailChange("demo@correo.com")
+        failing.onPasswordChange("demo1234")
+
+        failing.onSubmit()
+
+        val state = failing.uiState.value
+        assertEquals(CONNECTION_ERROR_MESSAGE, state.errorMessage)
+        assertNull(state.result)
+        assertFalse(state.isLoading)
+    }
+
+    @Test
+    fun anonymousSessionFailureShowsTheConnectionMessage() = runTest {
+        val failing = LoginViewModel(FailingAuthRepository())
+
+        failing.onReportAnonymously()
+
+        assertEquals(CONNECTION_ERROR_MESSAGE, failing.uiState.value.errorMessage)
+        assertNull(failing.uiState.value.result)
     }
 
     @Test

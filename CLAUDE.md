@@ -162,9 +162,8 @@ Rules:
 ### Phase 4 — Notifications and polish
 - [ ] Notifications to affiliates by radius and priority, respecting `notification_prefs`
 - [ ] Live updates with Supabase Realtime
-- [ ] FCM push (app closed): device tokens, Edge Function, tap opens the report; also for
-      adoption request approved / rejected
-      `POST_NOTIFICATIONS` permission screen
+- [ ] FCM push (app closed): device tokens, Edge Function, tap opens the report,
+      `POST_NOTIFICATIONS` permission screen, and pushes for adoption request approved / rejected
 - [ ] Polish: accessibility, empty and error states, Figma copy fixes
 - [ ] Bottom-nav labels must not clip at large font scales ("Notificaciones" clips at 1.3)
 - [ ] Home: the "Ver adopciones" button sits under the green wave until the user scrolls

@@ -40,7 +40,7 @@ class LoginViewModel(private val authRepository: AuthRepository) : ViewModel() {
         viewModelScope.launch {
             authRepository.signIn(current.email.trim(), current.password)
                 .onSuccess { state.update { it.copy(isLoading = false, result = LoginResult.SignedIn) } }
-                .onFailure { state.update { it.copy(isLoading = false, errorMessage = INVALID_DATA_MESSAGE) } }
+                .onFailure { error -> state.update { it.copy(isLoading = false, errorMessage = error.authErrorMessage()) } }
         }
     }
 
@@ -50,14 +50,10 @@ class LoginViewModel(private val authRepository: AuthRepository) : ViewModel() {
         viewModelScope.launch {
             authRepository.signInAnonymously()
                 .onSuccess { state.update { it.copy(isLoading = false, result = LoginResult.Anonymous) } }
-                .onFailure { error -> state.update { it.copy(isLoading = false, errorMessage = error.readableMessage()) } }
+                .onFailure { state.update { it.copy(isLoading = false, errorMessage = CONNECTION_ERROR_MESSAGE) } }
         }
     }
 
     /** Called by the route once it has navigated, so returning to this screen does not navigate again. */
     fun onResultHandled() = state.update { it.copy(result = null) }
 }
-
-/** Repository errors already carry user-facing Spanish copy; anything else gets a generic message. */
-internal fun Throwable.readableMessage(): String =
-    message?.takeIf { it.isNotBlank() } ?: "Algo salió mal. Inténtalo de nuevo."
