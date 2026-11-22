@@ -28,6 +28,11 @@ import com.example.fluffypawtrack.domain.model.ReportStatus
 import com.example.fluffypawtrack.domain.model.Organization
 import com.example.fluffypawtrack.domain.model.Report
 import com.example.fluffypawtrack.ui.common.AppImage
+import com.example.fluffypawtrack.ui.common.DirectionsButton
+import com.example.fluffypawtrack.ui.common.LinkText
+import com.example.fluffypawtrack.ui.common.emailUri
+import com.example.fluffypawtrack.ui.common.phoneUri
+import com.example.fluffypawtrack.ui.common.socialUrl
 import com.example.fluffypawtrack.ui.common.PinColors
 import com.example.fluffypawtrack.ui.common.formatDateTime
 import com.example.fluffypawtrack.ui.common.label
@@ -58,6 +63,7 @@ fun ReportDetailSheetContent(
         DetailRow("Fecha", formatDateTime(report.createdAt))
         DetailRow("Dirección", report.address)
         report.reference?.let { DetailRow("Referencia", it) }
+        DirectionsButton(report.location)
         actions()
     }
 }
@@ -76,7 +82,10 @@ internal fun PlaceDetailSheetContent(
         DetailRow("Tipo", organization.type.label)
         DetailRow("Dirección", organization.address)
         DetailRow("Horario", organization.schedule)
-        DetailRow("Teléfono", organization.phone)
+        DetailRow("Teléfono", organization.phone, linkUri = phoneUri(organization.phone))
+        DetailRow("Correo", organization.email, linkUri = emailUri(organization.email))
+        organization.social?.takeIf { it.isNotBlank() }?.let { DetailRow("Redes", it, linkUri = socialUrl(it)) }
+        DirectionsButton(organization.location)
         actions()
     }
 }
@@ -100,7 +109,7 @@ private fun SheetTitle(text: String, pinColor: Color) {
 }
 
 @Composable
-private fun DetailRow(label: String, value: String) {
+private fun DetailRow(label: String, value: String, linkUri: String? = null) {
     Row(Modifier.fillMaxWidth()) {
         Text(
             text = label,
@@ -108,12 +117,16 @@ private fun DetailRow(label: String, value: String) {
             style = MaterialTheme.typography.labelLarge,
             color = FluffyColors.Brown900,
         )
-        Text(
-            text = value,
-            modifier = Modifier.weight(1f),
-            style = MaterialTheme.typography.bodyMedium,
-            color = FluffyColors.Brown900,
-        )
+        if (linkUri != null && value.isNotBlank()) {
+            LinkText(value, linkUri, modifier = Modifier.weight(1f))
+        } else {
+            Text(
+                text = value,
+                modifier = Modifier.weight(1f),
+                style = MaterialTheme.typography.bodyMedium,
+                color = FluffyColors.Brown900,
+            )
+        }
     }
 }
 
