@@ -141,15 +141,15 @@ Rules:
 - [x] `assembleDebug` passes; emulator check; push
 
 ### Phase 2 — Supabase
-- [ ] Add `supabase-kt`; read credentials from `local.properties`
-- [ ] Auth: email/password and anonymous sign-in
-- [ ] Migrations for every table in `docs/REQUIREMENTS.md` §7 (including `adoption_requests`),
+- [x] Add `supabase-kt`; read credentials from `local.properties`
+- [x] Auth: email/password and anonymous sign-in
+- [x] Migrations for every table in `docs/REQUIREMENTS.md` §7 (including `adoption_requests`),
       with RLS policies
-- [ ] `get_contact_details(request_id)` RPC
-- [ ] Storage buckets `report-photos` and `adoption-photos`; compress photos before upload
-- [ ] Supabase repositories; switch `AppContainer` from fake to Supabase
+- [x] `get_contact_details(request_id)` RPC
+- [x] Storage buckets `report-photos` and `adoption-photos`; compress photos before upload
+- [x] Supabase repositories; switch `AppContainer` from fake to Supabase
 - [ ] Keep the fake auth and `SampleData.DEMO_PASSWORD` out of release builds
-- [ ] `assembleDebug` passes; push
+- [x] `assembleDebug` passes; push
 
 ### Phase 3 — Affiliate and admin views
 - [ ] Role-based navigation after login
