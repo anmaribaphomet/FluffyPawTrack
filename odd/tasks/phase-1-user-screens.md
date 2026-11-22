@@ -25,7 +25,7 @@ Branch: `master` (commit per unit, push at phase end). Parallel units run in iso
 | T0 | S12 | inline | done — shared deps (MapLibre, activity-compose), permissions, demo session | (prep commit) |
 | T1 | S3 | delegated W1 (worktree) | done — merged, emulator: tiles, pins, detail sheet OK | 60cfe94, d766b14 |
 | T2 | S4 | delegated W2 (worktree) | done — merged, emulator: full anonymous flow to "¡Reporte publicado!" | 5a3f912, b0b1da9 |
-| T3 | S5, S9 | delegated W3 (worktree) | done — merged and wired; emulator check pending | 6881c7f, 69ddbf0, 7ea1216 |
+| T3 | S5, S9 | delegated W3 (worktree) | done — merged, emulator: account data, my reports, settings OK | 6881c7f, 69ddbf0, 7ea1216 |
 | T4 | S7 | delegated W4 (worktree) | done — merged, emulator: splash → login → home | 074f888, e1158d3 |
 | T5 | S6 | delegated W5 (worktree) | in progress | |
 | T6 | S8, S11 | delegated W6 (worktree) | in progress | |
