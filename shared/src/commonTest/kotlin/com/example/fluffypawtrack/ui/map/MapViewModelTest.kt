@@ -65,7 +65,7 @@ class MapViewModelTest {
         )
         assertEquals(
             listOf("Todos", "Situación de calle", "Posible mascota extraviada", "Maltratado",
-                "Herido o lesionado", "Estado crítico o moribundo", "Abandono", "Adopciones", "Lugares de apoyo"),
+                "Herido o lesionado", "Estado crítico", "Abandono", "Adopciones", "Lugares de apoyo"),
             options.map { it.label },
         )
     }

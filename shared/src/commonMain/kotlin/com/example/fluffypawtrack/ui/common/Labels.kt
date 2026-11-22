@@ -19,7 +19,7 @@ val ReportCategory.label: String
         ReportCategory.PossiblyLost -> "Posible mascota extraviada"
         ReportCategory.Mistreated -> "Maltratado"
         ReportCategory.Injured -> "Herido o lesionado"
-        ReportCategory.Critical -> "Estado crítico o moribundo"
+        ReportCategory.Critical -> "Estado crítico"
         ReportCategory.Abandoned -> "Abandono"
     }
 

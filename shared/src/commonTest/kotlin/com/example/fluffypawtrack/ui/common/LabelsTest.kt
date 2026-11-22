@@ -26,6 +26,11 @@ class LabelsTest {
     }
 
     @Test
+    fun criticalCategoryIsShownAsEstadoCritico() {
+        assertEquals("Estado crítico", ReportCategory.Critical.label)
+    }
+
+    @Test
     fun everyCategoryHasADistinctPinColor() {
         val colors = ReportCategory.entries.map { it.pinColor }
         assertEquals(colors.size, colors.toSet().size)
