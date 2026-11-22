@@ -32,6 +32,54 @@ internal data class OrganizationDto(
     val social: String? = null,
     val status: String,
     val active: Boolean,
+    val capacity: Int? = null,
+)
+
+/** Columns the admin writes when creating or editing a place; status and visibility are separate. */
+@Serializable
+internal data class OrganizationWriteDto(
+    val type: String,
+    val name: String,
+    val description: String,
+    @SerialName("photo_url") val photoUrl: String,
+    val lat: Double,
+    val lng: Double,
+    val address: String,
+    val schedule: String,
+    val capacity: Int?,
+    val phone: String,
+    val email: String,
+    val social: String?,
+)
+
+/** Insert body of an admin-created place: approved and active from the start. */
+@Serializable
+internal data class NewOrganizationDto(
+    val type: String,
+    val name: String,
+    val description: String,
+    @SerialName("photo_url") val photoUrl: String,
+    val lat: Double,
+    val lng: Double,
+    val address: String,
+    val schedule: String,
+    val capacity: Int?,
+    val phone: String,
+    val email: String,
+    val social: String?,
+    val status: String,
+    val active: Boolean,
+)
+
+/** The columns `organizations_guard_update` lets an affiliate change. */
+@Serializable
+internal data class OrganizationProfileDto(
+    val description: String,
+    val schedule: String,
+    val phone: String,
+    val email: String,
+    val social: String?,
+    @SerialName("photo_url") val photoUrl: String,
 )
 
 @Serializable

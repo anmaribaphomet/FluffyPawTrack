@@ -12,6 +12,9 @@ import com.example.fluffypawtrack.domain.model.ListingStatus
 import com.example.fluffypawtrack.domain.model.NewReport
 import com.example.fluffypawtrack.domain.model.NotificationType
 import com.example.fluffypawtrack.domain.model.Organization
+import com.example.fluffypawtrack.domain.model.OrganizationDraft
+import com.example.fluffypawtrack.domain.model.OrganizationProfile
+import com.example.fluffypawtrack.domain.model.OrganizationRules
 import com.example.fluffypawtrack.domain.model.OrganizationStatus
 import com.example.fluffypawtrack.domain.model.OrganizationType
 import com.example.fluffypawtrack.domain.model.Report
@@ -43,8 +46,15 @@ import kotlin.time.Instant
 
 // In-memory implementations backed by SampleData. State lives only while the app runs.
 
-class FakeAuthRepository(initialUser: UserProfile? = null) : AuthRepository {
-    private val accounts = SampleData.users
+/**
+ * Accounts of [SampleData.users] plus [extraUsers], all with [SampleData.DEMO_PASSWORD]. It also
+ * stands in for the `profiles` table of the other fakes ([findUser], [updateUsers]).
+ */
+class FakeAuthRepository(
+    initialUser: UserProfile? = null,
+    extraUsers: List<UserProfile> = emptyList(),
+) : AuthRepository {
+    private val accounts = (SampleData.users + extraUsers)
         .mapNotNull { user -> user.email?.let { it to (user to SampleData.DEMO_PASSWORD) } }
         .toMap()
         .toMutableMap()
@@ -52,6 +62,19 @@ class FakeAuthRepository(initialUser: UserProfile? = null) : AuthRepository {
     private var nextId = 1
 
     override val currentUser: StateFlow<UserProfile?> = session.asStateFlow()
+
+    /** The profile of [id]: a registered account, or the current (possibly anonymous) session. */
+    internal fun findUser(id: String): UserProfile? =
+        session.value?.takeIf { it.id == id } ?: accounts.values.firstOrNull { it.first.id == id }?.first
+
+    /** Server-side profile changes (role promotion, organization removal) applied to every account. */
+    internal fun updateUsers(transform: (UserProfile) -> UserProfile) {
+        for (key in accounts.keys.toList()) {
+            val (user, password) = accounts.getValue(key)
+            accounts[key] = transform(user) to password
+        }
+        session.update { it?.let(transform) }
+    }
 
     override suspend fun signIn(email: String, password: String): Result<UserProfile> {
         val (user, expected) = accounts[email.trim().lowercase()]
@@ -293,14 +316,153 @@ class FakeReportRepository(
     }
 }
 
-class FakeOrganizationRepository : OrganizationRepository {
+/**
+ * Enforces the RF-07 rules of `review_affiliation`, the admin policies and the affiliate's
+ * profile guard. [currentUser] stands in for the session, [updateUsers] for the profile changes
+ * the server makes (promotion on approval, demotion on delete), and [notifications] receives
+ * the requester's notification.
+ */
+class FakeOrganizationRepository(
+    private val currentUser: () -> UserProfile? = { null },
+    private val updateUsers: ((UserProfile) -> UserProfile) -> Unit = {},
+    private val notifications: NotificationRepository? = null,
+) : OrganizationRepository {
     private val organizations = MutableStateFlow(SampleData.organizations)
+
+    /** `organizations.requested_by`: who asked for each affiliation. */
+    private val requesters = SampleData.affiliationRequesters.toMutableMap()
 
     override fun observeActiveOrganizations(): Flow<List<Organization>> =
         organizations.map { list -> list.filter { it.status == OrganizationStatus.Approved && it.active } }
 
     override suspend fun getOrganization(id: String): Organization? =
         organizations.value.firstOrNull { it.id == id }
+
+    override fun observePendingAffiliations(): Flow<List<Organization>> =
+        organizations.map { list -> list.filter { it.status == OrganizationStatus.Pending } }
+
+    override suspend fun reviewAffiliation(organizationId: String, approve: Boolean): Result<Organization> {
+        if (!isAdmin()) return failure("Solo el administrador puede revisar afiliaciones")
+        val organization = getOrganization(organizationId) ?: return failure(NOT_FOUND)
+        if (organization.status != OrganizationStatus.Pending) {
+            return failure("Esta solicitud de afiliación ya fue revisada")
+        }
+        val reviewed = save(
+            organization.copy(status = if (approve) OrganizationStatus.Approved else OrganizationStatus.Rejected),
+        )
+        val requesterId = requesters[organizationId] ?: return Result.success(reviewed)
+        if (approve) {
+            updateUsers { user ->
+                if (user.id == requesterId && user.role == Role.User) {
+                    user.copy(role = Role.Affiliate, organizationId = organizationId)
+                } else {
+                    user
+                }
+            }
+        }
+        notifications?.notify(
+            requesterId,
+            if (approve) "Afiliación aprobada" else "Afiliación no aprobada",
+            "Tu solicitud de afiliación para ${organization.name} ${if (approve) "fue aprobada" else "no fue aprobada"}.",
+            NotificationType.General,
+        )
+        return Result.success(reviewed)
+    }
+
+    override fun observeAllForAdmin(): Flow<List<Organization>> =
+        organizations.map { list -> list.sortedBy { it.name } }
+
+    override suspend fun createOrganization(draft: OrganizationDraft): Result<Organization> {
+        if (!isAdmin()) return failure(ADMIN_ONLY)
+        OrganizationRules.problemOf(draft)?.let { return failure(it) }
+        val created = draft.toOrganization(id = "org-admin-${nextAffiliationId++}")
+            .copy(status = OrganizationStatus.Approved, active = true)
+        organizations.update { it + created }
+        return Result.success(created)
+    }
+
+    override suspend fun updateOrganization(organizationId: String, draft: OrganizationDraft): Result<Organization> {
+        if (!isAdmin()) return failure(ADMIN_ONLY)
+        val current = getOrganization(organizationId) ?: return failure(NOT_FOUND)
+        OrganizationRules.problemOf(draft)?.let { return failure(it) }
+        return Result.success(save(draft.toOrganization(organizationId).copy(status = current.status, active = current.active)))
+    }
+
+    override suspend fun setActive(organizationId: String, active: Boolean): Result<Organization> {
+        if (!isAdmin()) return failure(ADMIN_ONLY)
+        val current = getOrganization(organizationId) ?: return failure(NOT_FOUND)
+        return Result.success(save(current.copy(active = active)))
+    }
+
+    override suspend fun deleteOrganization(organizationId: String): Result<Unit> {
+        if (!isAdmin()) return failure(ADMIN_ONLY)
+        if (getOrganization(organizationId) == null) return failure(NOT_FOUND)
+        organizations.update { list -> list.filterNot { it.id == organizationId } }
+        requesters.remove(organizationId)
+        updateUsers { user ->
+            if (user.role == Role.Affiliate && user.organizationId == organizationId) {
+                user.copy(role = Role.User, organizationId = null)
+            } else {
+                user
+            }
+        }
+        return Result.success(Unit)
+    }
+
+    override suspend fun updateOwnOrganization(
+        organizationId: String,
+        profile: OrganizationProfile,
+    ): Result<Organization> {
+        val user = currentUser()
+        val current = getOrganization(organizationId)
+        if (current == null || user?.role != Role.Affiliate || user.organizationId != organizationId) {
+            return failure("Solo los afiliados de la organización pueden editar su perfil")
+        }
+        OrganizationRules.problemOf(profile)?.let { return failure(it) }
+        return Result.success(
+            save(
+                current.copy(
+                    description = profile.description.trim(),
+                    schedule = profile.schedule.trim(),
+                    phone = profile.phone.trim(),
+                    email = profile.email.trim(),
+                    social = profile.social?.trim()?.takeIf { it.isNotEmpty() },
+                    photoUrl = profile.photoUrl,
+                ),
+            ),
+        )
+    }
+
+    private fun isAdmin(): Boolean = currentUser()?.role == Role.Admin
+
+    private fun save(updated: Organization): Organization {
+        organizations.update { list -> list.map { if (it.id == updated.id) updated else it } }
+        return updated
+    }
+
+    private fun OrganizationDraft.toOrganization(id: String): Organization = Organization(
+        id = id,
+        type = type,
+        name = name.trim(),
+        description = description.trim(),
+        location = location,
+        address = address.trim(),
+        schedule = schedule.trim(),
+        phone = phone.trim(),
+        email = email.trim(),
+        social = social?.trim()?.takeIf { it.isNotEmpty() },
+        photoUrl = photoUrl,
+        status = OrganizationStatus.Approved,
+        active = true,
+        capacity = capacity,
+    )
+
+    private fun <T> failure(message: String): Result<T> = Result.failure(IllegalStateException(message))
+
+    private companion object {
+        const val NOT_FOUND = "La organización no existe"
+        const val ADMIN_ONLY = "Solo el administrador puede administrar el directorio"
+    }
 
     private var nextAffiliationId = 1
 
@@ -336,6 +498,7 @@ class FakeOrganizationRepository : OrganizationRepository {
             active = true,
         )
         organizations.update { it + requested }
+        currentUser()?.let { requesters[requested.id] = it.id }
         return Result.success(requested)
     }
 }

@@ -47,7 +47,12 @@ class AppContainer(private val supabaseConfig: SupabaseConfig? = null) {
             currentUser = { authRepository.currentUser.value },
             notifications = notificationRepository,
         )
-    val organizationRepository: OrganizationRepository = supabase?.organizations ?: FakeOrganizationRepository()
+    val organizationRepository: OrganizationRepository = supabase?.organizations
+        ?: FakeOrganizationRepository(
+            currentUser = { authRepository.currentUser.value },
+            updateUsers = { transform -> (authRepository as? FakeAuthRepository)?.updateUsers(transform) },
+            notifications = notificationRepository,
+        )
     val adoptionRepository: AdoptionRepository =
         supabase?.adoptions ?: FakeAdoptionRepository(findUser = profileLookup(authRepository))
     val favoritesRepository: FavoritesRepository = supabase?.favorites ?: FakeFavoritesRepository()
@@ -65,9 +70,13 @@ class AppContainer(private val supabaseConfig: SupabaseConfig? = null) {
         )
 }
 
-/** The signed-in profile first, so accounts created at runtime pass the fake rules too. */
+/**
+ * The fake accounts (with runtime sign-ups and role changes such as an approved affiliation),
+ * so every fake applies its rules to the current profiles.
+ */
 private fun profileLookup(authRepository: AuthRepository): (String) -> UserProfile? = { id ->
-    authRepository.currentUser.value?.takeIf { it.id == id }
+    (authRepository as? FakeAuthRepository)?.findUser(id)
+        ?: authRepository.currentUser.value?.takeIf { it.id == id }
         ?: SampleData.users.firstOrNull { it.id == id }
 }
 

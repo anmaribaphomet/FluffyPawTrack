@@ -9,6 +9,9 @@ import com.example.fluffypawtrack.domain.model.GeoPoint
 import com.example.fluffypawtrack.domain.model.NewAdoptionRequest
 import com.example.fluffypawtrack.domain.model.NewReport
 import com.example.fluffypawtrack.domain.model.Organization
+import com.example.fluffypawtrack.domain.model.OrganizationDraft
+import com.example.fluffypawtrack.domain.model.OrganizationProfile
+import com.example.fluffypawtrack.domain.model.OrganizationStatus
 import com.example.fluffypawtrack.domain.model.Report
 import com.example.fluffypawtrack.domain.model.ReportStatus
 import com.example.fluffypawtrack.domain.model.ReportStatusRules
@@ -55,6 +58,50 @@ internal fun OrganizationDto.toDomain(): Organization = Organization(
     photoUrl = photoUrl,
     status = fromDb(status),
     active = active,
+    capacity = capacity,
+)
+
+/** [photoUrl] is the stored photo (already uploaded when the form held a local one). */
+internal fun OrganizationDraft.toWriteDto(photoUrl: String): OrganizationWriteDto = OrganizationWriteDto(
+    type = type.dbValue,
+    name = name.trim(),
+    description = description.trim(),
+    photoUrl = photoUrl,
+    lat = location.latitude,
+    lng = location.longitude,
+    address = address.trim(),
+    schedule = schedule.trim(),
+    capacity = capacity,
+    phone = phone.trim(),
+    email = email.trim(),
+    social = social?.trim()?.takeIf { it.isNotEmpty() },
+)
+
+/** An admin-created place is approved and active, so it appears on the map right away. */
+internal fun OrganizationWriteDto.asNewApproved(): NewOrganizationDto = NewOrganizationDto(
+    type = type,
+    name = name,
+    description = description,
+    photoUrl = photoUrl,
+    lat = lat,
+    lng = lng,
+    address = address,
+    schedule = schedule,
+    capacity = capacity,
+    phone = phone,
+    email = email,
+    social = social,
+    status = OrganizationStatus.Approved.dbValue,
+    active = true,
+)
+
+internal fun OrganizationProfile.toDto(photoUrl: String): OrganizationProfileDto = OrganizationProfileDto(
+    description = description.trim(),
+    schedule = schedule.trim(),
+    phone = phone.trim(),
+    email = email.trim(),
+    social = social?.trim()?.takeIf { it.isNotEmpty() },
+    photoUrl = photoUrl,
 )
 
 @OptIn(ExperimentalTime::class)

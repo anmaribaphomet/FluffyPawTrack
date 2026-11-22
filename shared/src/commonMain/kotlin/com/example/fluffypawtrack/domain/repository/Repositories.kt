@@ -9,6 +9,8 @@ import com.example.fluffypawtrack.domain.model.NewAdoptionRequest
 import com.example.fluffypawtrack.domain.model.NotificationType
 import com.example.fluffypawtrack.domain.model.NewReport
 import com.example.fluffypawtrack.domain.model.Organization
+import com.example.fluffypawtrack.domain.model.OrganizationDraft
+import com.example.fluffypawtrack.domain.model.OrganizationProfile
 import com.example.fluffypawtrack.domain.model.OrganizationType
 import com.example.fluffypawtrack.domain.model.Report
 import com.example.fluffypawtrack.domain.model.ReportStatus
@@ -108,6 +110,34 @@ interface OrganizationRepository {
         /** Required photo of the place or its logo. */
         photoUrl: String,
     ): Result<Organization>
+
+    /** Admin: affiliation requests waiting for review, oldest first. */
+    fun observePendingAffiliations(): Flow<List<Organization>>
+
+    /**
+     * Admin approves (the requester becomes an affiliate of it and it appears on the map) or
+     * rejects (it stays off the map) a pending affiliation (`review_affiliation`). The
+     * requester is notified. The RPC stores no rejection reason.
+     */
+    suspend fun reviewAffiliation(organizationId: String, approve: Boolean): Result<Organization>
+
+    /** Admin directory: every organization, pending, rejected and inactive ones included, by name. */
+    fun observeAllForAdmin(): Flow<List<Organization>>
+
+    /** Admin adds a place; it is approved and active, so it appears on the map right away. */
+    suspend fun createOrganization(draft: OrganizationDraft): Result<Organization>
+
+    /** Admin edits a place; its status and visibility do not change. */
+    suspend fun updateOrganization(organizationId: String, draft: OrganizationDraft): Result<Organization>
+
+    /** Admin shows or hides a place on the map. */
+    suspend fun setActive(organizationId: String, active: Boolean): Result<Organization>
+
+    /** Admin deletes a place; its affiliates go back to the `user` role. */
+    suspend fun deleteOrganization(organizationId: String): Result<Unit>
+
+    /** An affiliate edits the profile of their own organization. */
+    suspend fun updateOwnOrganization(organizationId: String, profile: OrganizationProfile): Result<Organization>
 }
 
 /** Every listing it returns has at least one photo. */

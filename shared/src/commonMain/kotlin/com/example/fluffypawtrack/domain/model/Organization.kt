@@ -20,4 +20,51 @@ data class Organization(
     val photoUrl: String,
     val status: OrganizationStatus,
     val active: Boolean,
+    /** How many animals the place can hold (RF-07); null when unknown or not applicable. */
+    val capacity: Int? = null,
 )
+
+/** What the admin enters to create or edit a place of the directory (RF-07). */
+data class OrganizationDraft(
+    val type: OrganizationType,
+    val name: String,
+    val description: String,
+    val location: GeoPoint,
+    val address: String,
+    val schedule: String,
+    val capacity: Int?,
+    val phone: String,
+    val email: String,
+    val social: String?,
+    /** Required photo or logo; a local photo is uploaded first. */
+    val photoUrl: String,
+)
+
+/** The profile fields an affiliate may edit of their own organization. */
+data class OrganizationProfile(
+    val description: String,
+    val schedule: String,
+    val phone: String,
+    val email: String,
+    val social: String?,
+    /** Required photo or logo; a local photo is uploaded first. */
+    val photoUrl: String,
+)
+
+/** Validation shared by the fake and the Supabase organization repositories. */
+object OrganizationRules {
+    const val MISSING_PHOTO = "Agrega una foto del lugar o su logo"
+    const val MISSING_NAME_OR_ADDRESS = "Completa el nombre y la dirección del lugar"
+    const val NEGATIVE_CAPACITY = "La capacidad no puede ser negativa"
+
+    /** The readable reason [draft] cannot be saved, or null when it is valid. */
+    fun problemOf(draft: OrganizationDraft): String? = when {
+        draft.name.isBlank() || draft.address.isBlank() -> MISSING_NAME_OR_ADDRESS
+        draft.photoUrl.isBlank() -> MISSING_PHOTO
+        (draft.capacity ?: 0) < 0 -> NEGATIVE_CAPACITY
+        else -> null
+    }
+
+    fun problemOf(profile: OrganizationProfile): String? =
+        if (profile.photoUrl.isBlank()) MISSING_PHOTO else null
+}

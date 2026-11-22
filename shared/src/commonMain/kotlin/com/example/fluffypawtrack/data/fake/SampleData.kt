@@ -182,6 +182,9 @@ object SampleData {
         ),
     )
 
+    /** `organizations.requested_by` of the pending affiliations: approving one promotes this account. */
+    val affiliationRequesters: Map<String, String> = mapOf("org-norte" to otherUser.id)
+
     val reports: List<Report> = listOf(
         Report(
             id = "report-1",

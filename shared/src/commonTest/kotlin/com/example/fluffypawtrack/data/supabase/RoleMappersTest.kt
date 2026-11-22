@@ -1,8 +1,15 @@
 package com.example.fluffypawtrack.data.supabase
 
+import com.example.fluffypawtrack.domain.model.GeoPoint
+import com.example.fluffypawtrack.domain.model.OrganizationDraft
+import com.example.fluffypawtrack.domain.model.OrganizationProfile
+import com.example.fluffypawtrack.domain.model.OrganizationType
 import com.example.fluffypawtrack.domain.model.ReportStatus
 import com.example.fluffypawtrack.domain.model.ReportStatusRules
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonNull
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -44,6 +51,57 @@ class RoleMappersTest {
             listOf(ReportStatusRules.REPORTER_RESPONSIBLE, "Patitas", ReportStatusRules.REPORTER_RESPONSIBLE),
             history.map { it.responsibleName },
         )
+    }
+
+    private val draft = OrganizationDraft(
+        type = OrganizationType.AdoptionCenter,
+        name = " Centro Pitic ",
+        description = "Centro de adopción.",
+        location = GeoPoint(29.1, -110.9),
+        address = "Blvd. Kino 1",
+        schedule = "Lunes a viernes",
+        capacity = 12,
+        phone = "662",
+        email = "c@p.example",
+        social = " ",
+        photoUrl = "content://local",
+    )
+
+    @Test
+    fun organizationMapsCapacity() {
+        val org = json.decodeFromString<OrganizationDto>(
+            """{"id":"o1","type":"shelter","name":"N","photo_url":"res:p","lat":1.0,"lng":2.0,
+                "status":"approved","active":true,"capacity":40}""",
+        ).toDomain()
+        assertEquals(40, org.capacity)
+    }
+
+    @Test
+    fun adminDraftUsesSnakeCaseColumnsAndIsApproved() {
+        val row = json.encodeToJsonElement(NewOrganizationDto.serializer(), draft.toWriteDto("https://x/p.jpg").asNewApproved())
+            .jsonObject
+
+        assertEquals("adoption_center", row["type"]?.jsonPrimitive?.content)
+        assertEquals("Centro Pitic", row["name"]?.jsonPrimitive?.content)
+        assertEquals("https://x/p.jpg", row["photo_url"]?.jsonPrimitive?.content)
+        assertEquals("12", row["capacity"]?.jsonPrimitive?.content)
+        assertEquals(JsonNull, row["social"])
+        assertEquals("approved", row["status"]?.jsonPrimitive?.content)
+        assertEquals("true", row["active"]?.jsonPrimitive?.content)
+    }
+
+    @Test
+    fun editDraftLeavesStatusAndVisibilityOut() {
+        val row = json.encodeToJsonElement(OrganizationWriteDto.serializer(), draft.toWriteDto("p")).jsonObject
+        assertTrue("status" !in row && "active" !in row)
+    }
+
+    @Test
+    fun affiliateProfileSendsOnlyGuardedColumns() {
+        val profile = OrganizationProfile("d", "s", "p", "e", "@x", "content://local")
+        val row = json.encodeToJsonElement(OrganizationProfileDto.serializer(), profile.toDto("https://x/p.jpg")).jsonObject
+        assertEquals(setOf("description", "schedule", "phone", "email", "social", "photo_url"), row.keys)
+        assertEquals("https://x/p.jpg", row["photo_url"]?.jsonPrimitive?.content)
     }
 
     @Test
