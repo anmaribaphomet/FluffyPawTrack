@@ -92,6 +92,14 @@ Rules:
 - **Dependencies:** keep it light. Add a library only when it removes real work.
 - **Design:** follow `docs/design-system.md`. Screens missing from Figma reuse the
   existing components (wave header, pill buttons, cards, settings rows).
+- **Images are mandatory:** every report, adoption listing and place has at least one
+  image, and every detail screen and card shows it (sample data included).
+- **External links:** every address or location has a "Cómo llegar" action that opens
+  `https://www.google.com/maps/dir/?api=1&destination=LAT,LNG` with the coordinates;
+  social handles open the app or browser; phones open the dialer; emails open the mail app.
+- **Auth errors:** login and registration show only "Datos inválidos, intenta de nuevo."
+  for invalid data; never reveal whether the email exists or the password is wrong.
+- **Category label:** `ReportCategory.Critical` is shown as "Estado crítico" everywhere.
 
 ## Roadmap
 
@@ -118,10 +126,25 @@ Rules:
 - [x] Settings
 - [x] `assembleDebug` passes; push
 
+### Phase 1.1 — Review corrections (2026-11-22)
+- [ ] A. Generic auth error "Datos inválidos, intenta de nuevo."
+- [ ] B. Map search and Filtros fully below the header wave
+- [ ] C. One pin per adoption center; center detail lists "Animales en adopción" as
+      collapsed cards; animal detail ends with "Quiero adoptarlo"; no form button on the center
+- [ ] D. Adoption requests: form, rules, "Mis solicitudes de adopción", center "Solicitudes de
+      adopción" (approve / reject with reason), notifications, adopted → pending rejected
+- [ ] E. "Estado crítico" label everywhere
+- [ ] F. Mandatory images (report photo, ≥1 listing photo, place photo/logo) shown on every
+      card and detail; sample data with images
+- [ ] G. "Cómo llegar" to Google Maps, social, phone and email links
+- [ ] Report location: coordinates plus Android Geocoder address when available
+- [ ] `assembleDebug` passes; emulator check; push
+
 ### Phase 2 — Supabase
 - [ ] Add `supabase-kt`; read credentials from `local.properties`
 - [ ] Auth: email/password and anonymous sign-in
-- [ ] Migrations for every table in `docs/REQUIREMENTS.md` §7, with RLS policies
+- [ ] Migrations for every table in `docs/REQUIREMENTS.md` §7 (including `adoption_requests`),
+      with RLS policies
 - [ ] `get_contact_details(request_id)` RPC
 - [ ] Storage buckets `report-photos` and `adoption-photos`; compress photos before upload
 - [ ] Supabase repositories; switch `AppContainer` from fake to Supabase
@@ -139,7 +162,8 @@ Rules:
 ### Phase 4 — Notifications and polish
 - [ ] Notifications to affiliates by radius and priority, respecting `notification_prefs`
 - [ ] Live updates with Supabase Realtime
-- [ ] FCM push (app closed): device tokens, Edge Function, tap opens the report,
+- [ ] FCM push (app closed): device tokens, Edge Function, tap opens the report; also for
+      adoption request approved / rejected
       `POST_NOTIFICATIONS` permission screen
 - [ ] Polish: accessibility, empty and error states, Figma copy fixes
 - [ ] Bottom-nav labels must not clip at large font scales ("Notificaciones" clips at 1.3)

@@ -70,21 +70,22 @@ Al iniciar sesión, el **rol** asociado a la cuenta decide qué pantallas y acci
    - Posible mascota extraviada
    - Maltratado
    - Herido o lesionado
-   - **Estado crítico o moribundo** (siempre con prioridad **urgente**)
+   - **Estado crítico** (siempre con prioridad **urgente**). En toda la app se muestra solo como "Estado crítico".
    - Abandono
-2. **Foto:** tomarla con la cámara o subirla de la galería.
-3. **Ubicación:** GPS automático (con diálogo de permiso) y un campo de **referencia adicional** opcional.
+2. **Foto (obligatoria):** tomarla con la cámara o subirla de la galería. No se puede avanzar del paso de foto sin ella.
+3. **Ubicación:** GPS automático (con diálogo de permiso) y un campo de **referencia adicional** opcional. Se guardan las **coordenadas** y, si se puede obtener con el Geocoder de Android, la **dirección en texto**. Si no se obtiene, se muestran solo las coordenadas. Las coordenadas son las que se usan para el enlace de Google Maps.
 4. **Descripción** breve.
 5. **Prioridad:** baja, media, alta o urgente. El sistema sugiere una según la categoría y el usuario puede ajustarla, salvo en "estado crítico".
 6. **Resumen** y confirmación → modal "¡Reporte publicado!" → botón **Ver mapa**.
 - Diseño: pantallas 10 a 16 de Figma, con su indicador de pasos.
 
 ### RF-02 Mapa interactivo y filtros
-- Muestra los reportes activos, los animales en adopción, los albergues afiliados, las veterinarias aliadas y los puntos seguros.
+- Muestra los reportes activos, los centros de adopción, los albergues afiliados, las veterinarias aliadas y los puntos seguros. **No hay pines individuales de animales en adopción:** cada centro de adopción tiene **un solo pin**.
 - **Un pin de color distinto por categoría.**
 - **Filtros:** Todos, cada categoría de reporte, Adopciones y Lugares de apoyo. Hay que ampliar el filtro de Figma, que solo trae 4 opciones.
 - Búsqueda en el mapa.
 - Al tocar un pin se abre una **hoja de detalle** con foto, descripción, categoría, prioridad, estado y fecha.
+- El buscador y el botón **Filtros** quedan completamente **debajo de la onda del encabezado**, sin encimarse con el logo ni con "Regresar".
 
 ### RF-03 Notificaciones a albergues cercanos
 - Cada reporte nuevo notifica a los **afiliados dentro de un radio configurable**, por ejemplo 5 km por defecto.
@@ -162,10 +163,36 @@ Las solicitudes aceptadas, rechazadas o canceladas **ya no cambian de estado**.
 - Los afiliados ven también la pestaña **Recibidas**, con las solicitudes de los reportes de su organización.
 
 ### RF-06 Adopciones
-- Los afiliados de tipo centro de adopción crean **fichas de animales** con campos **obligatorios**: fotos, tipo de animal, raza, edad, vacunación y descripción.
-- Cada ficha queda ligada al centro, con su ubicación y sus métodos de contacto, y aparece en el mapa.
-- Los usuarios consultan las fichas, las guardan en **favoritos** y llegan a la ficha del centro y al **Formulario de adopción** (Figma, pantalla 6).
+- Los afiliados de tipo centro de adopción crean **fichas de animales** con campos **obligatorios**: fotos (**al menos 1**), tipo de animal, raza, edad, vacunación y descripción.
+- Cada ficha queda ligada al centro, con su ubicación y sus métodos de contacto. En el mapa aparece **el centro**, no cada animal.
 - El afiliado puede marcar el animal como **adoptado**.
+
+#### Flujo del usuario
+1. Tocar el pin del centro → hoja con la información preliminar.
+2. **"Ver centro"** → ficha completa del centro y, debajo, la sección **"Animales en adopción"**.
+3. Cada animal es una **tarjeta plegada** con foto, nombre, tipo, raza y edad, más una flecha.
+4. Tocar la flecha → **ficha completa del animal** (todas sus fotos, vacunación, descripción, etc.). Desde ahí se puede guardar en **favoritos**.
+5. Al final de la ficha del animal → botón **"Quiero adoptarlo"**.
+- La ficha del centro **no** tiene botón de formulario: el formulario **solo** se abre desde "Quiero adoptarlo" en un animal específico.
+
+#### Solicitud de adopción
+- **Formulario:**
+  - Campo **"Interesado en:"**, autocompletado y **bloqueado** (no editable), con el formato `Nombre · Tipo · Raza` (ejemplo: "Canela · Perro · Mestiza").
+  - Nombre completo, teléfono y correo, **precargados del perfil y editables**.
+  - Tipo de vivienda (**casa** o **departamento**) y si es **propia** o **rentada**.
+  - **¿Tienes otras mascotas?** (sí o no, y cuáles).
+  - **¿Por qué quieres adoptarlo?** (texto, obligatorio).
+  - Texto arriba del botón de enviar: *"Una vez aprobada tu solicitud, el centro se pondrá en contacto contigo mediante los datos de contacto que proporcionaste."*
+- **Reglas:**
+  - Requiere cuenta. Solo el rol `user` puede enviar.
+  - Máximo **una solicitud activa** (pendiente o aprobada) por usuario por animal.
+  - El usuario puede **cancelar** mientras esté pendiente.
+- **Estados:** `pending` (Pendiente) → `approved` (Aprobada) **o** `rejected` (Rechazada) **o** `cancelled` (Cancelada por el usuario, solo mientras está pendiente).
+- **Centro (afiliado):** sección **"Solicitudes de adopción"** con la lista agrupada por animal. Ve los datos de cada solicitud y puede **Aprobar** o **Rechazar**.
+- **Al aprobar:** push y notificación para el usuario: *"¡Buenas noticias! El centro aprobó tu solicitud para adoptar a [Nombre]. Pronto se pondrán en contacto contigo."*
+- **Al rechazar:** push y notificación: *"Tu solicitud para adoptar a [Nombre] no fue aprobada esta vez. ¡Hay muchos más esperando un hogar!"*, y abajo el **motivo de rechazo** que escribe el centro.
+- Cuando el centro marca al animal como **adoptado**, sus solicitudes pendientes pasan a **rechazadas** con ese mismo aviso.
+- El usuario ve sus solicitudes y su estado en **Cuenta → "Mis solicitudes de adopción"**.
 
 ### RF-07 Directorio y administración
 - El admin **da de alta, valida o rechaza** albergues, centros de adopción, veterinarias aliadas y puntos seguros: nombre, tipo, ubicación, horario, capacidad y contacto.
@@ -174,6 +201,7 @@ Las solicitudes aceptadas, rechazadas o canceladas **ya no cambian de estado**.
 
 ### RF-08 Cuenta y ajustes
 - Registro e inicio de sesión con correo y contraseña. *No hay pantalla en Figma: se diseña con el mismo estilo.*
+- Si un dato es inválido, el login y el registro muestran **solo** el mensaje *"Datos inválidos, intenta de nuevo."* Nunca se indica si el correo no existe o si la contraseña está mal.
 - Gestión de cuenta: información personal, **Mis reportes** (historial con Editar y Eliminar, pantallas 17–18), Favoritos, y contadores de Reportes, Atendidos y Favoritos.
 - Ajustes: idioma (ES), modo oscuro, notificaciones, accesibilidad, permisos, FAQ y Contáctanos.
 
@@ -187,7 +215,7 @@ Las solicitudes aceptadas, rechazadas o canceladas **ya no cambian de estado**.
 - Flujo de nuevo reporte: categoría → foto → ubicación → descripción y prioridad → resumen → publicado
 - Adopciones: mapa de centros → ficha del centro → ficha del animal → formulario
 - Notificaciones ✅ *ya implementado (sin datos reales)*
-- Cuenta ✅ *ya implementado*, más Mis reportes y Favoritos
+- Cuenta ✅ *ya implementado*, más Mis reportes, Favoritos y Mis solicitudes de adopción
 - Solicitudes de contacto: pestañas Enviadas y Recibidas, más el formulario "Es mi mascota" (ver RF-05)
 - Ajustes
 
@@ -197,6 +225,7 @@ Las solicitudes aceptadas, rechazadas o canceladas **ya no cambian de estado**.
 - Detalle del reporte → Tomar caso → cambiar estado
 - Mis casos en curso
 - Mis fichas de adopción (crear, editar, marcar adoptado)
+- Solicitudes de adopción de sus animales (aprobar o rechazar con motivo, ver RF-06)
 - Perfil de la organización y preferencias de notificación (radio y prioridades)
 
 **Administrador**
@@ -211,10 +240,11 @@ Las solicitudes aceptadas, rechazadas o canceladas **ya no cambian de estado**.
 | Tabla | Campos principales |
 |---|---|
 | `profiles` | id (= auth.users), first_name, last_name, phone (obligatorio para las solicitudes de contacto), avatar_url, **role** (`user` / `affiliate` / `admin`), organization_id |
-| `organizations` | id, **type** (`shelter` / `adoption_center` / `vet` / `safe_point`), name, description, lat, lng, address, schedule, capacity, contact, social, **status** (`pending` / `approved` / `rejected`), active |
-| `reports` | id, reporter_id (nullable si es anónimo), **category**, **priority**, description, photo_url, lat, lng, reference, **status**, assigned_org_id, hidden, created_at |
+| `organizations` | id, **type** (`shelter` / `adoption_center` / `vet` / `safe_point`), name, description, **photo_url (obligatoria: foto del lugar o logo)**, lat, lng, address, schedule, capacity, contact, social, **status** (`pending` / `approved` / `rejected`), active |
+| `reports` | id, reporter_id (nullable si es anónimo), **category**, **priority**, description, **photo_url (obligatoria)**, lat, lng, address (nullable: dirección del Geocoder), reference, **status**, assigned_org_id, hidden, created_at |
 | `report_status_history` | id, report_id, status, changed_by, created_at |
-| `adoption_listings` | id, organization_id, species, breed, age, vaccination, description, photos[], status (`available` / `adopted`) |
+| `adoption_listings` | id, organization_id, name, species, breed, age, vaccination, description, **photos[] (al menos 1)**, status (`available` / `adopted`) |
+| `adoption_requests` | id, listing_id, organization_id, requester_id, full_name, phone, email, housing_type (`house` / `apartment`), housing_tenure (`owned` / `rented`), has_other_pets, other_pets, reason, **status** (`pending` / `approved` / `rejected` / `cancelled`), rejection_reason, created_at, responded_at. Restricción: máximo una solicitud activa por (listing_id, requester_id). **RLS:** el usuario ve solo las suyas; los afiliados del centro ven solo las de sus animales |
 | `contact_requests` | id, report_id, requester_id, recipient_user_id (nullable), recipient_org_id (nullable), message, photo_url (nullable), status (`pending` / `accepted` / `rejected` / `cancelled`), status_note, created_at, responded_at. Restricción: máximo una solicitud activa por (report_id, requester_id) |
 | `notifications` | id, user_id, type, title, body, report_id, read, created_at |
 | `notification_prefs` | user_id, priorities[], radius_km, push_enabled |
@@ -231,12 +261,20 @@ Las solicitudes aceptadas, rechazadas o canceladas **ya no cambian de estado**.
 - **Rendimiento:** las fotos se comprimen antes de subirlas.
 - **Idioma de la UI:** español. El código, los nombres y los commits van en inglés.
 - **Metodología:** Scrum con iteraciones cortas. Se hace commit al terminar cada unidad de trabajo.
+- **Imágenes obligatorias:** toda ficha y toda tarjeta muestra su imagen (reportes, animales en adopción y lugares). Los datos de ejemplo también la tienen.
+- **Enlaces externos:**
+  - Toda dirección o ubicación (reportes, centros, albergues, veterinarias, puntos seguros) tiene un botón **"Cómo llegar"** que abre Google Maps con la ruta: `https://www.google.com/maps/dir/?api=1&destination=LAT,LNG`.
+  - Las redes sociales de los afiliados son enlaces que abren la app o el navegador.
+  - Teléfono → abre el marcador. Correo → abre la app de correo.
 
 ## 9. Decisiones ya tomadas
 - **Tarjetas de Inicio:** se mantiene el café `brown-300`. El texto que va directo sobre la tarjeta usa `title-card` (Inter 20 Bold) o un tamaño mayor para cumplir el contraste, y los botones van sobre píldoras blancas. **Excepción aceptada:** las descripciones de las tarjetas se quedan en tamaño `body`, como en Figma, y no cumplen el contraste AA (4.13:1). El diseño no cambia. Ver `docs/design-system.md`.
 - **Persona e idioma:** la UI y las respuestas al equipo van en **español neutro, sin voseo**.
 - **Git:** por ahora se trabaja en `master` y se hace push al terminar cada fase. `.atl/` está en `.gitignore`.
 - **Reporte anónimo:** sí, con Supabase anonymous sign-in.
+- **Foto del reporte:** obligatoria.
+- **Ubicación del reporte:** coordenadas siempre, más la dirección en texto del Geocoder de Android cuando se pueda obtener.
+- **Solicitudes de adopción:** se guardan en la tabla `adoption_requests` (ver RF-06).
 - **Notificaciones:** **push obligatorias con FCM** (con la app cerrada) más Realtime dentro de la app.
 
 ## 10. Correcciones pendientes del Figma

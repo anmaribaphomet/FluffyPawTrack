@@ -99,7 +99,7 @@ category, plus adoption listings and support places. Defined in `ui/common/Label
 | Posible mascota extraviada | `#3E7CB1` |
 | Maltratado | `#8E6CB0` |
 | Herido o lesionado | `#E53935` |
-| Estado crítico o moribundo | `#7F0000` |
+| Estado crítico | `#7F0000` |
 | Abandono | `#7A8542` (`sage-700`) |
 | Adopción | `#FF8F9E` (`pink-400`) |
 | Lugar de apoyo (albergue, veterinaria, punto seguro) | `#633D14` (`brown-900`) |
