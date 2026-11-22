@@ -127,18 +127,18 @@ Rules:
 - [x] `assembleDebug` passes; push
 
 ### Phase 1.1 — Review corrections (2026-11-22)
-- [ ] A. Generic auth error "Datos inválidos, intenta de nuevo."
-- [ ] B. Map search and Filtros fully below the header wave
-- [ ] C. One pin per adoption center; center detail lists "Animales en adopción" as
+- [x] A. Generic auth error "Datos inválidos, intenta de nuevo."
+- [x] B. Map search and Filtros fully below the header wave
+- [x] C. One pin per adoption center; center detail lists "Animales en adopción" as
       collapsed cards; animal detail ends with "Quiero adoptarlo"; no form button on the center
-- [ ] D. Adoption requests: form, rules, "Mis solicitudes de adopción", center "Solicitudes de
+- [x] D. Adoption requests: form, rules, "Mis solicitudes de adopción", center "Solicitudes de
       adopción" (approve / reject with reason), notifications, adopted → pending rejected
-- [ ] E. "Estado crítico" label everywhere
-- [ ] F. Mandatory images (report photo, ≥1 listing photo, place photo/logo) shown on every
+- [x] E. "Estado crítico" label everywhere
+- [x] F. Mandatory images (report photo, ≥1 listing photo, place photo/logo) shown on every
       card and detail; sample data with images
-- [ ] G. "Cómo llegar" to Google Maps, social, phone and email links
-- [ ] Report location: coordinates plus Android Geocoder address when available
-- [ ] `assembleDebug` passes; emulator check; push
+- [x] G. "Cómo llegar" to Google Maps, social, phone and email links
+- [x] Report location: coordinates plus Android Geocoder address when available
+- [x] `assembleDebug` passes; emulator check; push
 
 ### Phase 2 — Supabase
 - [ ] Add `supabase-kt`; read credentials from `local.properties`

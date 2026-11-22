@@ -30,9 +30,9 @@ Branch: `master`, one commit per point, push at the end. Test runner: `./gradlew
 | T1b | SA | delegated (worktree) | done — 156 tests | f0e0f5e |
 | T4 | SF, S1 | delegated (context backstop) | done — 152/152 tests; 19 Commons images (licenses/SAMPLE_IMAGES.md) | d2fe939 |
 | T5 | SC | delegated (worktree) | done — 157 tests; nav hooks removed by parent | 31c095a + cleanup |
-| T6 | SD, S3 | delegated (context backstop) | pending | |
-| T7 | SG, S2 | delegated (context backstop) | pending | |
-| T8 | S9 | inline — build, emulator, push | pending | |
+| T6 | SD, S3 | delegated (worktree) | done — 189 tests; demo affiliate patitas@correo.com | 4664ed3, 5d6380a, a9e7015 |
+| T7 | SG, S2 | delegated (worktree) | done — 171 tests at merge | 1f4d41b, 006313c |
+| T8 | S9 | inline — build, emulator, push | done | see L5 |
 
 Route evidence: T4–T7 touch shared screens (adoptions, map sheets, SampleData), so they run one after another in the main tree; delegated because the parent context is past the long-session backstop.
 
@@ -42,3 +42,4 @@ Route evidence: T4–T7 touch shared screens (adoptions, map sheets, SampleData)
 - L2: T3 emulator evidence: map opened after demo login; search pill and Filtros start below the header wave (screenshot 8:24, top 150 dp + 8 dp), no overlap with logo or "Regresar".
 - L3: Native review of A/E/B + docs (lineage review-1c59285481371975, 4 lenses, user granted) approved and acknowledged; non-blocking findings. Follow-up T1b: show "Datos inválidos, intenta de nuevo." only for invalid data (typed domain error), keep a separate generic message for connection/server failures; remove dead per-field register errors and readableMessage leftovers; rename stale test; fix the CLAUDE.md FCM bullet.
 - L4: Native review of F + T1b (lineage review-b197610350b2854f, 4 lenses, user granted) approved and acknowledged. Fixed now: listing cover photo guarded (coverPhotoUrl, blank ref → placeholder). Remaining suggestions (AppImage contentScale on local photos, shared photo-error constant, gallery width constant) are minor and left for polish.
+- L5: Final check: 189/189 tests, assembleDebug OK. Emulator: generic login error; map search below the wave; one pink pin for Patitas; "Estado crítico"; center sheet with photo, Cómo llegar, tappable phone/email/social and Ver centro; center detail with collapsed animal cards; animal gallery and "Quiero adoptarlo" at the end; form with locked "Canela · Perro · Mestiza", prefilled contact, housing/tenure/pets and the notice; submit OK; affiliate sees requests grouped by animal, approves Michi, user receives the approval notification. Not checked on device: real Geocoder address (emulator location is outside Mexico). Native review of C+G could not run (lens_context_budget_exceeded).
