@@ -21,6 +21,10 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.fluffypawtrack.di.LocalAppContainer
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.dropShadow
@@ -56,6 +60,30 @@ data class ProfileUser(
     companion object {
         val Placeholder = ProfileUser("Nombre de Usuario", "usuario@correo.com", reports = 1, attended = 0, favorites = 1)
     }
+}
+
+/** Account screen wired to the signed-in user's data. */
+@Composable
+fun ProfileRoute(
+    onBack: () -> Unit,
+    onPersonalInfo: () -> Unit,
+    onMyReports: () -> Unit,
+    onFavorites: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val container = LocalAppContainer.current
+    val viewModel = viewModel {
+        ProfileViewModel(container.authRepository, container.reportRepository, container.favoritesRepository)
+    }
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
+    ProfileScreen(
+        onBack = onBack,
+        modifier = modifier,
+        user = state.toProfileUser(),
+        onPersonalInfo = onPersonalInfo,
+        onMyReports = onMyReports,
+        onFavorites = onFavorites,
+    )
 }
 
 /** Pantalla GESTION DE CUENTA (Figma nodo 11:228). */
@@ -111,7 +139,7 @@ fun ProfileScreen(
                 ProfileOptionRow(
                     icon = painterResource(Res.drawable.ic_star),
                     title = "Mis Favoritos",
-                    subtitle = "Animales y Publicaciones Guardadas",
+                    subtitle = "Animales y publicaciones guardados",
                     onClick = onFavorites,
                     iconSize = 25.dp,
                 )
