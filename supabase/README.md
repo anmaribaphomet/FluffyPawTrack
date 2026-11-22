@@ -150,6 +150,22 @@ Column notes for the mapping:
 - Seed images keep the `res:sample_*` refs of `SampleData`; uploaded photos use the public
   Storage URL.
 
+## Affiliate and admin calls (Phase 3)
+
+Besides the RPCs above, the app writes these tables directly; RLS and the guard triggers
+decide what succeeds, and an update or delete that returns no row is shown as a rule message.
+
+| Repository call | Table access | Policy / guard |
+|---|---|---|
+| `ReportRepository.observeStatusHistory` | `select report_status_history` + the report's `assigned_org_id` name | `report_status_history_select`. Profiles are private, so a change by anyone but the reporter is shown as the assigned organization (or "Administración" without one) |
+| `OrganizationRepository.createOrganization` | `insert organizations` with `status = 'approved'`, `active = true`, `capacity` | `organizations_insert_admin` |
+| `updateOrganization`, `setActive`, `deleteOrganization` | `update`/`delete organizations` | `organizations_update_admin`, `organizations_delete_admin` |
+| `updateOwnOrganization` | `update organizations` (description, schedule, phone, email, social, photo_url) | `organizations_update_member` + `organizations_guard_update` |
+| `AdoptionRepository.createListing`, `updateListing` | `insert`/`update adoption_listings`; photos in `adoption-photos/<organization_id>/` | `adoption_listings_insert_center`, `adoption_listings_update_center` |
+| `NotificationPrefsRepository.update` | `upsert notification_prefs` on `user_id` (`priorities` as `report_priority[]`, `radius_km`, `push_enabled`) | `notification_prefs_own`; no row reads as the column defaults |
+
+`review_affiliation` takes no rejection reason, so the app does not ask for one.
+
 ## Review fixes (apply after the seed)
 
 `20261122000600_review_fixes.sql` comes from the independent security review:

@@ -7,10 +7,19 @@ import com.example.fluffypawtrack.domain.model.ContactDetails
 import com.example.fluffypawtrack.domain.model.ContactRequest
 import com.example.fluffypawtrack.domain.model.GeoPoint
 import com.example.fluffypawtrack.domain.model.NewAdoptionRequest
+import com.example.fluffypawtrack.domain.model.NewListing
 import com.example.fluffypawtrack.domain.model.NewReport
+import com.example.fluffypawtrack.domain.model.NotificationPrefs
+import com.example.fluffypawtrack.domain.model.Priority
 import com.example.fluffypawtrack.domain.model.Organization
+import com.example.fluffypawtrack.domain.model.OrganizationDraft
+import com.example.fluffypawtrack.domain.model.OrganizationProfile
+import com.example.fluffypawtrack.domain.model.OrganizationStatus
 import com.example.fluffypawtrack.domain.model.Report
+import com.example.fluffypawtrack.domain.model.ReportStatus
+import com.example.fluffypawtrack.domain.model.ReportStatusRules
 import com.example.fluffypawtrack.domain.model.Role
+import com.example.fluffypawtrack.domain.model.StatusHistoryEntry
 import com.example.fluffypawtrack.domain.model.UserProfile
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.buildJsonObject
@@ -52,6 +61,50 @@ internal fun OrganizationDto.toDomain(): Organization = Organization(
     photoUrl = photoUrl,
     status = fromDb(status),
     active = active,
+    capacity = capacity,
+)
+
+/** [photoUrl] is the stored photo (already uploaded when the form held a local one). */
+internal fun OrganizationDraft.toWriteDto(photoUrl: String): OrganizationWriteDto = OrganizationWriteDto(
+    type = type.dbValue,
+    name = name.trim(),
+    description = description.trim(),
+    photoUrl = photoUrl,
+    lat = location.latitude,
+    lng = location.longitude,
+    address = address.trim(),
+    schedule = schedule.trim(),
+    capacity = capacity,
+    phone = phone.trim(),
+    email = email.trim(),
+    social = social?.trim()?.takeIf { it.isNotEmpty() },
+)
+
+/** An admin-created place is approved and active, so it appears on the map right away. */
+internal fun OrganizationWriteDto.asNewApproved(): NewOrganizationDto = NewOrganizationDto(
+    type = type,
+    name = name,
+    description = description,
+    photoUrl = photoUrl,
+    lat = lat,
+    lng = lng,
+    address = address,
+    schedule = schedule,
+    capacity = capacity,
+    phone = phone,
+    email = email,
+    social = social,
+    status = OrganizationStatus.Approved.dbValue,
+    active = true,
+)
+
+internal fun OrganizationProfile.toDto(photoUrl: String): OrganizationProfileDto = OrganizationProfileDto(
+    description = description.trim(),
+    schedule = schedule.trim(),
+    phone = phone.trim(),
+    email = email.trim(),
+    social = social?.trim()?.takeIf { it.isNotEmpty() },
+    photoUrl = photoUrl,
 )
 
 @OptIn(ExperimentalTime::class)
@@ -71,7 +124,26 @@ internal fun ReportDto.toDomain(): Report = Report(
     status = fromDb(status),
     assignedOrganizationId = assignedOrgId,
     createdAt = timestamp(createdAt),
+    hidden = hidden,
 )
+
+/**
+ * History rows of [report] (its raw row, so anonymous reporters still match their own changes),
+ * oldest first. [organizationName] is the assigned organization's name, if any.
+ */
+@OptIn(ExperimentalTime::class)
+internal fun statusHistoryOf(
+    rows: List<StatusHistoryDto>,
+    report: ReportDto,
+    organizationName: String?,
+): List<StatusHistoryEntry> = rows.map { row ->
+    val status = fromDb<ReportStatus>(row.status)
+    StatusHistoryEntry(
+        status = status,
+        changedAt = timestamp(row.createdAt),
+        responsibleName = ReportStatusRules.responsibleName(status, row.changedBy, report.reporterId, organizationName),
+    )
+}.sortedBy { it.changedAt }
 
 /** [photoUrl] is the stored photo (already uploaded when the form held a local one). */
 internal fun NewReport.toInsertDto(reporterId: String, photoUrl: String): NewReportDto = NewReportDto(
@@ -97,6 +169,28 @@ internal fun ListingDto.toDomain(): AdoptionListing = AdoptionListing(
     description = description,
     photoUrls = photoUrls,
     status = fromDb(status),
+)
+
+/** [photoUrls] are the stored photos (already uploaded when the form held local ones). */
+internal fun NewListing.toInsertDto(organizationId: String, photoUrls: List<String>): NewListingDto = NewListingDto(
+    organizationId = organizationId,
+    name = name.trim(),
+    species = species.trim(),
+    breed = breed.trim(),
+    age = age.trim(),
+    vaccination = vaccination.trim(),
+    description = description.trim(),
+    photoUrls = photoUrls,
+)
+
+internal fun NewListing.toUpdateDto(photoUrls: List<String>): ListingUpdateDto = ListingUpdateDto(
+    name = name.trim(),
+    species = species.trim(),
+    breed = breed.trim(),
+    age = age.trim(),
+    vaccination = vaccination.trim(),
+    description = description.trim(),
+    photoUrls = photoUrls,
 )
 
 @OptIn(ExperimentalTime::class)
@@ -158,3 +252,17 @@ internal fun NotificationDto.toDomain(): AppNotification = AppNotification(
 )
 
 internal fun ContactDetailsDto.toDomain(): ContactDetails = ContactDetails(fullName, phone, email)
+
+internal fun NotificationPrefsDto.toDomain(): NotificationPrefs = NotificationPrefs(
+    radiusKm = radiusKm,
+    priorities = priorities.map { fromDb<Priority>(it) }.toSet(),
+    pushEnabled = pushEnabled,
+)
+
+/** Priorities go in the enum order, so the stored array is stable. */
+internal fun NotificationPrefs.toDto(userId: String): NotificationPrefsDto = NotificationPrefsDto(
+    userId = userId,
+    priorities = priorities.sorted().map { it.dbValue },
+    radiusKm = radiusKm,
+    pushEnabled = pushEnabled,
+)

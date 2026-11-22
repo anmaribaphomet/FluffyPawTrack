@@ -363,6 +363,18 @@ class FakeContactRequestRepositoryTest {
         assertEquals(ContactDetails("Ana Ruiz", "6620000003", "ana@correo.com"), repository.getContactDetails(sent.id, shelterStaff.id))
     }
 
+    @Test
+    fun organizationRequestsAreReceivedByItsAffiliatesOnly() = runTest {
+        val (reportId, repository) = shelteredLostReport()
+        val sent = repository.send(reportId, ana.id, message, null).getOrThrow()
+
+        assertTrue(repository.observeReceived(shelterStaff.id).first().any { it.id == sent.id })
+        assertTrue(repository.observeReceived(carlos.id).first().none { it.id == sent.id }, "the reporter no longer decides")
+        assertTrue(repository.observeReceived(ana.id).first().none { it.id == sent.id })
+        // Requests addressed to a person keep reaching that person.
+        assertEquals(listOf("request-2"), repository.observeReceived(demo.id).first().map { it.id })
+    }
+
     /**
      * A possibly-lost report by Carlos that org-imbpa has sheltered. ReportRepository has
      * no "take case" yet, so the assignment is applied by a delegating test repository.

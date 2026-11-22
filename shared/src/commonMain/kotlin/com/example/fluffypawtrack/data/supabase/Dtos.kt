@@ -32,6 +32,54 @@ internal data class OrganizationDto(
     val social: String? = null,
     val status: String,
     val active: Boolean,
+    val capacity: Int? = null,
+)
+
+/** Columns the admin writes when creating or editing a place; status and visibility are separate. */
+@Serializable
+internal data class OrganizationWriteDto(
+    val type: String,
+    val name: String,
+    val description: String,
+    @SerialName("photo_url") val photoUrl: String,
+    val lat: Double,
+    val lng: Double,
+    val address: String,
+    val schedule: String,
+    val capacity: Int?,
+    val phone: String,
+    val email: String,
+    val social: String?,
+)
+
+/** Insert body of an admin-created place: approved and active from the start. */
+@Serializable
+internal data class NewOrganizationDto(
+    val type: String,
+    val name: String,
+    val description: String,
+    @SerialName("photo_url") val photoUrl: String,
+    val lat: Double,
+    val lng: Double,
+    val address: String,
+    val schedule: String,
+    val capacity: Int?,
+    val phone: String,
+    val email: String,
+    val social: String?,
+    val status: String,
+    val active: Boolean,
+)
+
+/** The columns `organizations_guard_update` lets an affiliate change. */
+@Serializable
+internal data class OrganizationProfileDto(
+    val description: String,
+    val schedule: String,
+    val phone: String,
+    val email: String,
+    val social: String?,
+    @SerialName("photo_url") val photoUrl: String,
 )
 
 @Serializable
@@ -49,6 +97,15 @@ internal data class ReportDto(
     val reference: String? = null,
     val status: String,
     @SerialName("assigned_org_id") val assignedOrgId: String? = null,
+    @SerialName("created_at") val createdAt: String,
+    val hidden: Boolean = false,
+)
+
+/** A row of `report_status_history`, written only by the `reports_track_status` trigger. */
+@Serializable
+internal data class StatusHistoryDto(
+    val status: String,
+    @SerialName("changed_by") val changedBy: String? = null,
     @SerialName("created_at") val createdAt: String,
 )
 
@@ -78,6 +135,31 @@ internal data class ListingDto(
     val description: String,
     @SerialName("photo_urls") val photoUrls: List<String>,
     val status: String,
+)
+
+/** Insert body of `adoption_listings`; status and timestamps come from column defaults. */
+@Serializable
+internal data class NewListingDto(
+    @SerialName("organization_id") val organizationId: String,
+    val name: String,
+    val species: String,
+    val breed: String,
+    val age: String,
+    val vaccination: String,
+    val description: String,
+    @SerialName("photo_urls") val photoUrls: List<String>,
+)
+
+/** The columns an affiliate edits on a listing; the organization and status stay. */
+@Serializable
+internal data class ListingUpdateDto(
+    val name: String,
+    val species: String,
+    val breed: String,
+    val age: String,
+    val vaccination: String,
+    val description: String,
+    @SerialName("photo_urls") val photoUrls: List<String>,
 )
 
 @Serializable
@@ -124,6 +206,15 @@ internal data class NotificationDto(
     val body: String,
     val read: Boolean = false,
     @SerialName("created_at") val createdAt: String,
+)
+
+/** A row of `notification_prefs`; `priorities` is a `report_priority[]`. */
+@Serializable
+internal data class NotificationPrefsDto(
+    @SerialName("user_id") val userId: String,
+    val priorities: List<String>,
+    @SerialName("radius_km") val radiusKm: Double,
+    @SerialName("push_enabled") val pushEnabled: Boolean,
 )
 
 @Serializable

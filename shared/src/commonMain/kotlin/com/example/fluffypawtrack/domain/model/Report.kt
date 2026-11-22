@@ -36,6 +36,8 @@ data class Report(
     val status: ReportStatus,
     val assignedOrganizationId: String?,
     val createdAt: Instant,
+    /** Hidden by the admin (RF-07): off the map and the inboxes, still visible to the admin. */
+    val hidden: Boolean = false,
 )
 
 /** Data the user fills in the new-report flow. */

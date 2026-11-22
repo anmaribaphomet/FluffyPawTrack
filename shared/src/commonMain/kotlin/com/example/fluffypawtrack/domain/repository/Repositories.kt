@@ -6,11 +6,18 @@ import com.example.fluffypawtrack.domain.model.AppNotification
 import com.example.fluffypawtrack.domain.model.ContactDetails
 import com.example.fluffypawtrack.domain.model.ContactRequest
 import com.example.fluffypawtrack.domain.model.NewAdoptionRequest
+import com.example.fluffypawtrack.domain.model.NewListing
+import com.example.fluffypawtrack.domain.model.NotificationPrefs
 import com.example.fluffypawtrack.domain.model.NotificationType
+import com.example.fluffypawtrack.domain.model.Priority
 import com.example.fluffypawtrack.domain.model.NewReport
 import com.example.fluffypawtrack.domain.model.Organization
+import com.example.fluffypawtrack.domain.model.OrganizationDraft
+import com.example.fluffypawtrack.domain.model.OrganizationProfile
 import com.example.fluffypawtrack.domain.model.OrganizationType
 import com.example.fluffypawtrack.domain.model.Report
+import com.example.fluffypawtrack.domain.model.ReportStatus
+import com.example.fluffypawtrack.domain.model.StatusHistoryEntry
 import com.example.fluffypawtrack.domain.model.UserProfile
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
@@ -54,6 +61,36 @@ interface ReportRepository {
 
     /** Moves the report to "Caso cerrado", for example when the lost pet was delivered. */
     suspend fun closeReport(id: String): Result<Report>
+
+    /**
+     * Affiliate inbox: open (not closed), non-hidden reports that no other organization took,
+     * newest first. Radius filtering (RF-03) arrives in Phase 4; filter by [Report.priority].
+     */
+    fun observeInbox(organizationId: String): Flow<List<Report>>
+
+    /** Non-hidden cases assigned to the organization that are not closed yet, newest first. */
+    fun observeCasesOf(organizationId: String): Flow<List<Report>>
+
+    /** Every report, hidden and closed ones included, newest first (RF-07 supervision). */
+    fun observeAllForAdmin(): Flow<List<Report>>
+
+    /**
+     * The signed-in affiliate's organization takes a pending case (`take_report`); it becomes
+     * "En camino". Only one organization can take it.
+     */
+    suspend fun takeReport(reportId: String): Result<Report>
+
+    /**
+     * The assigned organization moves the case forward only; the admin may set any status
+     * (`set_report_status`). The reporter is notified of each change.
+     */
+    suspend fun setStatus(reportId: String, status: ReportStatus): Result<Report>
+
+    /** Admin only (`set_report_hidden`). Hiding rejects the report's pending contact requests. */
+    suspend fun setHidden(reportId: String, hidden: Boolean): Result<Report>
+
+    /** RF-04 history, oldest first: every status with its date and responsible. */
+    fun observeStatusHistory(reportId: String): Flow<List<StatusHistoryEntry>>
 }
 
 interface OrganizationRepository {
@@ -76,6 +113,34 @@ interface OrganizationRepository {
         /** Required photo of the place or its logo. */
         photoUrl: String,
     ): Result<Organization>
+
+    /** Admin: affiliation requests waiting for review, oldest first. */
+    fun observePendingAffiliations(): Flow<List<Organization>>
+
+    /**
+     * Admin approves (the requester becomes an affiliate of it and it appears on the map) or
+     * rejects (it stays off the map) a pending affiliation (`review_affiliation`). The
+     * requester is notified. The RPC stores no rejection reason.
+     */
+    suspend fun reviewAffiliation(organizationId: String, approve: Boolean): Result<Organization>
+
+    /** Admin directory: every organization, pending, rejected and inactive ones included, by name. */
+    fun observeAllForAdmin(): Flow<List<Organization>>
+
+    /** Admin adds a place; it is approved and active, so it appears on the map right away. */
+    suspend fun createOrganization(draft: OrganizationDraft): Result<Organization>
+
+    /** Admin edits a place; its status and visibility do not change. */
+    suspend fun updateOrganization(organizationId: String, draft: OrganizationDraft): Result<Organization>
+
+    /** Admin shows or hides a place on the map. */
+    suspend fun setActive(organizationId: String, active: Boolean): Result<Organization>
+
+    /** Admin deletes a place; its affiliates go back to the `user` role. */
+    suspend fun deleteOrganization(organizationId: String): Result<Unit>
+
+    /** An affiliate edits the profile of their own organization. */
+    suspend fun updateOwnOrganization(organizationId: String, profile: OrganizationProfile): Result<Organization>
 }
 
 /** Every listing it returns has at least one photo. */
@@ -91,6 +156,15 @@ interface AdoptionRepository {
      * requests become rejected with "El animal ya fue adoptado" and their requesters are notified.
      */
     suspend fun markAdopted(listingId: String, affiliateUserId: String): Result<AdoptionListing>
+
+    /**
+     * The signed-in affiliate publishes an available animal for their adoption center. Needs
+     * every field and at least one photo; local photos go to `adoption-photos/<organization>/`.
+     */
+    suspend fun createListing(listing: NewListing): Result<AdoptionListing>
+
+    /** An affiliate of the listing's center edits it; its status does not change. */
+    suspend fun updateListing(listingId: String, listing: NewListing): Result<AdoptionListing>
 }
 
 /**
@@ -136,6 +210,20 @@ interface NotificationRepository {
 
     /** Creates an in-app notification for [userId]. Phase 4 also sends it as an FCM push. */
     suspend fun notify(userId: String, title: String, message: String, type: NotificationType): AppNotification
+}
+
+/** RF-03 preferences of one account: radius, priorities and push (`notification_prefs`). */
+interface NotificationPrefsRepository {
+    /** The saved preferences, or the defaults (5 km, every priority, push on) when none are saved. */
+    fun observe(userId: String): Flow<NotificationPrefs>
+
+    /** Saves the preferences of [userId] (the signed-in account). [radiusKm] must be above 0. */
+    suspend fun update(
+        userId: String,
+        radiusKm: Double,
+        priorities: Set<Priority>,
+        pushEnabled: Boolean,
+    ): Result<NotificationPrefs>
 }
 
 interface ContactRequestRepository {

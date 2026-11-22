@@ -5,6 +5,7 @@ import com.example.fluffypawtrack.domain.repository.AdoptionRequestRepository
 import com.example.fluffypawtrack.domain.repository.AuthRepository
 import com.example.fluffypawtrack.domain.repository.ContactRequestRepository
 import com.example.fluffypawtrack.domain.repository.FavoritesRepository
+import com.example.fluffypawtrack.domain.repository.NotificationPrefsRepository
 import com.example.fluffypawtrack.domain.repository.NotificationRepository
 import com.example.fluffypawtrack.domain.repository.OrganizationRepository
 import com.example.fluffypawtrack.domain.repository.ReportRepository
@@ -25,9 +26,10 @@ class SupabaseRepositories(client: SupabaseClient) {
     val auth: AuthRepository = SupabaseAuthRepository(client, scope, queries)
     val reports: ReportRepository = SupabaseReportRepository(client, queries, photos)
     val organizations: OrganizationRepository = SupabaseOrganizationRepository(client, queries, photos)
-    val adoptions: AdoptionRepository = SupabaseAdoptionRepository(client, queries)
+    val adoptions: AdoptionRepository = SupabaseAdoptionRepository(client, queries, photos)
     val favorites: FavoritesRepository = SupabaseFavoritesRepository(client, queries)
     val notifications: NotificationRepository = SupabaseNotificationRepository(client, queries)
+    val notificationPrefs: NotificationPrefsRepository = SupabaseNotificationPrefsRepository(client, queries)
     val contactRequests: ContactRequestRepository = SupabaseContactRequestRepository(client, queries, photos)
     val adoptionRequests: AdoptionRequestRepository = SupabaseAdoptionRequestRepository(client, queries)
 }
