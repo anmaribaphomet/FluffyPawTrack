@@ -85,6 +85,7 @@ Rules derived from this table:
   directly on the card must qualify as WCAG large text: ≥ 24 sp at any weight, or
   ≥ 19 sp Bold (700). Use `title-card` or larger. SemiBold (600) does not count as bold.
   Smaller text (labels, buttons) goes on a `white` pill, where contrast is 9.51:1.
+  The only exception is the Home card descriptions (see section 3).
 
 ---
 
@@ -114,11 +115,11 @@ Notes:
 
 ---
 
-## 3. Open decisions
+## 3. Exceptions and pending fixes
 
-1. The Home card descriptions ("Ayúdanos a encontrarle un hogar…", "Checa en el
-   mapa…") sit directly on `surface-card` at about 13 sp. That size fails contrast
-   even in Bold (needs ≥ 19 sp Bold). Keeping both the card color and the current
-   layout leaves this text non-compliant; it needs a decision.
+1. **Accepted exception:** the Home card descriptions ("Ayúdanos a encontrarle un
+   hogar…", "Checa en el mapa…") stay at `body` size directly on `surface-card`,
+   keeping the Figma layout. They do not meet WCAG AA contrast (4.13:1, needs 4.5:1
+   at that size). This is a deliberate product decision; no other text may rely on it.
 2. Figma typos to fix when the copy is implemented: "Patitas Calljeras",
    "dispositvo", "Guardas" (→ "Guardados"), "atentido" (→ "atendido").
