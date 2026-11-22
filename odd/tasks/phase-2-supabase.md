@@ -18,8 +18,8 @@ Branch: `master`, small commits (one unit each, so native review fits), push at 
 | ID | Specs | Route | Status | Commit |
 |---|---|---|---|---|
 | T1 | S2 | delegated (worktree) — deps, BuildConfig config, client provider | done — supabase-kt 3.9.0, Ktor 3.6.0; key not in tracked files | 3a5277c |
-| T2 | S3, S4, S5 | delegated (worktree) — SQL migrations, RLS, RPC, storage, seed | pending | |
-| T3 | S1, S6 | delegated after T1+T2 — Supabase repositories + AppContainer switch | pending | |
+| T2 | S3, S4, S5 | delegated (worktree) — SQL migrations, RLS, RPC, storage, seed | done — 11 tables with RLS, 15 RPCs, 3 buckets; local PG18: applied twice, 45 behavior scenarios OK | 0ddc77f..43b99dc |
+| T3 | S1, S6 | delegated (worktree) — Supabase repositories + AppContainer switch | in progress | |
 | T4 | S1 | user applies migrations + dashboard settings; parent emulator check; push | pending | |
 
 Route evidence: T1 and T2 are independent units with disjoint surfaces (Gradle/Kotlin config vs `supabase/`), each several files → parallel writers. T3 depends on both. Risk: item 5 (dependencies) for T1, item 1/2 (schema, RLS, auth) for T2/T3 → small commits and native review.
@@ -29,3 +29,4 @@ Route evidence: T1 and T2 are independent units with disjoint surfaces (Gradle/K
 - L1 (2026-11-22, user): "Ok sigue con la siguiente fase"
 - L2: Maven Central 2026-11-22: supabase-kt BOM 3.9.0, Ktor 3.6.1 (writer verifies compatibility).
 - L3: T1 merged. Note: the project URL (not the key) is in docs/REQUIREMENTS.md §3, written by the user; left as is. T2 hit the usage limit and was resumed. The emulator was stopped by the system for low memory; not restarted.
+- L4: T2 merged (8308ad1). Not tested against real Supabase auth/storage schemas yet. User asked to apply migrations 0100-0400 (+ optional 0500 seed) in the SQL Editor and enable anonymous sign-ins.
