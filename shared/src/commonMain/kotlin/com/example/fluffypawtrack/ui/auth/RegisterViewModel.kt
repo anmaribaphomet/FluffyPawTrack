@@ -18,7 +18,7 @@ data class RegisterUiState(
     val confirmPassword: String = "",
     val errors: RegisterErrors = RegisterErrors(),
     val isLoading: Boolean = false,
-    /** Error returned by the repository (for example, the email is taken). */
+    /** Always [INVALID_DATA_MESSAGE] when validation or sign-up fails. */
     val errorMessage: String? = null,
     val registered: Boolean = false,
 )
@@ -51,7 +51,8 @@ class RegisterViewModel(private val authRepository: AuthRepository) : ViewModel(
         if (form.isLoading) return
         val errors = validateRegistration(form.firstName, form.lastName, form.email, form.password, form.confirmPassword)
         if (errors.hasErrors) {
-            state.update { it.copy(errors = errors, errorMessage = null) }
+            // No field-level hints: only the generic message.
+            state.update { it.copy(errors = RegisterErrors(), errorMessage = INVALID_DATA_MESSAGE) }
             return
         }
         state.update { it.copy(errors = RegisterErrors(), isLoading = true, errorMessage = null) }
@@ -64,7 +65,7 @@ class RegisterViewModel(private val authRepository: AuthRepository) : ViewModel(
                 phone = form.phone.trim().ifEmpty { null },
             )
                 .onSuccess { state.update { it.copy(isLoading = false, registered = true) } }
-                .onFailure { error -> state.update { it.copy(isLoading = false, errorMessage = error.readableMessage()) } }
+                .onFailure { state.update { it.copy(isLoading = false, errorMessage = INVALID_DATA_MESSAGE) } }
         }
     }
 

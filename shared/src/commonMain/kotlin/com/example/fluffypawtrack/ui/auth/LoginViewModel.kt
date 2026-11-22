@@ -33,14 +33,14 @@ class LoginViewModel(private val authRepository: AuthRepository) : ViewModel() {
         val current = state.value
         if (current.isLoading) return
         if (current.email.isBlank() || current.password.isEmpty()) {
-            state.update { it.copy(errorMessage = MISSING_FIELDS) }
+            state.update { it.copy(errorMessage = INVALID_DATA_MESSAGE) }
             return
         }
         state.update { it.copy(isLoading = true, errorMessage = null) }
         viewModelScope.launch {
             authRepository.signIn(current.email.trim(), current.password)
                 .onSuccess { state.update { it.copy(isLoading = false, result = LoginResult.SignedIn) } }
-                .onFailure { error -> state.update { it.copy(isLoading = false, errorMessage = error.readableMessage()) } }
+                .onFailure { state.update { it.copy(isLoading = false, errorMessage = INVALID_DATA_MESSAGE) } }
         }
     }
 
@@ -56,10 +56,6 @@ class LoginViewModel(private val authRepository: AuthRepository) : ViewModel() {
 
     /** Called by the route once it has navigated, so returning to this screen does not navigate again. */
     fun onResultHandled() = state.update { it.copy(result = null) }
-
-    private companion object {
-        const val MISSING_FIELDS = "Ingresa tu correo y contraseña"
-    }
 }
 
 /** Repository errors already carry user-facing Spanish copy; anything else gets a generic message. */

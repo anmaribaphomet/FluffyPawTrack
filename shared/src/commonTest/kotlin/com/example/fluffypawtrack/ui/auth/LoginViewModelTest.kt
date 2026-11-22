@@ -54,7 +54,7 @@ class LoginViewModelTest {
         viewModel.onSubmit()
 
         val state = viewModel.uiState.value
-        assertEquals("Correo o contraseña incorrectos", state.errorMessage)
+        assertEquals(INVALID_DATA_MESSAGE, state.errorMessage)
         assertNull(state.result)
         assertNull(repository.currentUser.value)
     }
@@ -63,7 +63,7 @@ class LoginViewModelTest {
     fun emptyFieldsAreRejectedWithoutCallingTheRepository() = runTest {
         viewModel.onSubmit()
 
-        assertEquals("Ingresa tu correo y contraseña", viewModel.uiState.value.errorMessage)
+        assertEquals(INVALID_DATA_MESSAGE, viewModel.uiState.value.errorMessage)
         assertNull(repository.currentUser.value)
     }
 

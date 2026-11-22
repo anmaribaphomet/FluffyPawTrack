@@ -197,7 +197,7 @@ fun LoginScreen(
 private fun LoginScreenPreview() {
     FluffyPawTrackTheme {
         LoginScreen(
-            state = LoginUiState(email = "demo@correo.com", errorMessage = "Correo o contraseña incorrectos"),
+            state = LoginUiState(email = "demo@correo.com", errorMessage = INVALID_DATA_MESSAGE),
             onEmailChange = {},
             onPasswordChange = {},
             onSubmit = {},

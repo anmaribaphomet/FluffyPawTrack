@@ -73,12 +73,7 @@ class RegisterViewModelTest {
     fun missingRequiredFieldsAreReported() = runTest {
         viewModel.onSubmit()
 
-        val errors = viewModel.uiState.value.errors
-        assertEquals("Ingresa tu nombre", errors.firstName)
-        assertEquals("Ingresa tus apellidos", errors.lastName)
-        assertEquals("Ingresa tu correo", errors.email)
-        assertEquals("Ingresa una contraseña", errors.password)
-        assertEquals("Confirma tu contraseña", errors.confirmPassword)
+        assertOnlyGenericError()
         assertFalse(viewModel.uiState.value.registered)
         assertNull(repository.currentUser.value)
     }
@@ -89,7 +84,7 @@ class RegisterViewModelTest {
 
         viewModel.onSubmit()
 
-        assertEquals("Ingresa un correo válido", viewModel.uiState.value.errors.email)
+        assertOnlyGenericError()
         assertNull(repository.currentUser.value)
     }
 
@@ -101,7 +96,7 @@ class RegisterViewModelTest {
 
         viewModel.onSubmit()
 
-        assertEquals("La contraseña debe tener al menos 8 caracteres", viewModel.uiState.value.errors.password)
+        assertOnlyGenericError()
         assertNull(repository.currentUser.value)
     }
 
@@ -112,19 +107,26 @@ class RegisterViewModelTest {
 
         viewModel.onSubmit()
 
-        assertEquals("Las contraseñas no coinciden", viewModel.uiState.value.errors.confirmPassword)
+        assertOnlyGenericError()
         assertNull(repository.currentUser.value)
     }
 
     @Test
-    fun existingEmailShowsTheRepositoryError() = runTest {
+    fun existingEmailShowsOnlyTheGenericError() = runTest {
         fillValidForm(email = "demo@correo.com")
 
         viewModel.onSubmit()
 
         val state = viewModel.uiState.value
-        assertEquals("Ya existe una cuenta con ese correo", state.errorMessage)
+        assertOnlyGenericError()
         assertFalse(state.registered)
         assertNull(repository.currentUser.value)
+    }
+
+    /** Only "Datos inválidos, intenta de nuevo." is shown: no field-level hints. */
+    private fun assertOnlyGenericError() {
+        val state = viewModel.uiState.value
+        assertEquals(INVALID_DATA_MESSAGE, state.errorMessage)
+        assertEquals(RegisterErrors(), state.errors)
     }
 }

@@ -199,7 +199,7 @@ private fun RegisterScreenPreview() {
             state = RegisterUiState(
                 firstName = "Ana",
                 email = "ana@correo",
-                errors = RegisterErrors(lastName = "Ingresa tus apellidos", email = "Ingresa un correo válido"),
+                errorMessage = INVALID_DATA_MESSAGE,
             ),
             actions = RegisterActions({}, {}, {}, {}, {}, {}, {}, {}),
         )
