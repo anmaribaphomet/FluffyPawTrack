@@ -23,12 +23,12 @@ Branch: `master` (commit per unit, push at phase end). Parallel units run in iso
 | ID | Specs | Route | Status | Commit |
 |---|---|---|---|---|
 | T0 | S12 | inline | done — shared deps (MapLibre, activity-compose), permissions, demo session | (prep commit) |
-| T1 | S3 | delegated W1 (worktree) | in progress | |
-| T2 | S4 | delegated W2 (worktree) | in progress | |
-| T3 | S5, S9 | delegated W3 (worktree) | in progress | |
-| T4 | S7 | delegated W4 (worktree) | in progress | |
-| T5 | S6 | batch 2 (needs T1 map) | pending | |
-| T6 | S8, S11 | batch 2 (needs T1 detail sheet) | pending | |
+| T1 | S3 | delegated W1 (worktree) | done — merged, emulator: tiles, pins, detail sheet OK | 60cfe94, d766b14 |
+| T2 | S4 | delegated W2 (worktree) | done — merged, emulator: full anonymous flow to "¡Reporte publicado!" | 5a3f912, b0b1da9 |
+| T3 | S5, S9 | delegated W3 (worktree) | done — merged and wired; emulator check pending | 6881c7f, 69ddbf0, 7ea1216 |
+| T4 | S7 | delegated W4 (worktree) | done — merged, emulator: splash → login → home | 074f888, e1158d3 |
+| T5 | S6 | delegated W5 (worktree) | in progress | |
+| T6 | S8, S11 | delegated W6 (worktree) | in progress | |
 | T7 | S10 | inline | done — RED compile, GREEN 4/4, emulator checked | see log |
 | T8 | S1, S12 | inline — wire routes, merge, build, push | pending | |
 
@@ -40,3 +40,5 @@ Route evidence: writer trigger (a) — four independent units with disjoint edit
 - L2 (2026-11-22, user, earlier): "1. Sí, ese orden está bien." (order in S2)
 - L3: T0 prep: MapLibre Android 13.7.1 (Maven Central), activity-compose in shared androidMain, INTERNET + location permissions, `FakeAuthRepository(initialUser)` with demo session until login exists.
 - L4: Shared labels/pin colors/date format committed before launching writers (7df92a2). T7 notifications wired to the repository with "Marcar todas como leídas".
+- L5: Worktrees branch from `origin/master` (cb31946), not local master; writers were told to `git merge master` first. Batch 1 merged without conflicts; 80/80 tests, assembleDebug OK. Emulator fixes: photo frame 4:3 so camera/gallery buttons stay visible. Map detail sheets got `reportActions` / `placeActions` / `adoptionActions` slots so batch 2 does not edit `ui/map`.
+- L6: Open decisions reported by W2 (kept as built): photo optional; GPS address saved as coordinates; anonymous-session users send their anonymous id.
