@@ -1,0 +1,30 @@
+# Phase 2 — Supabase
+
+Objective: replace the fake repositories with Supabase (auth incl. anonymous sign-in, tables, RLS, storage) without changing the screens.
+Branch: `master`, small commits (one unit each, so native review fits), push at phase end. Test runner: `./gradlew :shared:testAndroidHostTest`, `./gradlew :androidApp:assembleDebug`, emulator against the real project after the user applies the migrations.
+
+## Specs
+
+- S1 (roadmap, `CLAUDE.md` Phase 2): "Fase 2: Supabase (auth con anonymous sign-in, tablas, RLS, storage de fotos) y cambiar el repositorio fake por el real."
+- S2 (`CLAUDE.md` rules): "las credenciales de Supabase se leen de local.properties (SUPABASE_URL y SUPABASE_PUBLISHABLE_KEY) y nunca se escriben en archivos versionados"; "el esquema de Supabase va como migraciones SQL en supabase/migrations/, con políticas RLS en todas las tablas."
+- S3 (`docs/REQUIREMENTS.md` §3): "Las tablas se crean con migraciones SQL guardadas en el repo (supabase/migrations/) ... Se aplican desde el SQL Editor de Supabase." "La secret key y la contraseña de la base de datos nunca se usan en la app."
+- S4: every table of `docs/REQUIREMENTS.md` §7 including `adoption_requests`, with RLS policies; `get_contact_details(request_id)` RPC (RF-05 "Reglas técnicas"); storage buckets `report-photos` and `adoption-photos` (plus place photos); photos compressed before upload (§8).
+- S5: the business rules already enforced by the fakes (RF-05 contact requests, RF-06 adoption requests, report status) are enforced server-side by RLS, constraints and RPC functions — "La seguridad se aplica con Row Level Security (RLS) en Supabase, no solo ocultando botones en la app."
+- S6: screens do not change; `AppContainer` switches from fake to Supabase implementations of the same interfaces.
+- Assumptions: the user applies migrations in the SQL Editor and enables "Allow anonymous sign-ins" in the dashboard; sample data is seeded by a separate seed migration whose image refs keep using the bundled `res:` images; if email confirmation is on, sign-up shows "Revisa tu correo para confirmar tu cuenta" instead of entering the app.
+
+## Tasks
+
+| ID | Specs | Route | Status | Commit |
+|---|---|---|---|---|
+| T1 | S2 | delegated (worktree) — deps, BuildConfig config, client provider | pending | |
+| T2 | S3, S4, S5 | delegated (worktree) — SQL migrations, RLS, RPC, storage, seed | pending | |
+| T3 | S1, S6 | delegated after T1+T2 — Supabase repositories + AppContainer switch | pending | |
+| T4 | S1 | user applies migrations + dashboard settings; parent emulator check; push | pending | |
+
+Route evidence: T1 and T2 are independent units with disjoint surfaces (Gradle/Kotlin config vs `supabase/`), each several files → parallel writers. T3 depends on both. Risk: item 5 (dependencies) for T1, item 1/2 (schema, RLS, auth) for T2/T3 → small commits and native review.
+
+## Log
+
+- L1 (2026-11-22, user): "Ok sigue con la siguiente fase"
+- L2: Maven Central 2026-11-22: supabase-kt BOM 3.9.0, Ktor 3.6.1 (writer verifies compatibility).
