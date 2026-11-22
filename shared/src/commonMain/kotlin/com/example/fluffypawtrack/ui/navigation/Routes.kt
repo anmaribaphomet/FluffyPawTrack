@@ -19,6 +19,10 @@ sealed interface Route {
     @Serializable
     data object Profile : Route
 
+    /** [adoptionsOnly] opens the map pre-filtered on adoption listings. */
+    @Serializable
+    data class Map(val adoptionsOnly: Boolean = false) : Route
+
     @Serializable
     data object Notifications : Route
 }

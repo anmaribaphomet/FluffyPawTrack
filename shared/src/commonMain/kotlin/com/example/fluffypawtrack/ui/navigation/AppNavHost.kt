@@ -6,11 +6,14 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.toRoute
 import com.example.fluffypawtrack.ui.auth.LoginRoute
 import com.example.fluffypawtrack.ui.auth.RegisterRoute
 import com.example.fluffypawtrack.ui.components.HomeDestination
 import com.example.fluffypawtrack.ui.splash.SplashRoute
 import com.example.fluffypawtrack.ui.home.HomeScreen
+import com.example.fluffypawtrack.ui.map.MapFilter
+import com.example.fluffypawtrack.ui.map.MapRoute
 import com.example.fluffypawtrack.ui.notifications.NotificationsRoute
 import com.example.fluffypawtrack.ui.profile.ProfileScreen
 
@@ -44,11 +47,13 @@ fun AppNavHost(navController: NavHostController = rememberNavController()) {
             HomeScreen(
                 // dropUnlessResumed ignores taps while a transition is running (double taps).
                 onProfileClick = dropUnlessResumed { navController.navigate(Route.Profile) },
+                onSeeAdoptions = dropUnlessResumed { navController.navigate(Route.Map(adoptionsOnly = true)) },
                 onNavigate = { destination ->
                     when (destination) {
                         HomeDestination.Notificaciones -> navController.navigate(Route.Notifications) {
                             launchSingleTop = true
                         }
+                        HomeDestination.Mapa -> navController.navigate(Route.Map()) { launchSingleTop = true }
                         else -> Unit // Remaining tabs arrive in Phase 1.
                     }
                 },
@@ -56,6 +61,13 @@ fun AppNavHost(navController: NavHostController = rememberNavController()) {
         }
         composable<Route.Profile> {
             ProfileScreen(onBack = dropUnlessResumed { navController.popBackStack() })
+        }
+        composable<Route.Map> { entry ->
+            val route = entry.toRoute<Route.Map>()
+            MapRoute(
+                onBack = dropUnlessResumed { navController.popBackStack() },
+                initialFilter = if (route.adoptionsOnly) MapFilter.Adoptions else MapFilter.All,
+            )
         }
         composable<Route.Notifications> {
             NotificationsRoute(onBack = dropUnlessResumed { navController.popBackStack() })
