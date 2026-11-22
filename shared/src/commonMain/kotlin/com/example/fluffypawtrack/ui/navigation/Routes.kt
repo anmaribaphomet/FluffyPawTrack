@@ -47,8 +47,13 @@ sealed interface Route {
     @Serializable
     data class AnimalDetail(val listingId: String) : Route
 
+    /** The organization comes from the listing. */
     @Serializable
-    data class AdoptionForm(val organizationId: String, val listingId: String? = null) : Route
+    data class AdoptionForm(val listingId: String) : Route
+
+    /** Cuenta → "Mis solicitudes de adopción" (role `user`). */
+    @Serializable
+    data object MyAdoptionRequests : Route
 
     @Serializable
     data class ContactRequestForm(val reportId: String) : Route

@@ -1,25 +1,28 @@
 package com.example.fluffypawtrack.ui.adoptions
 
+internal const val FULL_NAME_ERROR = "Ingresa tu nombre completo"
+internal const val PHONE_ERROR = "Ingresa tu teléfono"
+internal const val EMAIL_ERROR = "Ingresa tu correo"
+internal const val OTHER_PETS_ERROR = "Indica cuáles otras mascotas tienes"
+internal const val ADOPTION_REASON_ERROR = "Cuéntanos por qué quieres adoptarlo"
+
 /** Per-field validation messages; null means the field is valid. */
 data class AdoptionFormErrors(
-    val name: String? = null,
-    val contact: String? = null,
-    val message: String? = null,
+    val fullName: String? = null,
+    val phone: String? = null,
+    val email: String? = null,
+    val otherPets: String? = null,
+    val reason: String? = null,
 ) {
     val hasErrors: Boolean
-        get() = listOf(name, contact, message).any { it != null }
+        get() = listOf(fullName, phone, email, otherPets, reason).any { it != null }
 }
 
-internal const val MIN_ADOPTION_MESSAGE_LENGTH = 20
-
-/** Plain validation rules for the adoption form: name, a phone or an email, and a message. */
-internal fun validateAdoptionForm(name: String, phone: String, email: String, message: String) =
-    AdoptionFormErrors(
-        name = if (name.isBlank()) "Ingresa tu nombre" else null,
-        contact = if (phone.isBlank() && email.isBlank()) "Ingresa un teléfono o un correo" else null,
-        message = if (message.trim().length < MIN_ADOPTION_MESSAGE_LENGTH) {
-            "El mensaje debe tener al menos $MIN_ADOPTION_MESSAGE_LENGTH caracteres"
-        } else {
-            null
-        },
-    )
+/** RF-06 form rules: contact data, which other pets when the answer is "Sí", and the reason. */
+internal fun validateAdoptionForm(state: AdoptionFormUiState) = AdoptionFormErrors(
+    fullName = FULL_NAME_ERROR.takeIf { state.fullName.isBlank() },
+    phone = PHONE_ERROR.takeIf { state.phone.isBlank() },
+    email = EMAIL_ERROR.takeIf { state.email.isBlank() },
+    otherPets = OTHER_PETS_ERROR.takeIf { state.hasOtherPets && state.otherPets.isBlank() },
+    reason = ADOPTION_REASON_ERROR.takeIf { state.reason.isBlank() },
+)

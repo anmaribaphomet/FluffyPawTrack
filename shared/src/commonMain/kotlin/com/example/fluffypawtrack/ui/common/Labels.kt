@@ -1,7 +1,10 @@
 package com.example.fluffypawtrack.ui.common
 
 import androidx.compose.ui.graphics.Color
+import com.example.fluffypawtrack.domain.model.AdoptionRequestStatus
 import com.example.fluffypawtrack.domain.model.ContactRequestStatus
+import com.example.fluffypawtrack.domain.model.HousingTenure
+import com.example.fluffypawtrack.domain.model.HousingType
 import com.example.fluffypawtrack.domain.model.OrganizationType
 import com.example.fluffypawtrack.domain.model.Priority
 import com.example.fluffypawtrack.domain.model.ReportCategory
@@ -53,6 +56,35 @@ val ContactRequestStatus.label: String
         ContactRequestStatus.Accepted -> "Aceptada"
         ContactRequestStatus.Rejected -> "Rechazada"
         ContactRequestStatus.Cancelled -> "Cancelada"
+    }
+
+val AdoptionRequestStatus.label: String
+    get() = when (this) {
+        AdoptionRequestStatus.Pending -> "Pendiente"
+        AdoptionRequestStatus.Approved -> "Aprobada"
+        AdoptionRequestStatus.Rejected -> "Rechazada"
+        AdoptionRequestStatus.Cancelled -> "Cancelada"
+    }
+
+/** Status chip color of an adoption request; the text on it is brown-900. */
+val AdoptionRequestStatus.color: Color
+    get() = when (this) {
+        AdoptionRequestStatus.Pending -> FluffyColors.Peach300
+        AdoptionRequestStatus.Approved -> FluffyColors.Sage400
+        AdoptionRequestStatus.Rejected -> FluffyColors.Pink400
+        AdoptionRequestStatus.Cancelled -> FluffyColors.Neutral300
+    }
+
+val HousingType.label: String
+    get() = when (this) {
+        HousingType.House -> "Casa"
+        HousingType.Apartment -> "Departamento"
+    }
+
+val HousingTenure.label: String
+    get() = when (this) {
+        HousingTenure.Owned -> "Propia"
+        HousingTenure.Rented -> "Rentada"
     }
 
 /** Map pin colors, docs/design-system.md §1.4. */

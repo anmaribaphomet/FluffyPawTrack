@@ -1,10 +1,14 @@
 package com.example.fluffypawtrack.ui.adoptions
 
 import com.example.fluffypawtrack.data.fake.FakeAdoptionRepository
+import com.example.fluffypawtrack.data.fake.FakeAdoptionRequestRepository
 import com.example.fluffypawtrack.data.fake.FakeAuthRepository
 import com.example.fluffypawtrack.data.fake.FakeFavoritesRepository
 import com.example.fluffypawtrack.data.fake.FakeOrganizationRepository
 import com.example.fluffypawtrack.data.fake.SampleData
+import com.example.fluffypawtrack.domain.model.AdoptionRequestStatus
+import com.example.fluffypawtrack.domain.model.HousingTenure
+import com.example.fluffypawtrack.domain.model.HousingType
 import com.example.fluffypawtrack.domain.model.ListingStatus
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -21,7 +25,6 @@ import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
-import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
@@ -139,94 +142,123 @@ class AdoptionViewModelsTest {
 
     // Adoption form
 
-    private fun formViewModel(auth: FakeAuthRepository = FakeAuthRepository(), listingId: String? = "listing-1") =
-        AdoptionFormViewModel("org-patitas", listingId, auth, FakeOrganizationRepository(), FakeAdoptionRepository())
+    private fun formViewModel(
+        auth: FakeAuthRepository = FakeAuthRepository(initialUser = demo),
+        requests: FakeAdoptionRequestRepository = FakeAdoptionRequestRepository(initialRequests = emptyList()),
+        listingId: String = "listing-1",
+    ) = AdoptionFormViewModel(listingId, auth, FakeAdoptionRepository(), requests)
 
-    private val validMessage = "Tengo patio grande y mucho tiempo para pasear."
-
-    @Test
-    fun formPrefillsNameEmailAndPhoneFromTheSignedInUser() = runTest {
-        val state = collecting(formViewModel(FakeAuthRepository(initialUser = demo)).uiState).value
-        assertEquals("${demo.firstName} ${demo.lastName}", state.name)
-        assertEquals(demo.email.orEmpty(), state.email)
-        assertEquals(demo.phone.orEmpty(), state.phone)
-        assertEquals("Canela", state.listingName)
-    }
+    private val validReason = "Tengo patio grande y mucho tiempo para pasear."
 
     @Test
-    fun formIsEmptyWithoutASession() = runTest {
+    fun formShowsTheLockedInterestedInTextOfTheListing() = runTest {
         val state = collecting(formViewModel().uiState).value
-        assertEquals("", state.name)
-        assertEquals("", state.email)
-        assertEquals("", state.phone)
+        assertEquals("Canela · Perro · Mestiza", state.interestedIn)
+        assertNull(state.blockedMessage)
     }
 
     @Test
-    fun formRequiresAName() = runTest {
+    fun formPrefillsNameEmailAndPhoneFromTheProfileAndKeepsThemEditable() = runTest {
         val viewModel = formViewModel()
         val state = collecting(viewModel.uiState)
-        viewModel.onPhoneChange("6621234567")
-        viewModel.onMessageChange(validMessage)
+        assertEquals("${demo.firstName} ${demo.lastName}", state.value.fullName)
+        assertEquals(demo.email.orEmpty(), state.value.email)
+        assertEquals(demo.phone.orEmpty(), state.value.phone)
 
-        viewModel.submit()
-
-        assertEquals("Ingresa tu nombre", state.value.errors.name)
-        assertFalse(state.value.submitted)
+        viewModel.onPhoneChange("6629998877")
+        assertEquals("6629998877", state.value.phone)
     }
 
     @Test
-    fun formRequiresAPhoneOrAnEmail() = runTest {
+    fun formRequiresTheReason() = runTest {
+        val requests = FakeAdoptionRequestRepository(initialRequests = emptyList())
+        val viewModel = formViewModel(requests = requests)
+        val state = collecting(viewModel.uiState)
+
+        viewModel.submit()
+
+        assertEquals(ADOPTION_REASON_ERROR, state.value.errors.reason)
+        assertFalse(state.value.submitted)
+        assertTrue(requests.observeByRequester(demo.id).first().isEmpty())
+    }
+
+    @Test
+    fun formAsksWhichOtherPetsWhenTheAnswerIsYes() = runTest {
         val viewModel = formViewModel()
         val state = collecting(viewModel.uiState)
-        viewModel.onNameChange("Ana")
-        viewModel.onMessageChange(validMessage)
-
-        viewModel.submit()
-
-        assertEquals("Ingresa un teléfono o un correo", state.value.errors.contact)
-        assertFalse(state.value.submitted)
-
-        viewModel.onEmailChange("ana@correo.com")
-        viewModel.submit()
-        assertNull(state.value.errors.contact)
-        assertTrue(state.value.submitted)
-    }
-
-    @Test
-    fun formRejectsAMessageShorterThanTwentyCharacters() = runTest {
-        val viewModel = formViewModel()
-        val state = collecting(viewModel.uiState)
-        viewModel.onNameChange("Ana")
-        viewModel.onPhoneChange("6621234567")
-        viewModel.onMessageChange("Quiero adoptar")
-
-        viewModel.submit()
-
-        assertEquals("El mensaje debe tener al menos 20 caracteres", state.value.errors.message)
-        assertFalse(state.value.submitted)
-    }
-
-    @Test
-    fun validFormSubmitsWithHousingAndOtherPets() = runTest {
-        val viewModel = formViewModel(FakeAuthRepository(initialUser = demo))
-        val state = collecting(viewModel.uiState)
-        viewModel.onHousingChange(Housing.Apartment)
+        viewModel.onReasonChange(validReason)
         viewModel.onHasOtherPetsChange(true)
-        viewModel.onMessageChange(validMessage)
 
         viewModel.submit()
 
-        assertNotNull(state.value)
-        assertFalse(state.value.errors.hasErrors)
-        assertEquals(Housing.Apartment, state.value.housing)
-        assertTrue(state.value.hasOtherPets)
+        assertEquals(OTHER_PETS_ERROR, state.value.errors.otherPets)
+        assertFalse(state.value.submitted)
+
+        viewModel.onHasOtherPetsChange(false)
+        viewModel.submit()
         assertTrue(state.value.submitted)
     }
 
     @Test
-    fun formWithoutListingStillNamesTheCenter() = runTest {
-        val state = collecting(formViewModel(listingId = null).uiState).value
-        assertNull(state.listingName)
-        assertEquals(SampleData.organizations.first { it.id == "org-patitas" }.name, state.centerName)
+    fun validFormIsSavedInTheRepository() = runTest {
+        val requests = FakeAdoptionRequestRepository(initialRequests = emptyList())
+        val viewModel = formViewModel(requests = requests)
+        val state = collecting(viewModel.uiState)
+        viewModel.onHousingTypeChange(HousingType.Apartment)
+        viewModel.onHousingTenureChange(HousingTenure.Rented)
+        viewModel.onHasOtherPetsChange(true)
+        viewModel.onOtherPetsChange("Un gato")
+        viewModel.onReasonChange(validReason)
+
+        viewModel.submit()
+
+        assertTrue(state.value.submitted)
+        assertNull(state.value.submitError)
+        val saved = requests.observeByRequester(demo.id).first().single()
+        assertEquals("listing-1", saved.listingId)
+        assertEquals("org-patitas", saved.organizationId)
+        assertEquals(HousingType.Apartment, saved.housingType)
+        assertEquals(HousingTenure.Rented, saved.housingTenure)
+        assertEquals("Un gato", saved.otherPets)
+        assertEquals(validReason, saved.reason)
+        assertEquals(AdoptionRequestStatus.Pending, saved.status)
+    }
+
+    @Test
+    fun formShowsTheRepositoryErrorForASecondActiveRequest() = runTest {
+        val requests = FakeAdoptionRequestRepository(initialRequests = emptyList())
+        val first = formViewModel(requests = requests)
+        first.onReasonChange(validReason)
+        first.submit()
+
+        val second = formViewModel(requests = requests)
+        val state = collecting(second.uiState)
+        second.onReasonChange(validReason)
+        second.submit()
+
+        assertEquals(FakeAdoptionRequestRepository.ALREADY_ACTIVE, state.value.submitError)
+        assertFalse(state.value.submitted)
+    }
+
+    @Test
+    fun formIsBlockedWithoutAnAccount() = runTest {
+        val signedOut = collecting(formViewModel(auth = FakeAuthRepository()).uiState).value
+        assertEquals(ADOPTION_ACCOUNT_REQUIRED, signedOut.blockedMessage)
+
+        val auth = FakeAuthRepository()
+        auth.signInAnonymously()
+        val anonymous = collecting(formViewModel(auth = auth).uiState).value
+        assertEquals(ADOPTION_ACCOUNT_REQUIRED, anonymous.blockedMessage)
+    }
+
+    @Test
+    fun formIsBlockedForAnAffiliate() = runTest {
+        val viewModel = formViewModel(auth = FakeAuthRepository(initialUser = SampleData.demoAffiliate))
+        val state = collecting(viewModel.uiState)
+        assertEquals(ADOPTION_ONLY_USERS, state.value.blockedMessage)
+
+        viewModel.onReasonChange(validReason)
+        viewModel.submit()
+        assertFalse(state.value.submitted)
     }
 }

@@ -15,8 +15,6 @@ import com.example.fluffypawtrack.ui.home.HomeScreen
 import com.example.fluffypawtrack.ui.map.MapFilter
 import com.example.fluffypawtrack.ui.map.MapRoute
 import com.example.fluffypawtrack.ui.notifications.NotificationsRoute
-import androidx.compose.runtime.rememberCoroutineScope
-import com.example.fluffypawtrack.di.LocalAppContainer
 import com.example.fluffypawtrack.domain.model.OrganizationType
 import com.example.fluffypawtrack.ui.account.FavoritesRoute
 import com.example.fluffypawtrack.ui.adoptions.AdoptionFormRoute
@@ -29,8 +27,8 @@ import com.example.fluffypawtrack.ui.adoptions.CenterDetailRoute
 import com.example.fluffypawtrack.ui.components.PillActionButton
 import fluffypawtrack.shared.generated.resources.Res
 import fluffypawtrack.shared.generated.resources.ic_home
-import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.painterResource
+import com.example.fluffypawtrack.ui.account.MyAdoptionRequestsRoute
 import com.example.fluffypawtrack.ui.account.MyReportsRoute
 import com.example.fluffypawtrack.ui.account.PersonalInfoRoute
 import com.example.fluffypawtrack.ui.profile.ProfileRoute
@@ -91,6 +89,7 @@ fun AppNavHost(navController: NavHostController = rememberNavController()) {
                 onMyReports = dropUnlessResumed { navController.navigate(Route.MyReports) },
                 onFavorites = dropUnlessResumed { navController.navigate(Route.Favorites) },
                 onContactRequests = dropUnlessResumed { navController.navigate(Route.ContactRequests) },
+                onMyAdoptionRequests = dropUnlessResumed { navController.navigate(Route.MyAdoptionRequests) },
             )
         }
         composable<Route.PersonalInfo> {
@@ -178,28 +177,22 @@ fun AppNavHost(navController: NavHostController = rememberNavController()) {
             )
         }
         composable<Route.AnimalDetail> { entry ->
-            val adoptionRepository = LocalAppContainer.current.adoptionRepository
-            val scope = rememberCoroutineScope()
             AnimalDetailRoute(
                 listingId = entry.toRoute<Route.AnimalDetail>().listingId,
                 onBack = dropUnlessResumed { navController.popBackStack() },
                 onCenterClick = { orgId -> navController.navigate(Route.CenterDetail(orgId)) },
-                onAdopt = { listingId ->
-                    scope.launch {
-                        val listing = adoptionRepository.getListing(listingId) ?: return@launch
-                        navController.navigate(Route.AdoptionForm(listing.organizationId, listingId))
-                    }
-                },
+                onAdopt = { listingId -> navController.navigate(Route.AdoptionForm(listingId)) },
             )
         }
         composable<Route.AdoptionForm> { entry ->
-            val route = entry.toRoute<Route.AdoptionForm>()
             AdoptionFormRoute(
-                organizationId = route.organizationId,
-                listingId = route.listingId,
+                listingId = entry.toRoute<Route.AdoptionForm>().listingId,
                 onBack = dropUnlessResumed { navController.popBackStack() },
                 onDone = { navController.popBackStack() },
             )
+        }
+        composable<Route.MyAdoptionRequests> {
+            MyAdoptionRequestsRoute(onBack = dropUnlessResumed { navController.popBackStack() })
         }
         composable<Route.Notifications> {
             NotificationsRoute(onBack = dropUnlessResumed { navController.popBackStack() })
