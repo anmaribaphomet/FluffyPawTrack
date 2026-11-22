@@ -16,6 +16,7 @@ can be run again safely.
 | 3 | `20261122000300_functions.sql` | RPC functions, status history and notification triggers |
 | 4 | `20261122000400_storage.sql` | Buckets `report-photos`, `adoption-photos`, `place-photos` and their policies |
 | 5 | `20261122000500_seed.sql` | Optional demo content (organizations, listings, reports) |
+| 6 | `20261122000600_review_fixes.sql` | Fixes from the security review (close rejects pending contact requests; organization delete) |
 
 ## Dashboard settings
 
