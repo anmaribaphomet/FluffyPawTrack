@@ -25,4 +25,23 @@ sealed interface Route {
 
     @Serializable
     data object Notifications : Route
+
+    @Serializable
+    data object NewReport : Route
+
+    @Serializable
+    data object PersonalInfo : Route
+
+    @Serializable
+    data object MyReports : Route
+
+    @Serializable
+    data object Favorites : Route
+
+    @Serializable
+    data object Settings : Route
+
+    /** [topic] is a `SettingsTopic` name. */
+    @Serializable
+    data class SettingsInfo(val topic: String) : Route
 }

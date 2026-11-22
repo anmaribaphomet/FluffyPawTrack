@@ -15,7 +15,14 @@ import com.example.fluffypawtrack.ui.home.HomeScreen
 import com.example.fluffypawtrack.ui.map.MapFilter
 import com.example.fluffypawtrack.ui.map.MapRoute
 import com.example.fluffypawtrack.ui.notifications.NotificationsRoute
-import com.example.fluffypawtrack.ui.profile.ProfileScreen
+import com.example.fluffypawtrack.ui.account.FavoritesRoute
+import com.example.fluffypawtrack.ui.account.MyReportsRoute
+import com.example.fluffypawtrack.ui.account.PersonalInfoRoute
+import com.example.fluffypawtrack.ui.profile.ProfileRoute
+import com.example.fluffypawtrack.ui.report.NewReportRoute
+import com.example.fluffypawtrack.ui.settings.SettingsInfoRoute
+import com.example.fluffypawtrack.ui.settings.SettingsRoute
+import com.example.fluffypawtrack.ui.settings.SettingsTopic
 
 @Composable
 fun AppNavHost(navController: NavHostController = rememberNavController()) {
@@ -33,8 +40,7 @@ fun AppNavHost(navController: NavHostController = rememberNavController()) {
             LoginRoute(
                 onSignedIn = { navController.navigateClearingStack(Route.Home) },
                 onCreateAccount = dropUnlessResumed { navController.navigate(Route.Register) },
-                // The new-report flow arrives with T2; until then the anonymous user lands on Home.
-                onReportAnonymously = { navController.navigateClearingStack(Route.Home) },
+                onReportAnonymously = { navController.navigateClearingStack(Route.NewReport) },
             )
         }
         composable<Route.Register> {
@@ -48,19 +54,63 @@ fun AppNavHost(navController: NavHostController = rememberNavController()) {
                 // dropUnlessResumed ignores taps while a transition is running (double taps).
                 onProfileClick = dropUnlessResumed { navController.navigate(Route.Profile) },
                 onSeeAdoptions = dropUnlessResumed { navController.navigate(Route.Map(adoptionsOnly = true)) },
+                onReportAnimal = dropUnlessResumed { navController.navigate(Route.NewReport) },
                 onNavigate = { destination ->
                     when (destination) {
                         HomeDestination.Notificaciones -> navController.navigate(Route.Notifications) {
                             launchSingleTop = true
                         }
+                        HomeDestination.Inicio -> Unit
                         HomeDestination.Mapa -> navController.navigate(Route.Map()) { launchSingleTop = true }
-                        else -> Unit // Remaining tabs arrive in Phase 1.
+                        HomeDestination.Nuevo -> navController.navigate(Route.NewReport) { launchSingleTop = true }
+                        HomeDestination.Ajustes -> navController.navigate(Route.Settings) { launchSingleTop = true }
                     }
                 },
             )
         }
         composable<Route.Profile> {
-            ProfileScreen(onBack = dropUnlessResumed { navController.popBackStack() })
+            ProfileRoute(
+                onBack = dropUnlessResumed { navController.popBackStack() },
+                onPersonalInfo = dropUnlessResumed { navController.navigate(Route.PersonalInfo) },
+                onMyReports = dropUnlessResumed { navController.navigate(Route.MyReports) },
+                onFavorites = dropUnlessResumed { navController.navigate(Route.Favorites) },
+            )
+        }
+        composable<Route.PersonalInfo> {
+            PersonalInfoRoute(onBack = dropUnlessResumed { navController.popBackStack() })
+        }
+        composable<Route.MyReports> {
+            MyReportsRoute(onBack = dropUnlessResumed { navController.popBackStack() })
+        }
+        composable<Route.Favorites> {
+            FavoritesRoute(
+                onBack = dropUnlessResumed { navController.popBackStack() },
+                // The animal detail screen arrives with T5; until then open adoptions on the map.
+                onListingClick = { navController.navigate(Route.Map(adoptionsOnly = true)) },
+            )
+        }
+        composable<Route.NewReport> {
+            NewReportRoute(
+                onBack = dropUnlessResumed { navController.popBackStack() },
+                onSeeMap = {
+                    navController.navigate(Route.Map()) {
+                        popUpTo<Route.NewReport> { inclusive = true }
+                    }
+                },
+            )
+        }
+        composable<Route.Settings> {
+            SettingsRoute(
+                onBack = dropUnlessResumed { navController.popBackStack() },
+                onSignedOut = { navController.navigateClearingStack(Route.Login) },
+                onTopicClick = { topic -> navController.navigate(Route.SettingsInfo(topic.name)) },
+            )
+        }
+        composable<Route.SettingsInfo> { entry ->
+            SettingsInfoRoute(
+                topic = SettingsTopic.valueOf(entry.toRoute<Route.SettingsInfo>().topic),
+                onBack = dropUnlessResumed { navController.popBackStack() },
+            )
         }
         composable<Route.Map> { entry ->
             val route = entry.toRoute<Route.Map>()
