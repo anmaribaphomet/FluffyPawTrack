@@ -80,6 +80,45 @@ class FakeRepositoriesTest {
     }
 
     @Test
+    fun updateReportChangesDescriptionAndReferenceOfAPendingReport() = runTest {
+        val repository = FakeReportRepository()
+        val created = repository.createReport("user-1", newReport).getOrThrow()
+
+        val updated = repository.updateReport(created.id, "Ahora cojea menos", "Frente a la tienda").getOrThrow()
+
+        assertEquals("Ahora cojea menos", updated.description)
+        assertEquals("Frente a la tienda", updated.reference)
+        assertEquals(created.copy(description = "Ahora cojea menos", reference = "Frente a la tienda"), updated)
+        assertEquals(updated, repository.getReport(created.id))
+        assertEquals(listOf(updated), repository.observeReportsBy("user-1").first())
+    }
+
+    @Test
+    fun updatingUnknownReportFails() = runTest {
+        assertTrue(FakeReportRepository().updateReport("missing", "Texto", null).isFailure)
+    }
+
+    @Test
+    fun updatingANonPendingReportFailsAndLeavesItUnchanged() = runTest {
+        val repository = FakeReportRepository()
+        val sheltered = SampleData.reports.first { it.status != ReportStatus.Pending }
+
+        assertTrue(repository.updateReport(sheltered.id, "Texto nuevo", null).isFailure)
+        assertEquals(sheltered, repository.getReport(sheltered.id))
+    }
+
+    @Test
+    fun deleteStillWorksAfterAnUpdate() = runTest {
+        val repository = FakeReportRepository()
+        val created = repository.createReport("user-1", newReport).getOrThrow()
+        repository.updateReport(created.id, "Otro texto", null).getOrThrow()
+
+        assertTrue(repository.deleteReport(created.id).isSuccess)
+        assertNull(repository.getReport(created.id))
+        assertTrue(repository.observeReportsBy("user-1").first().isEmpty())
+    }
+
+    @Test
     fun onlyApprovedActiveOrganizationsAreShown() = runTest {
         val shown = FakeOrganizationRepository().observeActiveOrganizations().first()
         assertTrue(shown.isNotEmpty())
