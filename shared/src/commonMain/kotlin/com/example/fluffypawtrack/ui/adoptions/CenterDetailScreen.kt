@@ -22,6 +22,11 @@ import com.example.fluffypawtrack.ui.account.AccountCard
 import com.example.fluffypawtrack.ui.account.AccountScaffold
 import com.example.fluffypawtrack.ui.account.LabeledValue
 import com.example.fluffypawtrack.ui.common.AppImage
+import com.example.fluffypawtrack.ui.common.DirectionsButton
+import com.example.fluffypawtrack.ui.common.LabeledLink
+import com.example.fluffypawtrack.ui.common.emailUri
+import com.example.fluffypawtrack.ui.common.phoneUri
+import com.example.fluffypawtrack.ui.common.socialUrl
 import com.example.fluffypawtrack.ui.common.label
 import com.example.fluffypawtrack.ui.theme.FluffyShapes
 import com.example.fluffypawtrack.ui.theme.FluffyColors
@@ -96,10 +101,11 @@ fun CenterDetailScreen(
         }
         AccountCard {
             LabeledValue("Dirección", organization.address)
+            DirectionsButton(organization.location)
             LabeledValue("Horario", organization.schedule)
-            LabeledValue("Teléfono", organization.phone)
-            LabeledValue("Correo", organization.email)
-            LabeledValue("Redes sociales", organization.social)
+            LabeledLink("Teléfono", organization.phone, ::phoneUri)
+            LabeledLink("Correo", organization.email, ::emailUri)
+            LabeledLink("Redes sociales", organization.social, ::socialUrl)
         }
         Text(
             "Animales en adopción",

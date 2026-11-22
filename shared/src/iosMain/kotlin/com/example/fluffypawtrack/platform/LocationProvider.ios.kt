@@ -11,3 +11,7 @@ actual fun rememberLocationRequester(onResult: (GeoPoint?) -> Unit): () -> Unit 
     val callback = rememberUpdatedState(onResult)
     return remember { { callback.value(null) } }
 }
+
+// iOS is not built; without a geocoder the flow shows the coordinates.
+@Composable
+actual fun rememberReverseGeocoder(): ReverseGeocoder = remember { ReverseGeocoder { null } }

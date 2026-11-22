@@ -27,13 +27,16 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.fluffypawtrack.di.LocalAppContainer
 import com.example.fluffypawtrack.domain.model.ContactDetails
-import com.example.fluffypawtrack.ui.common.AppImage
 import com.example.fluffypawtrack.ui.account.AccountCard
 import com.example.fluffypawtrack.ui.account.AccountScaffold
 import com.example.fluffypawtrack.ui.account.LabeledValue
 import com.example.fluffypawtrack.ui.auth.AuthErrorMessage
+import com.example.fluffypawtrack.ui.common.AppImage
+import com.example.fluffypawtrack.ui.common.emailUri
 import com.example.fluffypawtrack.ui.common.formatDateTime
 import com.example.fluffypawtrack.ui.common.label
+import com.example.fluffypawtrack.ui.common.openSafely
+import com.example.fluffypawtrack.ui.common.phoneUri
 import com.example.fluffypawtrack.ui.theme.FluffyColors
 import com.example.fluffypawtrack.ui.theme.FluffyShapes
 import kotlin.time.ExperimentalTime
@@ -216,13 +219,13 @@ private fun ContactBlock(contact: ContactDetails, title: String) {
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             CardActionButton(
                 "Llamar",
-                onClick = { runCatching { uriHandler.openUri("tel:${contact.phone}") } },
+                onClick = { uriHandler.openSafely(phoneUri(contact.phone)) },
                 enabled = contact.phone.isNotBlank(),
                 modifier = Modifier.weight(1f),
             )
             CardActionButton(
                 "Enviar correo",
-                onClick = { runCatching { uriHandler.openUri("mailto:${contact.email}") } },
+                onClick = { uriHandler.openSafely(emailUri(contact.email)) },
                 enabled = contact.email.isNotBlank(),
                 modifier = Modifier.weight(1f),
             )

@@ -34,6 +34,7 @@ import androidx.compose.ui.unit.dp
 import com.example.fluffypawtrack.domain.model.Priority
 import com.example.fluffypawtrack.domain.model.ReportCategory
 import com.example.fluffypawtrack.ui.common.AppImage
+import com.example.fluffypawtrack.ui.common.DirectionsButton
 import com.example.fluffypawtrack.ui.common.label
 import com.example.fluffypawtrack.ui.components.PillActionButton
 import com.example.fluffypawtrack.ui.theme.FluffyColors
@@ -171,6 +172,10 @@ internal fun LocationStep(state: NewReportUiState, actions: NewReportActions) {
                     LocationStatus.Found -> {
                         Text("Tu ubicación actual", style = MaterialTheme.typography.bodyLarge, color = FluffyColors.Brown900)
                         Text(state.address, style = MaterialTheme.typography.bodyMedium, color = FluffyColors.Brown900)
+                        state.location?.let { point ->
+                            Spacer(Modifier.height(8.dp))
+                            DirectionsButton(point)
+                        }
                     }
                     LocationStatus.Manual -> {
                         Text("No pudimos obtener tu ubicación", style = MaterialTheme.typography.bodyLarge, color = FluffyColors.Brown900)
@@ -282,6 +287,8 @@ internal fun SummaryStep(state: NewReportUiState) {
         SummaryRow("Prioridad", state.priority?.label.orEmpty())
         SummaryRow("Descripción", state.description.trim())
         SummaryRow("Ubicación", state.address.trim())
+        // Manual addresses carry a default point, so the route is offered only for a GPS fix.
+        if (state.locationStatus == LocationStatus.Found) state.location?.let { DirectionsButton(it) }
         if (state.reference.isNotBlank()) SummaryRow("Referencia", state.reference.trim())
     }
 }
