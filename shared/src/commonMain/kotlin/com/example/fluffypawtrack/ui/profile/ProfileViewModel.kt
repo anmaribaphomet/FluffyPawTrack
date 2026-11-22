@@ -3,6 +3,7 @@ package com.example.fluffypawtrack.ui.profile
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.fluffypawtrack.domain.model.ReportStatus
+import com.example.fluffypawtrack.domain.model.Role
 import com.example.fluffypawtrack.domain.repository.AuthRepository
 import com.example.fluffypawtrack.domain.repository.FavoritesRepository
 import com.example.fluffypawtrack.domain.repository.ReportRepository
@@ -21,6 +22,8 @@ data class ProfileUiState(
     val reports: Int = 0,
     val attended: Int = 0,
     val favorites: Int = 0,
+    /** Affiliates see their center's "Solicitudes de adopción" instead of the user-only rows. */
+    val isAffiliate: Boolean = false,
 ) {
     fun toProfileUser() = ProfileUser(name, email, reports, attended, favorites)
 }
@@ -48,6 +51,7 @@ class ProfileViewModel(
                         // "Atendido" means a shelter already took the case.
                         attended = reports.count { it.status != ReportStatus.Pending },
                         favorites = favorites.size,
+                        isAffiliate = user.role == Role.Affiliate,
                     )
                 }
             }

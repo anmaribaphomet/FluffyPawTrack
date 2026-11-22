@@ -1,10 +1,14 @@
 package com.example.fluffypawtrack.data.fake
 
 import com.example.fluffypawtrack.domain.model.AdoptionListing
+import com.example.fluffypawtrack.domain.model.AdoptionRequest
+import com.example.fluffypawtrack.domain.model.AdoptionRequestStatus
 import com.example.fluffypawtrack.domain.model.AppNotification
 import com.example.fluffypawtrack.domain.model.ContactRequest
 import com.example.fluffypawtrack.domain.model.ContactRequestStatus
 import com.example.fluffypawtrack.domain.model.GeoPoint
+import com.example.fluffypawtrack.domain.model.HousingTenure
+import com.example.fluffypawtrack.domain.model.HousingType
 import com.example.fluffypawtrack.domain.model.ListingStatus
 import com.example.fluffypawtrack.domain.model.NotificationType
 import com.example.fluffypawtrack.domain.model.Organization
@@ -54,7 +58,19 @@ object SampleData {
         isAnonymous = false,
     )
 
-    val users: List<UserProfile> = listOf(demoUser, otherUser)
+    /** Demo affiliate account of Patitas Callejeras HMO; signs in with [DEMO_PASSWORD]. */
+    val demoAffiliate = UserProfile(
+        id = "user-patitas",
+        email = "patitas@correo.com",
+        firstName = "Laura",
+        lastName = "Ruiz",
+        phone = "6620003001",
+        role = Role.Affiliate,
+        organizationId = "org-patitas",
+        isAnonymous = false,
+    )
+
+    val users: List<UserProfile> = listOf(demoUser, otherUser, demoAffiliate)
 
     val organizations: List<Organization> = listOf(
         Organization(
@@ -359,6 +375,46 @@ object SampleData {
             status = ContactRequestStatus.Pending,
             statusNote = null,
             createdAt = Instant.parse("2026-11-21T19:00:00Z"),
+        ),
+    )
+
+    /** Pending requests so both "Mis solicitudes de adopción" and the center's list have data. */
+    val adoptionRequests: List<AdoptionRequest> = listOf(
+        AdoptionRequest(
+            id = "adoption-request-1",
+            listingId = "listing-2",
+            organizationId = "org-patitas",
+            requesterId = demoUser.id,
+            fullName = "${demoUser.firstName} ${demoUser.lastName}",
+            phone = demoUser.phone.orEmpty(),
+            email = demoUser.email.orEmpty(),
+            housingType = HousingType.Apartment,
+            housingTenure = HousingTenure.Rented,
+            hasOtherPets = false,
+            otherPets = null,
+            reason = "Vivo sola, trabajo desde casa y quiero darle un hogar tranquilo.",
+            status = AdoptionRequestStatus.Pending,
+            rejectionReason = null,
+            createdAt = Instant.parse("2026-11-21T18:30:00Z"),
+            respondedAt = null,
+        ),
+        AdoptionRequest(
+            id = "adoption-request-2",
+            listingId = "listing-3",
+            organizationId = "org-patitas",
+            requesterId = demoUser.id,
+            fullName = "${demoUser.firstName} ${demoUser.lastName}",
+            phone = demoUser.phone.orEmpty(),
+            email = demoUser.email.orEmpty(),
+            housingType = HousingType.House,
+            housingTenure = HousingTenure.Owned,
+            hasOtherPets = true,
+            otherPets = "Una gata de 3 años",
+            reason = "Mis papás tienen patio grande y salimos a caminar todos los días.",
+            status = AdoptionRequestStatus.Pending,
+            rejectionReason = null,
+            createdAt = Instant.parse("2026-11-22T01:10:00Z"),
+            respondedAt = null,
         ),
     )
 }

@@ -43,6 +43,8 @@ import com.example.fluffypawtrack.ui.theme.FluffyPawTrackTheme
 import com.example.fluffypawtrack.ui.theme.FluffyShadows
 import com.example.fluffypawtrack.ui.theme.FluffyShapes
 import fluffypawtrack.shared.generated.resources.Res
+import fluffypawtrack.shared.generated.resources.ic_heart
+import fluffypawtrack.shared.generated.resources.ic_home
 import fluffypawtrack.shared.generated.resources.ic_person_outline
 import fluffypawtrack.shared.generated.resources.ic_notification
 import fluffypawtrack.shared.generated.resources.ic_report
@@ -72,6 +74,8 @@ fun ProfileRoute(
     onFavorites: () -> Unit,
     modifier: Modifier = Modifier,
     onContactRequests: () -> Unit = {},
+    onMyAdoptionRequests: () -> Unit = {},
+    onCenterAdoptionRequests: () -> Unit = {},
 ) {
     val container = LocalAppContainer.current
     val viewModel = viewModel {
@@ -86,6 +90,9 @@ fun ProfileRoute(
         onMyReports = onMyReports,
         onFavorites = onFavorites,
         onContactRequests = onContactRequests,
+        isAffiliate = state.isAffiliate,
+        onMyAdoptionRequests = onMyAdoptionRequests,
+        onCenterAdoptionRequests = onCenterAdoptionRequests,
     )
 }
 
@@ -99,6 +106,9 @@ fun ProfileScreen(
     onMyReports: () -> Unit = {},
     onFavorites: () -> Unit = {},
     onContactRequests: () -> Unit = {},
+    isAffiliate: Boolean = false,
+    onMyAdoptionRequests: () -> Unit = {},
+    onCenterAdoptionRequests: () -> Unit = {},
 ) {
     Box(modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
         ProfileBackdrop()
@@ -153,6 +163,21 @@ fun ProfileScreen(
                     subtitle = "Enviadas y recibidas",
                     onClick = onContactRequests,
                 )
+                if (isAffiliate) {
+                    ProfileOptionRow(
+                        icon = painterResource(Res.drawable.ic_home),
+                        title = "Solicitudes de adopción",
+                        subtitle = "Aprueba o rechaza las de tus animales",
+                        onClick = onCenterAdoptionRequests,
+                    )
+                } else {
+                    ProfileOptionRow(
+                        icon = painterResource(Res.drawable.ic_heart),
+                        title = "Mis solicitudes de adopción",
+                        subtitle = "Consulta su estado",
+                        onClick = onMyAdoptionRequests,
+                    )
+                }
             }
         }
 
