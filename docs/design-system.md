@@ -22,8 +22,8 @@ Units: `dp` for sizes, `sp` for text (Compose Multiplatform).
 | `cream-100` | `#F0E2D2` | — | Input fields, secondary surfaces |
 | `white` | `#FFFFFF` | — | Pill buttons, cards on colored backgrounds |
 | `peach-100` | `#FFE3BB` | `#FFE0B9`, `#FFDDB9`, `#FAE9CC` | Light highlight surfaces |
-| `peach-200` | `#FCD4A1` | `#F4BD82` | Secondary surfaces on Home |
-| `peach-300` | `#FEBE99` | — | Home background |
+| `peach-200` | `#FCD4A1` | `#F4BD82` | Home background, profile stat cards |
+| `peach-300` | `#FEBE99` | — | Wave borders on Profile |
 | `orange-500` | `#F8AE45` | `#FFA03C`, `#FF9526` | Primary brand color, avatar, inactive nav circles |
 | `orange-700` | `#FF8300` | `#F9850C` | Active nav tab, pressed state |
 | `sage-200` | `#D9E1B2` | `#D8E0AE` | Bottom wave, light green surfaces |
@@ -41,7 +41,7 @@ Discarded as non-brand or stray values: `#204B38` (logo asset), `#E9D77B`,
 | Semantic token | Primitive |
 |---|---|
 | `background` | `cream-50` |
-| `background-home` | `peach-300` |
+| `background-home` | `peach-200` |
 | `surface` | `white` |
 | `surface-variant` | `cream-100` |
 | `surface-card` | `brown-300` |
@@ -66,6 +66,7 @@ AA requires 4.5:1 for normal text and 3:1 for large text (≥ 18.66 sp bold or �
 |---|---|---|
 | `brown-900` / `cream-50` | 8.59 | ✅ AA |
 | `brown-900` / `white` | 9.51 | ✅ AA |
+| `brown-900` / `peach-200` | 6.83 | ✅ AA |
 | `brown-900` / `peach-300` | 5.91 | ✅ AA |
 | `brown-900` / `sage-400` | 5.41 | ✅ AA |
 | `brown-900` / `orange-500` | 5.04 | ✅ AA |

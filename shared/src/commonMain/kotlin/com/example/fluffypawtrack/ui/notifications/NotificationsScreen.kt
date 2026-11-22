@@ -28,7 +28,7 @@ import com.example.fluffypawtrack.domain.model.AppNotification
 import com.example.fluffypawtrack.domain.model.NotificationType
 import com.example.fluffypawtrack.ui.components.NotificationCard
 import com.example.fluffypawtrack.ui.components.ProfileHeader
-import com.example.fluffypawtrack.ui.theme.FluffyPalette
+import com.example.fluffypawtrack.ui.theme.FluffyColors
 import com.example.fluffypawtrack.ui.theme.FluffyPawTrackTheme
 import com.example.fluffypawtrack.ui.theme.FluffyShadows
 import com.example.fluffypawtrack.ui.theme.FluffyShapes
@@ -62,8 +62,8 @@ fun NotificationsScreen(
                 Text(
                     text = "Notificaciones",
                     modifier = Modifier.fillMaxWidth().padding(start = 13.dp, bottom = 13.dp),
-                    style = MaterialTheme.typography.titleMedium,
-                    color = FluffyPalette.TextBrown,
+                    style = MaterialTheme.typography.headlineSmall,
+                    color = FluffyColors.Brown900,
                 )
             }
             if (notifications.isEmpty()) {
@@ -96,7 +96,7 @@ private fun EmptyNotifications(modifier: Modifier = Modifier) {
             Modifier
                 .size(80.dp)
                 .dropShadow(FluffyShapes.Ellipse, FluffyShadows.Drop)
-                .background(FluffyPalette.Sand, FluffyShapes.Ellipse),
+                .background(FluffyColors.Cream100, FluffyShapes.Ellipse),
             contentAlignment = Alignment.Center,
         ) {
             Image(painterResource(Res.drawable.ic_notification), contentDescription = null, modifier = Modifier.size(42.dp))
@@ -104,15 +104,15 @@ private fun EmptyNotifications(modifier: Modifier = Modifier) {
         Spacer(Modifier.height(16.dp))
         Text(
             text = "No tienes notificaciones",
-            style = MaterialTheme.typography.titleMedium,
-            color = FluffyPalette.TextBrown,
+            style = MaterialTheme.typography.titleLarge,
+            color = FluffyColors.Brown900,
             textAlign = TextAlign.Center,
         )
         Spacer(Modifier.height(6.dp))
         Text(
             text = "Aquí verás los avisos sobre tus reportes y adopciones.",
-            style = MaterialTheme.typography.labelMedium,
-            color = FluffyPalette.MessageBrown,
+            style = MaterialTheme.typography.bodyMedium,
+            color = FluffyColors.Brown900,
             textAlign = TextAlign.Center,
         )
     }

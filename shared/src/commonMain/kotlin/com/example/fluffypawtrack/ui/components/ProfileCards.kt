@@ -28,7 +28,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.example.fluffypawtrack.ui.theme.FluffyPalette
+import com.example.fluffypawtrack.ui.theme.FluffyColors
 import com.example.fluffypawtrack.ui.theme.FluffyPawTrackTheme
 import com.example.fluffypawtrack.ui.theme.FluffyShadows
 import com.example.fluffypawtrack.ui.theme.FluffyShapes
@@ -45,13 +45,13 @@ fun ProfileStatCard(value: String, label: String, modifier: Modifier = Modifier)
         modifier = modifier
             .size(91.dp, 63.dp)
             .dropShadow(FluffyShapes.Card, FluffyShadows.Drop)
-            .background(FluffyPalette.Apricot, FluffyShapes.Card)
+            .background(FluffyColors.Peach200, FluffyShapes.Card)
             .padding(top = 11.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Text(value, style = MaterialTheme.typography.titleMedium, color = FluffyPalette.TextBrown)
+        Text(value, style = MaterialTheme.typography.bodyLarge, color = FluffyColors.Brown900)
         Spacer(Modifier.height(5.dp))
-        Text(label, style = MaterialTheme.typography.labelMedium, color = Color.White, maxLines = 1)
+        Text(label, style = MaterialTheme.typography.labelLarge, color = FluffyColors.Brown900, maxLines = 1)
     }
 }
 
@@ -70,7 +70,7 @@ fun ProfileOptionRow(
             .size(309.dp, 63.dp)
             .dropShadow(FluffyShapes.OptionRow, FluffyShadows.Drop)
             .clip(FluffyShapes.OptionRow)
-            .background(FluffyPalette.Apricot)
+            .background(FluffyColors.Peach200)
             .clickable(role = Role.Button, onClick = onClick)
             .padding(start = 18.dp, end = 15.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -80,12 +80,12 @@ fun ProfileOptionRow(
         }
         Spacer(Modifier.width(10.dp))
         Column(Modifier.weight(1f).fillMaxHeight(), verticalArrangement = Arrangement.Center) {
-            Text(title, style = MaterialTheme.typography.labelLarge, color = FluffyPalette.TextBrown, maxLines = 1)
+            Text(title, style = MaterialTheme.typography.bodyLarge, color = FluffyColors.Brown900, maxLines = 1)
             Spacer(Modifier.height(6.dp))
             Text(
                 subtitle,
-                style = MaterialTheme.typography.labelMedium,
-                color = Color.White,
+                style = MaterialTheme.typography.bodyMedium,
+                color = FluffyColors.Brown900,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
@@ -102,7 +102,7 @@ fun ProfileOptionRow(
 @Composable
 private fun ProfileCardsPreview() {
     FluffyPawTrackTheme {
-        Column(Modifier.background(FluffyPalette.Sheet).padding(16.dp)) {
+        Column(Modifier.background(FluffyColors.White).padding(16.dp)) {
             Row(horizontalArrangement = Arrangement.spacedBy(18.dp)) {
                 ProfileStatCard("01", "Reportes")
                 ProfileStatCard("00", "Atendidos")

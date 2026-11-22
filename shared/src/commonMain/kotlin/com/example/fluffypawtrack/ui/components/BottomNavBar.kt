@@ -23,7 +23,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.example.fluffypawtrack.ui.theme.FluffyPalette
+import com.example.fluffypawtrack.ui.theme.FluffyColors
 import com.example.fluffypawtrack.ui.theme.FluffyPawTrackTheme
 import com.example.fluffypawtrack.ui.theme.FluffyShadows
 import com.example.fluffypawtrack.ui.theme.FluffyShapes
@@ -58,9 +58,9 @@ fun BottomNavBar(
         Box(
             Modifier
                 .placeAt((-62).dp, 0.dp, 484.54.dp, 307.73.dp)
-                .background(MaterialTheme.colorScheme.tertiary, FluffyShapes.Grass)
+                .background(FluffyColors.Sage400, FluffyShapes.Grass)
                 .innerShadow(FluffyShapes.Grass, FluffyShadows.InnerDeep)
-                .border(1.dp, FluffyPalette.PeachBorder, FluffyShapes.Grass),
+                .border(1.dp, FluffyColors.Peach200, FluffyShapes.Grass),
         )
         Box(Modifier.placeAt(0.dp, 77.dp, DesignWidth, 86.dp)) {
             OuterShadow(FluffyShapes.NavBar, FluffyShadows.NavBar, Modifier.fillMaxSize())
@@ -108,7 +108,7 @@ private fun NavBarItem(
         Text(
             text = destination.label,
             style = MaterialTheme.typography.labelSmall,
-            color = FluffyPalette.TextBrown,
+            color = FluffyColors.Brown900,
             maxLines = 1,
             softWrap = false,
         )
@@ -120,6 +120,6 @@ private fun NavBarItem(
 private fun BottomNavBarPreview() {
     FluffyPawTrackTheme {
         var selected by remember { mutableStateOf(HomeDestination.Inicio) }
-        BottomNavBar(selected, { selected = it }, Modifier.background(FluffyPalette.Peach))
+        BottomNavBar(selected, { selected = it }, Modifier.background(FluffyColors.Peach200))
     }
 }

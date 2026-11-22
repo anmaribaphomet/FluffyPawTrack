@@ -24,7 +24,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.example.fluffypawtrack.ui.theme.FluffyPalette
+import com.example.fluffypawtrack.ui.theme.FluffySemanticColors
+import com.example.fluffypawtrack.ui.theme.FluffyColors
 import com.example.fluffypawtrack.ui.theme.FluffyPawTrackTheme
 import com.example.fluffypawtrack.ui.theme.FluffyShadows
 import com.example.fluffypawtrack.ui.theme.FluffyShapes
@@ -73,7 +74,7 @@ fun HouseCard(
     content: @Composable BoxScope.() -> Unit,
 ) {
     val set = earSet(ears)
-    val color = MaterialTheme.colorScheme.secondary
+    val color = FluffySemanticColors.SurfaceCard
     DesignFrame(height = set.extent + bodyHeight, modifier = modifier) {
         Box(
             Modifier
@@ -103,7 +104,7 @@ fun CardCallToAction(
     actionIcon: Painter,
     onAction: () -> Unit,
     modifier: Modifier = Modifier,
-    titleStyle: TextStyle = MaterialTheme.typography.titleSmall,
+    titleStyle: TextStyle = MaterialTheme.typography.titleMedium,
     actionIconSize: Dp = 15.dp,
     descriptionWidth: Dp = 172.dp,
 ) {
@@ -111,13 +112,13 @@ fun CardCallToAction(
         modifier = modifier.width(200.dp).fillMaxHeight(),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Text(title, style = titleStyle, color = FluffyPalette.TitleBrown, textAlign = TextAlign.Center)
+        Text(title, style = titleStyle, color = FluffyColors.Brown900, textAlign = TextAlign.Center)
         Spacer(Modifier.height(6.dp))
         Text(
             text = description,
             modifier = Modifier.width(descriptionWidth),
-            style = MaterialTheme.typography.bodySmall,
-            color = FluffyPalette.TextDark,
+            style = MaterialTheme.typography.bodyMedium,
+            color = FluffyColors.Brown900,
             textAlign = TextAlign.Center,
         )
         Spacer(Modifier.weight(1f))
@@ -129,7 +130,7 @@ fun CardCallToAction(
 @Composable
 private fun HouseCardPreview() {
     FluffyPawTrackTheme {
-        Box(Modifier.background(FluffyPalette.Peach).padding(vertical = 16.dp)) {
+        Box(Modifier.background(FluffyColors.Peach200).padding(vertical = 16.dp)) {
             HouseCard(ears = HouseCardEars.Soft, bodyHeight = 157.dp) {
                 Image(
                     painterResource(Res.drawable.img_cat_phone),

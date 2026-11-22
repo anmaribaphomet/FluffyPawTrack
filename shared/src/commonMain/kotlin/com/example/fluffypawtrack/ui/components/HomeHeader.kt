@@ -10,7 +10,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
-import com.example.fluffypawtrack.ui.theme.FluffyPalette
+import com.example.fluffypawtrack.ui.theme.FluffyColors
 import com.example.fluffypawtrack.ui.theme.FluffyPawTrackTheme
 import com.example.fluffypawtrack.ui.theme.FluffyShadows
 import com.example.fluffypawtrack.ui.theme.FluffyShapes
@@ -30,21 +30,21 @@ fun HomeHeader(onProfileClick: () -> Unit, modifier: Modifier = Modifier) {
             Modifier
                 .placeAt((-32).dp, 34.dp, 436.dp, 103.dp)
                 .dropShadow(FluffyShapes.HeaderFront, FluffyShadows.Drop)
-                .background(FluffyPalette.Cream, FluffyShapes.HeaderFront),
+                .background(FluffyColors.Cream50, FluffyShapes.HeaderFront),
         )
         Box(
             Modifier
                 .placeAt((-18.36).dp, 42.38.dp, 445.76.dp, 103.dp)
                 .graphicsLayer { rotationZ = -5f }
                 .dropShadow(FluffyShapes.HeaderBack, FluffyShadows.Drop)
-                .background(FluffyPalette.Cream, FluffyShapes.HeaderBack),
+                .background(FluffyColors.Cream50, FluffyShapes.HeaderBack),
         )
         // Logotipo: círculo naranja + pin + "Fluffy PawTrack"
         Box(
             Modifier
                 .placeAt(22.dp, 54.dp, 60.dp, 57.dp)
                 .dropShadow(FluffyShapes.Ellipse, FluffyShadows.Drop)
-                .background(FluffyPalette.Orange, FluffyShapes.Ellipse),
+                .background(FluffyColors.Orange500, FluffyShapes.Ellipse),
         )
         Image(
             painter = painterResource(Res.drawable.img_logo_pin),
@@ -59,7 +59,7 @@ fun HomeHeader(onProfileClick: () -> Unit, modifier: Modifier = Modifier) {
         CircleIconButton(
             icon = painterResource(Res.drawable.ic_user),
             contentDescription = "Perfil",
-            containerColor = FluffyPalette.OrangeLight,
+            containerColor = FluffyColors.Orange500,
             onClick = onProfileClick,
             modifier = Modifier.placeAt(298.dp, 54.dp, 60.dp, 57.dp),
             size = DpSize(60.dp, 57.dp),
@@ -72,6 +72,6 @@ fun HomeHeader(onProfileClick: () -> Unit, modifier: Modifier = Modifier) {
 @Composable
 private fun HomeHeaderPreview() {
     FluffyPawTrackTheme {
-        HomeHeader(onProfileClick = {}, modifier = Modifier.background(FluffyPalette.Peach))
+        HomeHeader(onProfileClick = {}, modifier = Modifier.background(FluffyColors.Peach200))
     }
 }

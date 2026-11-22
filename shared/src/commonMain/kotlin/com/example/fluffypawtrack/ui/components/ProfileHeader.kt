@@ -20,7 +20,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.example.fluffypawtrack.ui.theme.FluffyPalette
+import com.example.fluffypawtrack.ui.theme.FluffyColors
 import com.example.fluffypawtrack.ui.theme.FluffyPawTrackTheme
 import com.example.fluffypawtrack.ui.theme.FluffyShadows
 import com.example.fluffypawtrack.ui.theme.FluffyShapes
@@ -44,21 +44,21 @@ fun ProfileHeader(onBack: () -> Unit, modifier: Modifier = Modifier, showLogoBad
             Modifier
                 .placeAt((-32).dp, 34.dp, 436.dp, 103.dp)
                 .dropShadow(FluffyShapes.HeaderFront, FluffyShadows.Drop)
-                .background(FluffyPalette.Cream, FluffyShapes.HeaderFront),
+                .background(FluffyColors.Cream50, FluffyShapes.HeaderFront),
         )
         Box(
             Modifier
                 .placeAt((-21.91).dp, 34.21.dp, 445.76.dp, 113.26.dp)
                 .graphicsLayer { rotationZ = -5f }
                 .dropShadow(FluffyShapes.HeaderBackTall, FluffyShadows.Drop)
-                .background(FluffyPalette.Cream, FluffyShapes.HeaderBackTall),
+                .background(FluffyColors.Cream50, FluffyShapes.HeaderBackTall),
         )
         if (showLogoBadge) {
             Box(
                 Modifier
                     .placeAt(22.dp, 59.dp, 60.dp, 57.dp)
                     .dropShadow(FluffyShapes.Ellipse, FluffyShadows.Drop)
-                    .background(FluffyPalette.TitleOrange, FluffyShapes.Ellipse),
+                    .background(FluffyColors.Brown300, FluffyShapes.Ellipse),
             )
         }
         Image(
@@ -91,7 +91,7 @@ private fun HeaderBackButton(onClick: () -> Unit, modifier: Modifier = Modifier)
             modifier = Modifier.size(31.dp),
         )
         Spacer(Modifier.height(5.dp))
-        Text("Regresar", style = MaterialTheme.typography.labelSmall, color = FluffyPalette.TextBrown, maxLines = 1)
+        Text("Regresar", style = MaterialTheme.typography.labelSmall, color = FluffyColors.Brown900, maxLines = 1)
     }
 }
 
@@ -99,6 +99,6 @@ private fun HeaderBackButton(onClick: () -> Unit, modifier: Modifier = Modifier)
 @Composable
 private fun ProfileHeaderPreview() {
     FluffyPawTrackTheme {
-        ProfileHeader(onBack = {}, modifier = Modifier.background(FluffyPalette.Tangerine))
+        ProfileHeader(onBack = {}, modifier = Modifier.background(FluffyColors.Orange500))
     }
 }

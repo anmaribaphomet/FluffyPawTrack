@@ -21,7 +21,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
-import com.example.fluffypawtrack.ui.theme.FluffyPalette
+import com.example.fluffypawtrack.ui.theme.FluffyColors
 import com.example.fluffypawtrack.ui.theme.FluffyPawTrackTheme
 import com.example.fluffypawtrack.ui.theme.FluffyShadows
 import com.example.fluffypawtrack.ui.theme.FluffyShapes
@@ -60,11 +60,11 @@ fun CircleIconButton(
 @Composable
 private fun CircleIconButtonPreview() {
     FluffyPawTrackTheme {
-        Row(Modifier.background(FluffyPalette.Peach).padding(16.dp)) {
+        Row(Modifier.background(FluffyColors.Peach200).padding(16.dp)) {
             CircleIconButton(
                 icon = painterResource(Res.drawable.ic_user),
                 contentDescription = "Perfil",
-                containerColor = FluffyPalette.OrangeLight,
+                containerColor = FluffyColors.Orange500,
                 onClick = {},
                 size = DpSize(60.dp, 57.dp),
                 iconSize = 33.dp,
@@ -72,7 +72,7 @@ private fun CircleIconButtonPreview() {
             CircleIconButton(
                 icon = painterResource(Res.drawable.ic_home),
                 contentDescription = "Inicio",
-                containerColor = FluffyPalette.Orange,
+                containerColor = FluffyColors.Orange500,
                 onClick = {},
                 modifier = Modifier.padding(start = 16.dp),
             )

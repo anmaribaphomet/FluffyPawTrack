@@ -32,7 +32,8 @@ import com.example.fluffypawtrack.ui.components.HomeHeaderHeight
 import com.example.fluffypawtrack.ui.components.HouseCard
 import com.example.fluffypawtrack.ui.components.HouseCardEars
 import com.example.fluffypawtrack.ui.components.placeAt
-import com.example.fluffypawtrack.ui.theme.FluffyPalette
+import com.example.fluffypawtrack.ui.theme.FluffySemanticColors
+import com.example.fluffypawtrack.ui.theme.FluffyColors
 import com.example.fluffypawtrack.ui.theme.FluffyPawTrackTheme
 import fluffypawtrack.shared.generated.resources.Res
 import fluffypawtrack.shared.generated.resources.ic_camera
@@ -52,7 +53,7 @@ fun HomeScreen(
 ) {
     var selected by remember { mutableStateOf(HomeDestination.Inicio) }
 
-    Box(modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
+    Box(modifier.fillMaxSize().background(FluffySemanticColors.BackgroundHome)) {
         Column(
             Modifier
                 .fillMaxSize()
@@ -62,8 +63,8 @@ fun HomeScreen(
             Text(
                 text = "¡Hola, amante de los\nanimales!",
                 modifier = Modifier.fillMaxWidth(),
-                style = MaterialTheme.typography.headlineSmall,
-                color = FluffyPalette.TitleOrange,
+                style = MaterialTheme.typography.displaySmall,
+                color = FluffyColors.Brown900,
                 textAlign = TextAlign.Center,
             )
             ReportAnimalCard(onReportAnimal)
@@ -118,7 +119,7 @@ private fun AdoptionCard(onClick: () -> Unit) {
             actionIcon = painterResource(Res.drawable.ic_heart),
             actionIconSize = 17.dp,
             onAction = onClick,
-            titleStyle = MaterialTheme.typography.titleLarge,
+            titleStyle = MaterialTheme.typography.titleMedium,
             modifier = Modifier.padding(start = 115.dp, top = 12.dp, bottom = 8.dp),
         )
     }

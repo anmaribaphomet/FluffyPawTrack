@@ -23,7 +23,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.example.fluffypawtrack.ui.theme.FluffyPalette
+import com.example.fluffypawtrack.ui.theme.FluffyColors
 import com.example.fluffypawtrack.ui.theme.FluffyPawTrackTheme
 import com.example.fluffypawtrack.ui.theme.FluffyShapes
 import fluffypawtrack.shared.generated.resources.Res
@@ -50,7 +50,7 @@ fun PillActionButton(
             Modifier
                 .padding(top = GlowOffset)
                 .size(PillWidth, PillHeight)
-                .background(FluffyPalette.LimeGlow, FluffyShapes.Pill),
+                .background(FluffyColors.Sage200, FluffyShapes.Pill),
         )
         Row(
             modifier = Modifier
@@ -67,8 +67,8 @@ fun PillActionButton(
             Text(
                 text = text,
                 modifier = Modifier.weight(1f),
-                style = MaterialTheme.typography.labelSmall,
-                color = FluffyPalette.TextBrown,
+                style = MaterialTheme.typography.labelLarge,
+                color = FluffyColors.Brown900,
                 textAlign = TextAlign.Center,
                 maxLines = 1,
             )
@@ -85,7 +85,7 @@ fun PillActionButton(
 @Composable
 private fun PillActionButtonPreview() {
     FluffyPawTrackTheme {
-        Column(Modifier.background(FluffyPalette.CardBrown).padding(16.dp)) {
+        Column(Modifier.background(FluffyColors.Brown300).padding(16.dp)) {
             PillActionButton("Reportar un animal", painterResource(Res.drawable.ic_camera), onClick = {})
             Spacer(Modifier.height(12.dp))
             PillActionButton("Ver adopciones", painterResource(Res.drawable.ic_heart), onClick = {}, iconSize = 17.dp)

@@ -34,7 +34,7 @@ import com.example.fluffypawtrack.ui.components.ProfileHeader
 import com.example.fluffypawtrack.ui.components.ProfileOptionRow
 import com.example.fluffypawtrack.ui.components.ProfileStatCard
 import com.example.fluffypawtrack.ui.components.placeAt
-import com.example.fluffypawtrack.ui.theme.FluffyPalette
+import com.example.fluffypawtrack.ui.theme.FluffyColors
 import com.example.fluffypawtrack.ui.theme.FluffyPawTrackTheme
 import com.example.fluffypawtrack.ui.theme.FluffyShadows
 import com.example.fluffypawtrack.ui.theme.FluffyShapes
@@ -82,11 +82,11 @@ fun ProfileScreen(
             Spacer(Modifier.height(9.dp))
             Text(
                 text = user.name,
-                style = MaterialTheme.typography.headlineSmall.copy(lineHeight = 21.sp),
-                color = FluffyPalette.TitleBrown,
+                style = MaterialTheme.typography.headlineSmall,
+                color = FluffyColors.Brown900,
                 textAlign = TextAlign.Center,
             )
-            Text(user.email, style = MaterialTheme.typography.labelMedium, color = FluffyPalette.EmailTan)
+            Text(user.email, style = MaterialTheme.typography.bodyMedium, color = FluffyColors.Brown900)
             Spacer(Modifier.height(20.dp))
             Row(Modifier.width(310.dp), horizontalArrangement = Arrangement.SpaceBetween) {
                 ProfileStatCard(user.reports.twoDigits(), "Reportes")
@@ -131,7 +131,7 @@ private fun ProfileBackdrop() {
                 .requiredWidth(359.dp)
                 .fillMaxHeight()
                 .dropShadow(FluffyShapes.ProfileSheet, FluffyShadows.Drop)
-                .background(FluffyPalette.Sheet, FluffyShapes.ProfileSheet),
+                .background(FluffyColors.White, FluffyShapes.ProfileSheet),
 
         )
     }
@@ -140,8 +140,8 @@ private fun ProfileBackdrop() {
             Modifier
                 .placeAt((-19).dp, (-37).dp, 440.dp, 242.dp)
                 .dropShadow(FluffyShapes.TangerineDripTop, FluffyShadows.Drop)
-                .background(FluffyPalette.Tangerine, FluffyShapes.TangerineDripTop)
-                .border(1.dp, FluffyPalette.TangerineBorder, FluffyShapes.TangerineDripTop),
+                .background(FluffyColors.Orange500, FluffyShapes.TangerineDripTop)
+                .border(1.dp, FluffyColors.Peach300, FluffyShapes.TangerineDripTop),
         )
     }
     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.BottomCenter) {
@@ -149,9 +149,9 @@ private fun ProfileBackdrop() {
             Box(
                 Modifier
                     .placeAt((-9).dp, 0.dp, 440.dp, 242.dp)
-                    .background(FluffyPalette.Tangerine, FluffyShapes.TangerineDripBottom)
+                    .background(FluffyColors.Orange500, FluffyShapes.TangerineDripBottom)
                     .innerShadow(FluffyShapes.TangerineDripBottom, FluffyShadows.Inner)
-                    .border(1.dp, FluffyPalette.TangerineBorder, FluffyShapes.TangerineDripBottom),
+                    .border(1.dp, FluffyColors.Peach300, FluffyShapes.TangerineDripBottom),
             )
         }
     }
@@ -162,7 +162,7 @@ private fun ProfileAvatar() {
     Box(
         Modifier
             .size(80.dp, 85.dp)
-            .background(FluffyPalette.TitleOrange, FluffyShapes.Ellipse)
+            .background(FluffyColors.Brown300, FluffyShapes.Ellipse)
             .innerShadow(FluffyShapes.Ellipse, FluffyShadows.Inner),
         contentAlignment = Alignment.TopStart,
 

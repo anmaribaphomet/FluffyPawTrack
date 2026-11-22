@@ -24,7 +24,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.fluffypawtrack.domain.model.AppNotification
 import com.example.fluffypawtrack.domain.model.NotificationType
-import com.example.fluffypawtrack.ui.theme.FluffyPalette
+import com.example.fluffypawtrack.ui.theme.FluffyColors
 import com.example.fluffypawtrack.ui.theme.FluffyPawTrackTheme
 import com.example.fluffypawtrack.ui.theme.FluffyShapes
 import fluffypawtrack.shared.generated.resources.Res
@@ -61,7 +61,7 @@ fun NotificationCard(
     modifier: Modifier = Modifier,
     now: Instant = Clock.System.now(),
 ) {
-    val background = if (notification.isRead) FluffyPalette.CardGlass.copy(alpha = 0.35f) else FluffyPalette.CardGlass
+    val background = if (notification.isRead) FluffyColors.White.copy(alpha = 0.6f).copy(alpha = 0.35f) else FluffyColors.White.copy(alpha = 0.6f)
     Row(
         modifier = modifier
             .width(324.dp)
@@ -83,25 +83,25 @@ fun NotificationCard(
                 Text(
                     text = notification.title,
                     modifier = Modifier.weight(1f),
-                    style = MaterialTheme.typography.titleMedium,
-                    color = FluffyPalette.TextBrown,
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = FluffyColors.Brown900,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
                 if (!notification.isRead) {
-                    Box(Modifier.size(6.dp).background(FluffyPalette.Orange, FluffyShapes.Ellipse))
+                    Box(Modifier.size(6.dp).background(FluffyColors.Orange500, FluffyShapes.Ellipse))
                     Spacer(Modifier.width(4.dp))
                 }
                 Text(
                     text = relativeTimeLabel(notification.receivedAt, now),
                     style = MaterialTheme.typography.labelSmall,
-                    color = FluffyPalette.MessageBrown,
+                    color = FluffyColors.Brown900,
                 )
             }
             Text(
                 text = notification.message,
-                style = MaterialTheme.typography.labelSmall,
-                color = FluffyPalette.MessageBrown,
+                style = MaterialTheme.typography.bodyMedium,
+                color = FluffyColors.Brown900,
             )
         }
     }
@@ -127,7 +127,7 @@ private fun NotificationCardPreview() {
     val now = Clock.System.now()
     FluffyPawTrackTheme {
         Column(
-            Modifier.background(FluffyPalette.Peach).padding(16.dp),
+            Modifier.background(FluffyColors.Peach200).padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             NotificationCard(

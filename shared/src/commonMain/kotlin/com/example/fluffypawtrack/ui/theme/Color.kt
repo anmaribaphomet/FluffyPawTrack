@@ -3,50 +3,57 @@ package com.example.fluffypawtrack.ui.theme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.ui.graphics.Color
 
-/** Paleta extraída del diseño de Figma (Fluffy PawTrack / INICIO). */
-object FluffyPalette {
-    val Peach = Color(0xFFFCD4A1)          // Fondo de pantalla
-    val PeachBorder = Color(0xFFFAD3A2)    // Borde del pasto
-    val Cream = Color(0xFFF8F3E7)          // Cabecera y botones píldora
-    val Sand = Color(0xFFF0E2D2)           // Botones circulares de navegación
-    val CardBrown = Color(0xFFC5A67E)      // Tarjetas en forma de casita
-    val Orange = Color(0xFFFF9526)         // Acento principal / ítem seleccionado
-    val OrangeLight = Color(0xFFF8AF49)    // Botón de perfil
-    val Grass = Color(0xFFBFC98D)          // Pasto inferior
-    val Mint = Color(0xFFA2CEAA)           // "Track" del logotipo
-    val LimeGlow = Color(0x33D4FF00)       // Resplandor bajo los botones píldora
-    val TitleOrange = Color(0xFFDEA467)    // Saludo principal
-    val TitleBrown = Color(0xFF825D35)     // Títulos de tarjetas
-    val TextBrown = Color(0xFF633D14)      // Etiquetas
-    val TextDark = Color(0xFF2D2D2D)       // Texto descriptivo
+/** Primitive color tokens from docs/design-system.md §1.1. */
+object FluffyColors {
+    val Brown900 = Color(0xFF633D14)
+    val Brown600 = Color(0xFFAA9885)
+    val Brown300 = Color(0xFFC5A67E)
+    val Cream50 = Color(0xFFF8F3E7)
+    val Cream100 = Color(0xFFF0E2D2)
+    val White = Color(0xFFFFFFFF)
+    val Peach100 = Color(0xFFFFE3BB)
+    val Peach200 = Color(0xFFFCD4A1)
+    val Peach300 = Color(0xFFFEBE99)
+    val Orange500 = Color(0xFFF8AE45)
+    val Orange700 = Color(0xFFFF8300)
+    val Sage200 = Color(0xFFD9E1B2)
+    val Sage400 = Color(0xFFBFC98D)
+    val Sage700 = Color(0xFF7A8542)
+    val Pink400 = Color(0xFFFF8F9E)
+    val Neutral300 = Color(0xFFD9D9D9)
+    val Neutral900 = Color(0xFF2D2D2D)
+}
 
-    // Perfil (GESTION DE CUENTA)
-    val Sheet = Color(0xFFFFFFFF)          // Hoja blanca central
-    val Apricot = Color(0xFFF4BD82)        // Tarjetas de estadísticas y opciones
-    val Tangerine = Color(0xFFFFA03C)      // Ondas naranjas superior e inferior
-    val TangerineBorder = Color(0xFFFEBE99)
-    val EmailTan = Color(0xFFDDAB75)       // Correo bajo el nombre
-
-    // Notificaciones
-    val MessageBrown = Color(0xFF8D673E)   // Cuerpo del mensaje
-    val CardGlass = Color(0x99FFFFFF)      // Fondo de tarjeta (blanco 60 %)
+/**
+ * Semantic tokens from docs/design-system.md §1.2 that have no Material slot.
+ * Text on any of these surfaces is [FluffyColors.Brown900].
+ */
+object FluffySemanticColors {
+    val BackgroundHome = FluffyColors.Peach200
+    val SurfaceCard = FluffyColors.Brown300
+    val SurfaceSettings = FluffyColors.Sage400
+    val PrimaryStrong = FluffyColors.Orange700
+    val OnSurfaceMuted = FluffyColors.Brown600
+    val Accent = FluffyColors.Pink400
+    val Disabled = FluffyColors.Neutral300
 }
 
 internal val FluffyLightColorScheme = lightColorScheme(
-    primary = FluffyPalette.Orange,
-    onPrimary = Color.White,
-    primaryContainer = FluffyPalette.OrangeLight,
-    onPrimaryContainer = FluffyPalette.TextBrown,
-    secondary = FluffyPalette.CardBrown,
-    onSecondary = FluffyPalette.TextDark,
-    secondaryContainer = FluffyPalette.Sand,
-    onSecondaryContainer = FluffyPalette.TextBrown,
-    tertiary = FluffyPalette.Grass,
-    onTertiary = FluffyPalette.TextBrown,
-    background = FluffyPalette.Peach,
-    onBackground = FluffyPalette.TextDark,
-    surface = FluffyPalette.Cream,
-    onSurface = FluffyPalette.TextBrown,
-    surfaceVariant = FluffyPalette.CardBrown,
-    onSurfaceVariant = FluffyPalette.TextDark,
+    primary = FluffyColors.Orange500,
+    onPrimary = FluffyColors.Brown900,
+    primaryContainer = FluffyColors.Peach200,
+    onPrimaryContainer = FluffyColors.Brown900,
+    secondary = FluffyColors.Sage400,
+    onSecondary = FluffyColors.Brown900,
+    secondaryContainer = FluffyColors.Cream100,
+    onSecondaryContainer = FluffyColors.Brown900,
+    tertiary = FluffyColors.Pink400,
+    onTertiary = FluffyColors.Brown900,
+    background = FluffyColors.Cream50,
+    onBackground = FluffyColors.Brown900,
+    surface = FluffyColors.White,
+    onSurface = FluffyColors.Brown900,
+    surfaceVariant = FluffyColors.Cream100,
+    onSurfaceVariant = FluffyColors.Brown900,
+    outline = FluffyColors.Sage700,
 )
