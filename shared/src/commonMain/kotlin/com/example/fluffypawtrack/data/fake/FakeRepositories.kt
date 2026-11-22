@@ -2,13 +2,21 @@ package com.example.fluffypawtrack.data.fake
 
 import com.example.fluffypawtrack.domain.model.AdoptionListing
 import com.example.fluffypawtrack.domain.model.AppNotification
+import com.example.fluffypawtrack.domain.model.ContactDetails
+import com.example.fluffypawtrack.domain.model.ContactRecipient
 import com.example.fluffypawtrack.domain.model.ContactRequest
+import com.example.fluffypawtrack.domain.model.ContactRequestRules
+import com.example.fluffypawtrack.domain.model.ContactRequestStatus
 import com.example.fluffypawtrack.domain.model.ListingStatus
 import com.example.fluffypawtrack.domain.model.NewReport
 import com.example.fluffypawtrack.domain.model.Organization
 import com.example.fluffypawtrack.domain.model.OrganizationStatus
+import com.example.fluffypawtrack.domain.model.OrganizationType
 import com.example.fluffypawtrack.domain.model.Report
+import com.example.fluffypawtrack.domain.model.ReportCategory
 import com.example.fluffypawtrack.domain.model.ReportStatus
+import com.example.fluffypawtrack.domain.model.contactRecipient
+import com.example.fluffypawtrack.domain.model.isActive
 import com.example.fluffypawtrack.domain.model.Role
 import com.example.fluffypawtrack.domain.model.UserProfile
 import com.example.fluffypawtrack.domain.repository.AdoptionRepository
@@ -141,6 +149,14 @@ class FakeReportRepository(private val clock: Clock = Clock.System) : ReportRepo
         reports.update { list -> list.map { if (it.id == id) updated else it } }
         return Result.success(updated)
     }
+
+    override suspend fun closeReport(id: String): Result<Report> {
+        val current = reports.value.firstOrNull { it.id == id }
+            ?: return Result.failure(NoSuchElementException("El reporte no existe"))
+        val closed = current.copy(status = ReportStatus.Closed)
+        reports.update { list -> list.map { if (it.id == id) closed else it } }
+        return Result.success(closed)
+    }
 }
 
 class FakeOrganizationRepository : OrganizationRepository {
@@ -151,6 +167,38 @@ class FakeOrganizationRepository : OrganizationRepository {
 
     override suspend fun getOrganization(id: String): Organization? =
         organizations.value.firstOrNull { it.id == id }
+
+    private var nextAffiliationId = 1
+
+    override suspend fun requestAffiliation(
+        type: OrganizationType,
+        name: String,
+        address: String,
+        phone: String,
+        email: String,
+        description: String,
+    ): Result<Organization> {
+        if (listOf(name, address, phone, email, description).any { it.isBlank() }) {
+            return Result.failure(IllegalArgumentException("Completa todos los datos de la organización"))
+        }
+        val requested = Organization(
+            id = "org-new-${nextAffiliationId++}",
+            type = type,
+            name = name.trim(),
+            description = description.trim(),
+            // The form has no map picker; the admin sets the exact spot when approving.
+            location = SampleData.HERMOSILLO_CENTER,
+            address = address.trim(),
+            schedule = "Por confirmar",
+            phone = phone.trim(),
+            email = email.trim().lowercase(),
+            social = null,
+            status = OrganizationStatus.Pending,
+            active = true,
+        )
+        organizations.update { it + requested }
+        return Result.success(requested)
+    }
 }
 
 class FakeAdoptionRepository : AdoptionRepository {
@@ -199,12 +247,156 @@ class FakeNotificationRepository : NotificationRepository {
     }
 }
 
-class FakeContactRequestRepository : ContactRequestRepository {
+/**
+ * Enforces the RF-05 rules that Supabase will enforce with RLS and the
+ * `get_contact_details` RPC. [findUser] stands in for the `profiles` table.
+ */
+@OptIn(ExperimentalTime::class)
+class FakeContactRequestRepository(
+    private val reportRepository: ReportRepository = FakeReportRepository(),
+    private val findUser: (String) -> UserProfile? = { id -> SampleData.users.firstOrNull { it.id == id } },
+    private val findOrganization: suspend (String) -> Organization? = { id ->
+        SampleData.organizations.firstOrNull { it.id == id }
+    },
+    private val clock: Clock = Clock.System,
+) : ContactRequestRepository {
     private val requests = MutableStateFlow(SampleData.contactRequests)
+    private var nextId = 1
 
     override fun observeSent(userId: String): Flow<List<ContactRequest>> =
         requests.map { list -> list.filter { it.requesterId == userId } }
 
     override fun observeReceived(userId: String): Flow<List<ContactRequest>> =
         requests.map { list -> list.filter { it.recipientUserId == userId } }
+
+    override suspend fun send(
+        reportId: String,
+        requesterId: String,
+        message: String,
+        photoUrl: String?,
+    ): Result<ContactRequest> {
+        val requester = findUser(requesterId)?.takeUnless { it.isAnonymous }
+            ?: return failure("Necesitas una cuenta para enviar solicitudes de contacto")
+        if (requester.role != Role.User) return failure("Solo los usuarios pueden enviar solicitudes de contacto")
+        val report = reportRepository.getReport(reportId) ?: return failure("El reporte ya no está disponible")
+        if (report.category != ReportCategory.PossiblyLost) {
+            return failure("Solo puedes enviar solicitudes en reportes de \"Posible mascota extraviada\"")
+        }
+        if (report.status == ReportStatus.Closed) return failure("Este caso ya está cerrado")
+        if (report.reporterId == requester.id) return failure("No puedes enviar una solicitud a tu propio reporte")
+        val recipient = report.contactRecipient ?: return failure(ContactRequestRules.ANONYMOUS_REPORT_NOTICE)
+        val previous = requests.value.filter { it.reportId == reportId && it.requesterId == requester.id }
+        if (previous.any { it.status.isActive }) return failure("Ya tienes una solicitud activa en este reporte")
+        if (previous.any { it.status == ContactRequestStatus.Rejected }) {
+            return failure("Tu solicitud en este reporte ya fue rechazada")
+        }
+        if (requester.phone.isNullOrBlank()) return failure(MISSING_PHONE)
+        if (!ContactRequestRules.isValidMessage(message)) {
+            return failure(
+                "El mensaje debe tener entre ${ContactRequestRules.MIN_MESSAGE_LENGTH} " +
+                    "y ${ContactRequestRules.MAX_MESSAGE_LENGTH} caracteres",
+            )
+        }
+        val created = ContactRequest(
+            id = "request-new-${nextId++}",
+            reportId = reportId,
+            requesterId = requester.id,
+            requesterFirstName = requester.firstName,
+            recipientUserId = (recipient as? ContactRecipient.User)?.userId,
+            recipientOrganizationId = (recipient as? ContactRecipient.Organization)?.organizationId,
+            message = message.trim(),
+            photoUrl = photoUrl,
+            status = ContactRequestStatus.Pending,
+            statusNote = null,
+            createdAt = clock.now(),
+        )
+        requests.update { it + created }
+        return Result.success(created)
+    }
+
+    override suspend fun cancel(requestId: String, userId: String): Result<ContactRequest> {
+        val request = find(requestId) ?: return failure(NOT_FOUND)
+        if (request.requesterId != userId) return failure("Solo quien envió la solicitud puede cancelarla")
+        if (request.status != ContactRequestStatus.Pending) return failure("Solo puedes cancelar solicitudes pendientes")
+        return Result.success(save(request.copy(status = ContactRequestStatus.Cancelled)))
+    }
+
+    override suspend fun accept(requestId: String, userId: String): Result<ContactRequest> {
+        val request = find(requestId) ?: return failure(NOT_FOUND)
+        if (!isRecipient(request, userId)) return failure(NOT_RECIPIENT)
+        if (request.status != ContactRequestStatus.Pending) return failure(ALREADY_ANSWERED)
+        if (findUser(userId)?.phone.isNullOrBlank()) return failure(MISSING_PHONE)
+        return Result.success(save(request.copy(status = ContactRequestStatus.Accepted)))
+    }
+
+    override suspend fun reject(requestId: String, userId: String): Result<ContactRequest> {
+        val request = find(requestId) ?: return failure(NOT_FOUND)
+        if (!isRecipient(request, userId)) return failure(NOT_RECIPIENT)
+        if (request.status != ContactRequestStatus.Pending) return failure(ALREADY_ANSWERED)
+        return Result.success(save(request.copy(status = ContactRequestStatus.Rejected)))
+    }
+
+    override suspend fun markDelivered(requestId: String, userId: String): Result<ContactRequest> {
+        val request = find(requestId) ?: return failure(NOT_FOUND)
+        if (!isRecipient(request, userId)) return failure(NOT_RECIPIENT)
+        if (request.status != ContactRequestStatus.Accepted) {
+            return failure("Solo puedes marcar como entregada una solicitud aceptada")
+        }
+        val report = reportRepository.getReport(request.reportId) ?: return failure("El reporte ya no está disponible")
+        if (report.status == ReportStatus.Closed) return failure("Este caso ya está cerrado")
+        reportRepository.closeReport(report.id).onFailure { return Result.failure(it) }
+        requests.update { list ->
+            list.map {
+                if (it.reportId == report.id && it.status == ContactRequestStatus.Pending) {
+                    it.copy(status = ContactRequestStatus.Rejected, statusNote = ContactRequestRules.CASE_CLOSED_NOTE)
+                } else {
+                    it
+                }
+            }
+        }
+        return Result.success(request)
+    }
+
+    override suspend fun getContactDetails(requestId: String, userId: String): ContactDetails? {
+        val request = find(requestId)?.takeIf { it.status == ContactRequestStatus.Accepted } ?: return null
+        return when {
+            request.requesterId == userId -> recipientDetails(request)
+            isRecipient(request, userId) -> findUser(request.requesterId)?.toContactDetails()
+            else -> null
+        }
+    }
+
+    private suspend fun recipientDetails(request: ContactRequest): ContactDetails? {
+        request.recipientOrganizationId?.let { orgId ->
+            val organization = findOrganization(orgId) ?: return null
+            return ContactDetails(organization.name, organization.phone, organization.email)
+        }
+        return request.recipientUserId?.let(findUser)?.toContactDetails()
+    }
+
+    private fun UserProfile.toContactDetails(): ContactDetails =
+        ContactDetails("$firstName $lastName".trim(), phone.orEmpty(), email.orEmpty())
+
+    /** The reporter, or any affiliate account of the recipient organization. */
+    private fun isRecipient(request: ContactRequest, userId: String): Boolean {
+        if (request.recipientUserId != null) return request.recipientUserId == userId
+        val user = findUser(userId) ?: return false
+        return user.role == Role.Affiliate && user.organizationId == request.recipientOrganizationId
+    }
+
+    private fun find(requestId: String): ContactRequest? = requests.value.firstOrNull { it.id == requestId }
+
+    private fun save(updated: ContactRequest): ContactRequest {
+        requests.update { list -> list.map { if (it.id == updated.id) updated else it } }
+        return updated
+    }
+
+    private fun <T> failure(message: String): Result<T> = Result.failure(IllegalStateException(message))
+
+    private companion object {
+        const val NOT_FOUND = "La solicitud no existe"
+        const val NOT_RECIPIENT = "Solo el receptor puede responder esta solicitud"
+        const val ALREADY_ANSWERED = "Esta solicitud ya fue respondida"
+        const val MISSING_PHONE = "Agrega un teléfono a tu perfil antes de continuar"
+    }
 }

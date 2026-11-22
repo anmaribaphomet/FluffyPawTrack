@@ -2,9 +2,11 @@ package com.example.fluffypawtrack.domain.repository
 
 import com.example.fluffypawtrack.domain.model.AdoptionListing
 import com.example.fluffypawtrack.domain.model.AppNotification
+import com.example.fluffypawtrack.domain.model.ContactDetails
 import com.example.fluffypawtrack.domain.model.ContactRequest
 import com.example.fluffypawtrack.domain.model.NewReport
 import com.example.fluffypawtrack.domain.model.Organization
+import com.example.fluffypawtrack.domain.model.OrganizationType
 import com.example.fluffypawtrack.domain.model.Report
 import com.example.fluffypawtrack.domain.model.UserProfile
 import kotlinx.coroutines.flow.Flow
@@ -46,6 +48,9 @@ interface ReportRepository {
 
     /** Edits the reporter's text fields. Fails for unknown reports or ones no longer pending. */
     suspend fun updateReport(id: String, description: String, reference: String?): Result<Report>
+
+    /** Moves the report to "Caso cerrado", for example when the lost pet was delivered. */
+    suspend fun closeReport(id: String): Result<Report>
 }
 
 interface OrganizationRepository {
@@ -53,6 +58,19 @@ interface OrganizationRepository {
     fun observeActiveOrganizations(): Flow<List<Organization>>
 
     suspend fun getOrganization(id: String): Organization?
+
+    /**
+     * A shelter, rescuer or adoption center asks to join. The organization is created as
+     * pending, so it stays off the map until the admin approves it.
+     */
+    suspend fun requestAffiliation(
+        type: OrganizationType,
+        name: String,
+        address: String,
+        phone: String,
+        email: String,
+        description: String,
+    ): Result<Organization>
 }
 
 interface AdoptionRepository {
@@ -82,4 +100,23 @@ interface ContactRequestRepository {
     fun observeSent(userId: String): Flow<List<ContactRequest>>
 
     fun observeReceived(userId: String): Flow<List<ContactRequest>>
+
+    /** Creates a pending "Es mi mascota" request. Fails with a readable message when RF-05 forbids it. */
+    suspend fun send(reportId: String, requesterId: String, message: String, photoUrl: String?): Result<ContactRequest>
+
+    /** The requester withdraws a pending request. */
+    suspend fun cancel(requestId: String, userId: String): Result<ContactRequest>
+
+    suspend fun accept(requestId: String, userId: String): Result<ContactRequest>
+
+    suspend fun reject(requestId: String, userId: String): Result<ContactRequest>
+
+    /** Closes the report and rejects its other pending requests with "El caso se cerró". */
+    suspend fun markDelivered(requestId: String, userId: String): Result<ContactRequest>
+
+    /**
+     * The other party's contact data, only when the request is accepted and [userId] is
+     * one of its two parties; null otherwise. Mirrors the `get_contact_details` RPC.
+     */
+    suspend fun getContactDetails(requestId: String, userId: String): ContactDetails?
 }
