@@ -693,8 +693,9 @@ class FakeContactRequestRepository(
     override fun observeSent(userId: String): Flow<List<ContactRequest>> =
         requests.map { list -> list.filter { it.requesterId == userId } }
 
+    /** Requests on the user's own reports, plus, for an affiliate, those of their organization (RLS). */
     override fun observeReceived(userId: String): Flow<List<ContactRequest>> =
-        requests.map { list -> list.filter { it.recipientUserId == userId } }
+        requests.map { list -> list.filter { isRecipient(it, userId) } }
 
     override suspend fun send(
         reportId: String,
