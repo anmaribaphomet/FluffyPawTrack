@@ -24,9 +24,9 @@ Branch: `master`, one commit per point, push at the end. Test runner: `./gradlew
 | ID | Specs | Route | Status | Commit |
 |---|---|---|---|---|
 | T0 | S0 | inline | done | 69cf6fa |
-| T1 | SA | inline | pending | |
-| T2 | SE | inline | pending | |
-| T3 | SB | inline | pending | |
+| T1 | SA | inline | done — RED/GREEN on Login/Register VM tests | 216967a |
+| T2 | SE | inline | done — RED/GREEN LabelsTest | a12f46f |
+| T3 | SB | inline | done — emulator: search below wave | see log |
 | T4 | SF, S1 | delegated (context backstop) | pending | |
 | T5 | SC | delegated (context backstop) | pending | |
 | T6 | SD, S3 | delegated (context backstop) | pending | |
