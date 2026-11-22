@@ -107,7 +107,7 @@ internal fun PhotoStep(photoRef: String?, onTakePhoto: () -> Unit, onPickPhoto: 
         Box(
             Modifier
                 .fillMaxWidth()
-                .aspectRatio(0.85f)
+                .aspectRatio(4f / 3f)
                 .dropShadow(FluffyShapes.Card, FluffyShadows.Drop)
                 .clip(FluffyShapes.Card)
                 .background(FluffySemanticColors.Disabled),
