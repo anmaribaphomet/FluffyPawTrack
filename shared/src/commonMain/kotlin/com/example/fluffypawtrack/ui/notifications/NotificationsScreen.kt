@@ -40,6 +40,29 @@ import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.ExperimentalTime
+import com.example.fluffypawtrack.di.LocalAppContainer
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.runtime.getValue
+import androidx.compose.material3.TextButton
+import androidx.compose.foundation.layout.Row
+
+/** Notifications screen wired to [NotificationsViewModel]. */
+@Composable
+fun NotificationsRoute(onBack: () -> Unit, modifier: Modifier = Modifier) {
+    val container = LocalAppContainer.current
+    val viewModel = viewModel {
+        NotificationsViewModel(container.notificationRepository, container.authRepository)
+    }
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
+    NotificationsScreen(
+        notifications = state.notifications,
+        onBack = onBack,
+        modifier = modifier,
+        onNotificationClick = { viewModel.onNotificationClick(it.id) },
+        onMarkAllAsRead = viewModel::onMarkAllAsRead,
+    )
+}
 
 /** Pantalla SECCION DE NOTIFICACIONES (Figma nodo 75:207). */
 @OptIn(ExperimentalTime::class)
@@ -49,8 +72,10 @@ fun NotificationsScreen(
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
     onNotificationClick: (AppNotification) -> Unit = {},
+    onMarkAllAsRead: () -> Unit = {},
 ) {
     val now = Clock.System.now()
+    val hasUnread = notifications.any { !it.isRead }
     Box(modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
@@ -59,12 +84,26 @@ fun NotificationsScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             item(key = "title") {
-                Text(
-                    text = "Notificaciones",
-                    modifier = Modifier.fillMaxWidth().padding(start = 13.dp, bottom = 13.dp),
-                    style = MaterialTheme.typography.headlineSmall,
-                    color = FluffyColors.Brown900,
-                )
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(start = 13.dp, end = 8.dp, bottom = 13.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        text = "Notificaciones",
+                        modifier = Modifier.weight(1f),
+                        style = MaterialTheme.typography.headlineSmall,
+                        color = FluffyColors.Brown900,
+                    )
+                    if (hasUnread) {
+                        TextButton(onClick = onMarkAllAsRead) {
+                            Text(
+                                text = "Marcar todas como leídas",
+                                style = MaterialTheme.typography.labelLarge,
+                                color = FluffyColors.Brown900,
+                            )
+                        }
+                    }
+                }
             }
             if (notifications.isEmpty()) {
                 item(key = "empty") {

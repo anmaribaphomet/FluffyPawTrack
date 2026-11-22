@@ -29,7 +29,7 @@ Branch: `master` (commit per unit, push at phase end). Parallel units run in iso
 | T4 | S7 | delegated W4 (worktree) | in progress | |
 | T5 | S6 | batch 2 (needs T1 map) | pending | |
 | T6 | S8, S11 | batch 2 (needs T1 detail sheet) | pending | |
-| T7 | S10 | inline | pending | |
+| T7 | S10 | inline | done — RED compile, GREEN 4/4, emulator checked | see log |
 | T8 | S1, S12 | inline — wire routes, merge, build, push | pending | |
 
 Route evidence: writer trigger (a) — four independent units with disjoint edit surfaces, each several files, launched together; worktrees because they share the `shared` compilation unit. Parent owns `Routes.kt`, `AppNavHost.kt`, Gradle files and the manifest.
@@ -39,3 +39,4 @@ Route evidence: writer trigger (a) — four independent units with disjoint edit
 - L1 (2026-11-22, user): "ok empieza la fase 1 ahora"
 - L2 (2026-11-22, user, earlier): "1. Sí, ese orden está bien." (order in S2)
 - L3: T0 prep: MapLibre Android 13.7.1 (Maven Central), activity-compose in shared androidMain, INTERNET + location permissions, `FakeAuthRepository(initialUser)` with demo session until login exists.
+- L4: Shared labels/pin colors/date format committed before launching writers (7df92a2). T7 notifications wired to the repository with "Marcar todas como leídas".
