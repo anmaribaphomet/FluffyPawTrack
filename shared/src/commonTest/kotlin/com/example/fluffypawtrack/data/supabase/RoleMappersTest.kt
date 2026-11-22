@@ -8,6 +8,8 @@ import com.example.fluffypawtrack.domain.model.ReportStatus
 import com.example.fluffypawtrack.domain.model.ReportStatusRules
 import kotlinx.serialization.json.Json
 import com.example.fluffypawtrack.domain.model.NewListing
+import com.example.fluffypawtrack.domain.model.NotificationPrefs
+import com.example.fluffypawtrack.domain.model.Priority
 import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
@@ -125,6 +127,27 @@ class RoleMappersTest {
             .jsonObject
         assertTrue("organization_id" !in row && "status" !in row)
         assertEquals("https://x/a.jpg", row["photo_urls"]?.jsonArray?.single()?.jsonPrimitive?.content)
+    }
+
+    @Test
+    fun notificationPrefsRowMapsToDomain() {
+        val prefs = json.decodeFromString<NotificationPrefsDto>(
+            """{"user_id":"u1","priorities":["high","urgent"],"radius_km":7.5,"push_enabled":false,
+                "updated_at":"2026-11-22T10:00:00+00:00"}""",
+        ).toDomain()
+
+        assertEquals(NotificationPrefs(7.5, setOf(Priority.High, Priority.Urgent), false), prefs)
+    }
+
+    @Test
+    fun notificationPrefsUpsertUsesColumnNamesAndEnumOrder() {
+        val dto = NotificationPrefs(3.0, setOf(Priority.Urgent, Priority.Low), true).toDto("u1")
+        val row = json.encodeToJsonElement(NotificationPrefsDto.serializer(), dto).jsonObject
+
+        assertEquals("u1", row["user_id"]?.jsonPrimitive?.content)
+        assertEquals(listOf("low", "urgent"), row["priorities"]?.jsonArray?.map { it.jsonPrimitive.content })
+        assertEquals("3.0", row["radius_km"]?.jsonPrimitive?.content)
+        assertEquals("true", row["push_enabled"]?.jsonPrimitive?.content)
     }
 
     @Test

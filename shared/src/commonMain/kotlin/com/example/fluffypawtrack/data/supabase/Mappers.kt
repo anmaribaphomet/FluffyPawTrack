@@ -9,6 +9,8 @@ import com.example.fluffypawtrack.domain.model.GeoPoint
 import com.example.fluffypawtrack.domain.model.NewAdoptionRequest
 import com.example.fluffypawtrack.domain.model.NewListing
 import com.example.fluffypawtrack.domain.model.NewReport
+import com.example.fluffypawtrack.domain.model.NotificationPrefs
+import com.example.fluffypawtrack.domain.model.Priority
 import com.example.fluffypawtrack.domain.model.Organization
 import com.example.fluffypawtrack.domain.model.OrganizationDraft
 import com.example.fluffypawtrack.domain.model.OrganizationProfile
@@ -250,3 +252,17 @@ internal fun NotificationDto.toDomain(): AppNotification = AppNotification(
 )
 
 internal fun ContactDetailsDto.toDomain(): ContactDetails = ContactDetails(fullName, phone, email)
+
+internal fun NotificationPrefsDto.toDomain(): NotificationPrefs = NotificationPrefs(
+    radiusKm = radiusKm,
+    priorities = priorities.map { fromDb<Priority>(it) }.toSet(),
+    pushEnabled = pushEnabled,
+)
+
+/** Priorities go in the enum order, so the stored array is stable. */
+internal fun NotificationPrefs.toDto(userId: String): NotificationPrefsDto = NotificationPrefsDto(
+    userId = userId,
+    priorities = priorities.sorted().map { it.dbValue },
+    radiusKm = radiusKm,
+    pushEnabled = pushEnabled,
+)

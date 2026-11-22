@@ -208,6 +208,15 @@ internal data class NotificationDto(
     @SerialName("created_at") val createdAt: String,
 )
 
+/** A row of `notification_prefs`; `priorities` is a `report_priority[]`. */
+@Serializable
+internal data class NotificationPrefsDto(
+    @SerialName("user_id") val userId: String,
+    val priorities: List<String>,
+    @SerialName("radius_km") val radiusKm: Double,
+    @SerialName("push_enabled") val pushEnabled: Boolean,
+)
+
 @Serializable
 internal data class FavoriteDto(
     @SerialName("user_id") val userId: String,

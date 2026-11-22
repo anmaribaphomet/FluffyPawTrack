@@ -1,6 +1,7 @@
 package com.example.fluffypawtrack.di
 
 import com.example.fluffypawtrack.data.fake.FakeAuthRepository
+import com.example.fluffypawtrack.data.fake.FakeNotificationPrefsRepository
 import com.example.fluffypawtrack.data.fake.FakeReportRepository
 import com.example.fluffypawtrack.data.supabase.SupabaseConfig
 import kotlin.test.Test
@@ -15,6 +16,7 @@ class AppContainerTest {
 
         assertIs<FakeAuthRepository>(container.authRepository)
         assertIs<FakeReportRepository>(container.reportRepository)
+        assertIs<FakeNotificationPrefsRepository>(container.notificationPrefsRepository)
         assertFalse(container.usesSupabase)
         assertNull(container.supabaseClient)
     }

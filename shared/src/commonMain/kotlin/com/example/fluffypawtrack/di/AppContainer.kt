@@ -6,6 +6,7 @@ import com.example.fluffypawtrack.data.fake.FakeAdoptionRequestRepository
 import com.example.fluffypawtrack.data.fake.FakeAuthRepository
 import com.example.fluffypawtrack.data.fake.FakeContactRequestRepository
 import com.example.fluffypawtrack.data.fake.FakeFavoritesRepository
+import com.example.fluffypawtrack.data.fake.FakeNotificationPrefsRepository
 import com.example.fluffypawtrack.data.fake.FakeNotificationRepository
 import com.example.fluffypawtrack.data.fake.FakeOrganizationRepository
 import com.example.fluffypawtrack.data.fake.FakeReportRepository
@@ -19,6 +20,7 @@ import com.example.fluffypawtrack.domain.repository.AdoptionRequestRepository
 import com.example.fluffypawtrack.domain.repository.AuthRepository
 import com.example.fluffypawtrack.domain.repository.ContactRequestRepository
 import com.example.fluffypawtrack.domain.repository.FavoritesRepository
+import com.example.fluffypawtrack.domain.repository.NotificationPrefsRepository
 import com.example.fluffypawtrack.domain.repository.NotificationRepository
 import com.example.fluffypawtrack.domain.repository.OrganizationRepository
 import com.example.fluffypawtrack.domain.repository.ReportRepository
@@ -42,6 +44,8 @@ class AppContainer(private val supabaseConfig: SupabaseConfig? = null) {
 
     val authRepository: AuthRepository = supabase?.auth ?: FakeAuthRepository()
     val notificationRepository: NotificationRepository = supabase?.notifications ?: FakeNotificationRepository()
+    val notificationPrefsRepository: NotificationPrefsRepository =
+        supabase?.notificationPrefs ?: FakeNotificationPrefsRepository()
     val reportRepository: ReportRepository = supabase?.reports
         ?: FakeReportRepository(
             currentUser = { authRepository.currentUser.value },

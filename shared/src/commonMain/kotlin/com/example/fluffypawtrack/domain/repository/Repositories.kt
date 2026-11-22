@@ -7,7 +7,9 @@ import com.example.fluffypawtrack.domain.model.ContactDetails
 import com.example.fluffypawtrack.domain.model.ContactRequest
 import com.example.fluffypawtrack.domain.model.NewAdoptionRequest
 import com.example.fluffypawtrack.domain.model.NewListing
+import com.example.fluffypawtrack.domain.model.NotificationPrefs
 import com.example.fluffypawtrack.domain.model.NotificationType
+import com.example.fluffypawtrack.domain.model.Priority
 import com.example.fluffypawtrack.domain.model.NewReport
 import com.example.fluffypawtrack.domain.model.Organization
 import com.example.fluffypawtrack.domain.model.OrganizationDraft
@@ -208,6 +210,20 @@ interface NotificationRepository {
 
     /** Creates an in-app notification for [userId]. Phase 4 also sends it as an FCM push. */
     suspend fun notify(userId: String, title: String, message: String, type: NotificationType): AppNotification
+}
+
+/** RF-03 preferences of one account: radius, priorities and push (`notification_prefs`). */
+interface NotificationPrefsRepository {
+    /** The saved preferences, or the defaults (5 km, every priority, push on) when none are saved. */
+    fun observe(userId: String): Flow<NotificationPrefs>
+
+    /** Saves the preferences of [userId] (the signed-in account). [radiusKm] must be above 0. */
+    suspend fun update(
+        userId: String,
+        radiusKm: Double,
+        priorities: Set<Priority>,
+        pushEnabled: Boolean,
+    ): Result<NotificationPrefs>
 }
 
 interface ContactRequestRepository {
