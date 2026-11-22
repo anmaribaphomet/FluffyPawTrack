@@ -18,7 +18,7 @@ Branch: `master` (project rule: commit per unit, push at phase end). Strategy: s
 | T1 | S1 | inline | done | 39b2bf8 |
 | T2 | S2 | inline | done (platform expect/actual deferred to Phase 1 features) | 71a1051 |
 | T3 | S3 | inline | done — RED compile failure, GREEN 15/15 | 6b2c980 |
-| T4 | S4 | inline | partial — Home card text overflows, needs user decision | (this commit) |
+| T4 | S4 | inline | done — cards grow with text (user chose A) | 4d07c01, next commit |
 | T5 | S5 | inline | pending | |
 
 Route evidence: one sequential feature, no parallel independent units, no context backstop → no writer trigger.
@@ -31,3 +31,5 @@ Route evidence: one sequential feature, no parallel independent units, no contex
 - L4: T4 emulator check (Medium_Phone_API_37). Fixed: cards were green and grass pink (Material slots remapped), profile subtitles white on peach. Corrected design-system: Home background is peach-200 (#FCD4A1, the Figma/code value), not peach-300.
 - L5: T4 open: with title-card 20 Bold + body 14, Home card text no longer fits the fixed 157/163 dp card bodies (description clipped, pill button hidden). Needs decision: grow cards or shrink description.
 - L6: Old build `com.example.fluffypawtrack` is still installed on the emulator next to `mx.unison.fluffypawtrack`.
+- L7 (2026-11-22, user): "A.- Cambia las tarjetas pero que queden esteticamente correctas y que la fuente sea bien legible"
+- L8: HouseCard now measures its text and grows (min = Figma height), illustration and text centered; pill button fills the text column, 40 dp tall. Checked on emulator at font scale 1.0 and 1.3: no clipping in cards. Known: at 1.3 the bottom-nav label "Notificaciones" is clipped (fixed-width tab) → Phase 4 polish.

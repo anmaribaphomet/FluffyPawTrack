@@ -1,6 +1,5 @@
 package com.example.fluffypawtrack.ui.home
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -26,12 +25,12 @@ import androidx.compose.ui.unit.dp
 import com.example.fluffypawtrack.ui.components.BottomNavBar
 import com.example.fluffypawtrack.ui.components.BottomNavBarHeight
 import com.example.fluffypawtrack.ui.components.CardCallToAction
+import com.example.fluffypawtrack.ui.components.CardIllustration
 import com.example.fluffypawtrack.ui.components.HomeDestination
 import com.example.fluffypawtrack.ui.components.HomeHeader
 import com.example.fluffypawtrack.ui.components.HomeHeaderHeight
 import com.example.fluffypawtrack.ui.components.HouseCard
 import com.example.fluffypawtrack.ui.components.HouseCardEars
-import com.example.fluffypawtrack.ui.components.placeAt
 import com.example.fluffypawtrack.ui.theme.FluffySemanticColors
 import com.example.fluffypawtrack.ui.theme.FluffyColors
 import com.example.fluffypawtrack.ui.theme.FluffyPawTrackTheme
@@ -68,7 +67,7 @@ fun HomeScreen(
                 textAlign = TextAlign.Center,
             )
             ReportAnimalCard(onReportAnimal)
-            Spacer(Modifier.height(7.dp))
+            Spacer(Modifier.height(20.dp))
             AdoptionCard(onSeeAdoptions)
         }
 
@@ -87,31 +86,28 @@ fun HomeScreen(
 
 @Composable
 private fun ReportAnimalCard(onClick: () -> Unit) {
-    HouseCard(ears = HouseCardEars.Soft, bodyHeight = 157.dp) {
-        Image(
-            painter = painterResource(Res.drawable.img_cat_phone),
-            contentDescription = null,
-            modifier = Modifier.placeAt(8.dp, 10.dp, 125.dp, 116.dp),
-        )
+    HouseCard(
+        ears = HouseCardEars.Soft,
+        illustration = CardIllustration(painterResource(Res.drawable.img_cat_phone), 6.dp, 125.dp, 116.dp),
+        minBodyHeight = 157.dp,
+    ) {
         CardCallToAction(
             title = "¿Encontraste un animalito?",
             description = "Ayúdanos a encontrarle un hogar o un refugio donde pueda estar a salvo",
             actionText = "Reportar un animal",
             actionIcon = painterResource(Res.drawable.ic_camera),
             onAction = onClick,
-            modifier = Modifier.padding(start = 115.dp, top = 35.dp, bottom = 14.dp),
         )
     }
 }
 
 @Composable
 private fun AdoptionCard(onClick: () -> Unit) {
-    HouseCard(ears = HouseCardEars.Pointy, bodyHeight = 163.dp) {
-        Image(
-            painter = painterResource(Res.drawable.img_dog_adopt),
-            contentDescription = null,
-            modifier = Modifier.placeAt((-22).dp, 25.dp, 198.dp, 107.dp),
-        )
+    HouseCard(
+        ears = HouseCardEars.Pointy,
+        illustration = CardIllustration(painterResource(Res.drawable.img_dog_adopt), (-22).dp, 198.dp, 107.dp),
+        minBodyHeight = 163.dp,
+    ) {
         CardCallToAction(
             title = "¡Dales una\noportunidad!",
             description = "Checa en el mapa los centros de adopción y conoce a los animalitos que esperan una nueva familia",
@@ -119,8 +115,6 @@ private fun AdoptionCard(onClick: () -> Unit) {
             actionIcon = painterResource(Res.drawable.ic_heart),
             actionIconSize = 17.dp,
             onAction = onClick,
-            titleStyle = MaterialTheme.typography.titleMedium,
-            modifier = Modifier.padding(start = 115.dp, top = 12.dp, bottom = 8.dp),
         )
     }
 }

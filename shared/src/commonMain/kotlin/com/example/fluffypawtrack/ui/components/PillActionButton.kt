@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -32,8 +33,7 @@ import fluffypawtrack.shared.generated.resources.ic_camera
 import fluffypawtrack.shared.generated.resources.ic_heart
 import org.jetbrains.compose.resources.painterResource
 
-private val PillWidth = 135.dp
-private val PillHeight = 32.dp
+private val PillHeight = 40.dp
 private val GlowOffset = 4.dp
 
 /** Botón píldora crema con ícono, texto, flecha y un resplandor lima por debajo. */
@@ -45,20 +45,22 @@ fun PillActionButton(
     modifier: Modifier = Modifier,
     iconSize: Dp = 15.dp,
 ) {
-    Box(modifier.size(PillWidth, PillHeight + GlowOffset)) {
+    Box(modifier.fillMaxWidth().height(PillHeight + GlowOffset)) {
         Box(
             Modifier
                 .padding(top = GlowOffset)
-                .size(PillWidth, PillHeight)
+                .fillMaxWidth()
+                .height(PillHeight)
                 .background(FluffyColors.Sage200, FluffyShapes.Pill),
         )
         Row(
             modifier = Modifier
-                .size(PillWidth, PillHeight)
+                .fillMaxWidth()
+                .height(PillHeight)
                 .clip(FluffyShapes.Pill)
                 .background(MaterialTheme.colorScheme.surface)
                 .clickable(role = Role.Button, onClick = onClick)
-                .padding(start = 16.dp, end = 14.dp),
+                .padding(start = 12.dp, end = 12.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Box(Modifier.size(18.dp), contentAlignment = Alignment.Center) {
