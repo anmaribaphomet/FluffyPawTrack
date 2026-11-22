@@ -45,6 +45,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.fluffypawtrack.di.LocalAppContainer
 import com.example.fluffypawtrack.platform.PawMap
 import com.example.fluffypawtrack.ui.components.ProfileHeader
+import com.example.fluffypawtrack.ui.components.ProfileHeaderHeight
 import com.example.fluffypawtrack.ui.theme.FluffyColors
 import com.example.fluffypawtrack.ui.theme.FluffyPawTrackTheme
 import com.example.fluffypawtrack.ui.theme.FluffyShadows
@@ -133,7 +134,7 @@ fun MapScreen(
         Column(
             modifier = Modifier
                 .align(Alignment.TopCenter)
-                .padding(top = 128.dp, start = 10.dp, end = 10.dp)
+                .padding(top = ProfileHeaderHeight + 8.dp, start = 10.dp, end = 10.dp)
                 .fillMaxWidth(),
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
