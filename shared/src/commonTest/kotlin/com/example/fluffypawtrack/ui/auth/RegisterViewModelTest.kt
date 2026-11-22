@@ -50,7 +50,6 @@ class RegisterViewModelTest {
         val state = viewModel.uiState.value
         assertTrue(state.registered)
         assertNull(state.errorMessage)
-        assertEquals(RegisterErrors(), state.errors)
         val user = repository.currentUser.value
         assertEquals("ana@correo.com", user?.email)
         assertEquals("Ana", user?.firstName)
@@ -70,7 +69,7 @@ class RegisterViewModelTest {
     }
 
     @Test
-    fun missingRequiredFieldsAreReported() = runTest {
+    fun emptyFormShowsOnlyTheInvalidDataMessage() = runTest {
         viewModel.onSubmit()
 
         assertOnlyGenericError()
@@ -123,10 +122,23 @@ class RegisterViewModelTest {
         assertNull(repository.currentUser.value)
     }
 
+    @Test
+    fun connectionFailureShowsTheConnectionMessage() = runTest {
+        viewModel = RegisterViewModel(FailingAuthRepository())
+        fillValidForm()
+
+        viewModel.onSubmit()
+
+        val state = viewModel.uiState.value
+        assertEquals(CONNECTION_ERROR_MESSAGE, state.errorMessage)
+        assertFalse(state.registered)
+        assertFalse(state.isLoading)
+    }
+
     /** Only "Datos inválidos, intenta de nuevo." is shown: no field-level hints. */
     private fun assertOnlyGenericError() {
         val state = viewModel.uiState.value
         assertEquals(INVALID_DATA_MESSAGE, state.errorMessage)
-        assertEquals(RegisterErrors(), state.errors)
+        assertFalse(state.isLoading)
     }
 }

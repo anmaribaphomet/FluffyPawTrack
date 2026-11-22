@@ -1,6 +1,7 @@
 package com.example.fluffypawtrack.data.fake
 
 import com.example.fluffypawtrack.domain.model.GeoPoint
+import com.example.fluffypawtrack.domain.model.InvalidAuthDataException
 import com.example.fluffypawtrack.domain.model.ListingStatus
 import com.example.fluffypawtrack.domain.model.NewReport
 import com.example.fluffypawtrack.domain.model.OrganizationStatus
@@ -12,6 +13,7 @@ import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertIs
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
@@ -170,7 +172,8 @@ class FakeRepositoriesTest {
     @Test
     fun signInWithDemoCredentialsSucceedsAndWrongPasswordFails() = runTest {
         val repository = FakeAuthRepository()
-        assertTrue(repository.signIn(SampleData.demoUser.email!!, "wrong").isFailure)
+        assertIs<InvalidAuthDataException>(repository.signIn(SampleData.demoUser.email!!, "wrong").exceptionOrNull())
+        assertIs<InvalidAuthDataException>(repository.signIn("nadie@correo.com", "wrong").exceptionOrNull())
         assertNull(repository.currentUser.value)
 
         val user = repository.signIn(SampleData.demoUser.email!!, SampleData.DEMO_PASSWORD).getOrThrow()
@@ -182,7 +185,7 @@ class FakeRepositoriesTest {
     @Test
     fun signUpRejectsAnExistingEmail() = runTest {
         val result = FakeAuthRepository().signUp(SampleData.demoUser.email!!, "secret123", "Ana", "López", null)
-        assertTrue(result.isFailure)
+        assertIs<InvalidAuthDataException>(result.exceptionOrNull())
     }
 
     @Test

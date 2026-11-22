@@ -7,6 +7,7 @@ import com.example.fluffypawtrack.domain.model.ContactRecipient
 import com.example.fluffypawtrack.domain.model.ContactRequest
 import com.example.fluffypawtrack.domain.model.ContactRequestRules
 import com.example.fluffypawtrack.domain.model.ContactRequestStatus
+import com.example.fluffypawtrack.domain.model.InvalidAuthDataException
 import com.example.fluffypawtrack.domain.model.ListingStatus
 import com.example.fluffypawtrack.domain.model.NewReport
 import com.example.fluffypawtrack.domain.model.Organization
@@ -49,8 +50,8 @@ class FakeAuthRepository(initialUser: UserProfile? = null) : AuthRepository {
 
     override suspend fun signIn(email: String, password: String): Result<UserProfile> {
         val (user, expected) = accounts[email.trim().lowercase()]
-            ?: return Result.failure(IllegalArgumentException("Correo o contraseña incorrectos"))
-        if (password != expected) return Result.failure(IllegalArgumentException("Correo o contraseña incorrectos"))
+            ?: return Result.failure(InvalidAuthDataException())
+        if (password != expected) return Result.failure(InvalidAuthDataException())
         session.value = user
         return Result.success(user)
     }
@@ -63,7 +64,7 @@ class FakeAuthRepository(initialUser: UserProfile? = null) : AuthRepository {
         phone: String?,
     ): Result<UserProfile> {
         val key = email.trim().lowercase()
-        if (key in accounts) return Result.failure(IllegalArgumentException("Ya existe una cuenta con ese correo"))
+        if (key in accounts) return Result.failure(InvalidAuthDataException())
         val user = UserProfile(
             id = "user-new-${nextId++}",
             email = key,
