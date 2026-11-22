@@ -1,0 +1,156 @@
+package com.example.fluffypawtrack.ui.report
+
+import com.example.fluffypawtrack.data.fake.FakeAuthRepository
+import com.example.fluffypawtrack.data.fake.FakeReportRepository
+import com.example.fluffypawtrack.data.fake.SampleData
+import com.example.fluffypawtrack.domain.model.GeoPoint
+import com.example.fluffypawtrack.domain.model.Priority
+import com.example.fluffypawtrack.domain.model.ReportCategory
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.test.setMain
+import kotlin.test.AfterTest
+import kotlin.test.BeforeTest
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertNotNull
+import kotlin.test.assertNull
+import kotlin.test.assertTrue
+
+@OptIn(ExperimentalCoroutinesApi::class)
+class NewReportViewModelTest {
+
+    private val reports = FakeReportRepository()
+
+    @BeforeTest
+    fun setUp() {
+        Dispatchers.setMain(UnconfinedTestDispatcher())
+    }
+
+    @AfterTest
+    fun tearDown() {
+        Dispatchers.resetMain()
+    }
+
+    private fun viewModel(signedIn: Boolean = true) = NewReportViewModel(
+        reportRepository = reports,
+        authRepository = FakeAuthRepository(initialUser = if (signedIn) SampleData.demoUser else null),
+    )
+
+    @Test
+    fun selectingACategorySuggestsItsPriority() {
+        val vm = viewModel()
+        vm.selectCategory(ReportCategory.Injured)
+        assertEquals(Priority.High, vm.uiState.value.priority)
+        assertFalse(vm.uiState.value.isPriorityLocked)
+    }
+
+    @Test
+    fun criticalCategoryIsLockedToUrgent() {
+        val vm = viewModel()
+        vm.selectCategory(ReportCategory.Critical)
+        vm.selectPriority(Priority.Low)
+        assertEquals(Priority.Urgent, vm.uiState.value.priority)
+        assertTrue(vm.uiState.value.isPriorityLocked)
+    }
+
+    @Test
+    fun userCanOverrideTheSuggestedPriority() {
+        val vm = viewModel()
+        vm.selectCategory(ReportCategory.Street)
+        vm.selectPriority(Priority.Urgent)
+        assertEquals(Priority.Urgent, vm.uiState.value.priority)
+    }
+
+    @Test
+    fun cannotLeaveTheCategoryStepWithoutACategory() {
+        val vm = viewModel()
+        assertFalse(vm.uiState.value.canContinue)
+        vm.next()
+        assertEquals(ReportStep.Category, vm.uiState.value.step)
+
+        vm.selectCategory(ReportCategory.Street)
+        vm.next()
+        assertEquals(ReportStep.Photo, vm.uiState.value.step)
+    }
+
+    @Test
+    fun cannotLeaveTheDetailsStepWithoutADescription() {
+        val vm = viewModel()
+        goToDetails(vm)
+        vm.onDescriptionChange("   ")
+        vm.next()
+        assertEquals(ReportStep.Details, vm.uiState.value.step)
+
+        vm.onDescriptionChange("Perrito con collar azul")
+        vm.next()
+        assertEquals(ReportStep.Summary, vm.uiState.value.step)
+    }
+
+    @Test
+    fun deniedLocationFallsBackToAManualAddress() {
+        val vm = viewModel()
+        vm.selectCategory(ReportCategory.Street)
+        vm.next()
+        vm.next()
+        vm.onLocationResult(null)
+        assertTrue(vm.uiState.value.isManualAddress)
+        assertFalse(vm.uiState.value.canContinue)
+        vm.onAddressChange("Calle Rosales y Blvd. Hidalgo")
+        assertTrue(vm.uiState.value.canContinue)
+    }
+
+    @Test
+    fun backMovesToThePreviousStepAndReportsTheFirstStep() {
+        val vm = viewModel()
+        assertFalse(vm.back())
+        vm.selectCategory(ReportCategory.Street)
+        vm.next()
+        assertTrue(vm.back())
+        assertEquals(ReportStep.Category, vm.uiState.value.step)
+    }
+
+    @Test
+    fun submitCreatesTheReportWithTheCurrentUserId() = runTest {
+        val vm = viewModel(signedIn = true)
+        fillAndSubmit(vm)
+        val published = assertNotNull(vm.uiState.value.publishedReport)
+        assertEquals(SampleData.demoUser.id, published.reporterId)
+        assertEquals(ReportCategory.Injured, published.category)
+        assertEquals(Priority.High, published.priority)
+        assertEquals("Perrito herido en la pata", published.description)
+        assertEquals("Frente a la tienda", published.reference)
+        assertTrue(reports.observeReportsBy(SampleData.demoUser.id).first().any { it.id == published.id })
+    }
+
+    @Test
+    fun submitWithoutSessionCreatesAnAnonymousReport() = runTest {
+        val vm = viewModel(signedIn = false)
+        fillAndSubmit(vm)
+        val published = assertNotNull(vm.uiState.value.publishedReport)
+        assertNull(published.reporterId)
+    }
+
+    private fun goToDetails(vm: NewReportViewModel) {
+        vm.selectCategory(ReportCategory.Injured)
+        vm.next() // photo
+        vm.onPhotoSelected("memory://photo/1")
+        vm.next() // location
+        vm.onLocationResult(GeoPoint(29.08, -110.95))
+        vm.next() // details
+        assertEquals(ReportStep.Details, vm.uiState.value.step)
+    }
+
+    private fun fillAndSubmit(vm: NewReportViewModel) {
+        goToDetails(vm)
+        vm.onReferenceChange("Frente a la tienda")
+        vm.onDescriptionChange("Perrito herido en la pata")
+        vm.next()
+        vm.submit()
+    }
+}
