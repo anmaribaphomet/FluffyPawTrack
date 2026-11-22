@@ -7,6 +7,7 @@ import com.example.fluffypawtrack.domain.model.ContactDetails
 import com.example.fluffypawtrack.domain.model.ContactRequest
 import com.example.fluffypawtrack.domain.model.GeoPoint
 import com.example.fluffypawtrack.domain.model.NewAdoptionRequest
+import com.example.fluffypawtrack.domain.model.NewListing
 import com.example.fluffypawtrack.domain.model.NewReport
 import com.example.fluffypawtrack.domain.model.Organization
 import com.example.fluffypawtrack.domain.model.OrganizationDraft
@@ -166,6 +167,28 @@ internal fun ListingDto.toDomain(): AdoptionListing = AdoptionListing(
     description = description,
     photoUrls = photoUrls,
     status = fromDb(status),
+)
+
+/** [photoUrls] are the stored photos (already uploaded when the form held local ones). */
+internal fun NewListing.toInsertDto(organizationId: String, photoUrls: List<String>): NewListingDto = NewListingDto(
+    organizationId = organizationId,
+    name = name.trim(),
+    species = species.trim(),
+    breed = breed.trim(),
+    age = age.trim(),
+    vaccination = vaccination.trim(),
+    description = description.trim(),
+    photoUrls = photoUrls,
+)
+
+internal fun NewListing.toUpdateDto(photoUrls: List<String>): ListingUpdateDto = ListingUpdateDto(
+    name = name.trim(),
+    species = species.trim(),
+    breed = breed.trim(),
+    age = age.trim(),
+    vaccination = vaccination.trim(),
+    description = description.trim(),
+    photoUrls = photoUrls,
 )
 
 @OptIn(ExperimentalTime::class)

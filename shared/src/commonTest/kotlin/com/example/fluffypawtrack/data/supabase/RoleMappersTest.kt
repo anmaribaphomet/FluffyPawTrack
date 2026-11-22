@@ -7,7 +7,9 @@ import com.example.fluffypawtrack.domain.model.OrganizationType
 import com.example.fluffypawtrack.domain.model.ReportStatus
 import com.example.fluffypawtrack.domain.model.ReportStatusRules
 import kotlinx.serialization.json.Json
+import com.example.fluffypawtrack.domain.model.NewListing
 import kotlinx.serialization.json.JsonNull
+import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlin.test.Test
@@ -102,6 +104,27 @@ class RoleMappersTest {
         val row = json.encodeToJsonElement(OrganizationProfileDto.serializer(), profile.toDto("https://x/p.jpg")).jsonObject
         assertEquals(setOf("description", "schedule", "phone", "email", "social", "photo_url"), row.keys)
         assertEquals("https://x/p.jpg", row["photo_url"]?.jsonPrimitive?.content)
+    }
+
+    private val listing = NewListing(" Luna ", "Gato", "Mestizo", "1 año", "Completa", "Tranquila", listOf("content://a"))
+
+    @Test
+    fun newListingInsertUsesSnakeCaseColumnsAndStoredPhotos() {
+        val row = json.encodeToJsonElement(NewListingDto.serializer(), listing.toInsertDto("o1", listOf("https://x/a.jpg")))
+            .jsonObject
+
+        assertEquals("o1", row["organization_id"]?.jsonPrimitive?.content)
+        assertEquals("Luna", row["name"]?.jsonPrimitive?.content)
+        assertEquals(listOf("https://x/a.jpg"), row["photo_urls"]?.jsonArray?.map { it.jsonPrimitive.content })
+        assertTrue("status" !in row)
+    }
+
+    @Test
+    fun listingUpdateLeavesOrganizationAndStatusOut() {
+        val row = json.encodeToJsonElement(ListingUpdateDto.serializer(), listing.toUpdateDto(listOf("https://x/a.jpg")))
+            .jsonObject
+        assertTrue("organization_id" !in row && "status" !in row)
+        assertEquals("https://x/a.jpg", row["photo_urls"]?.jsonArray?.single()?.jsonPrimitive?.content)
     }
 
     @Test

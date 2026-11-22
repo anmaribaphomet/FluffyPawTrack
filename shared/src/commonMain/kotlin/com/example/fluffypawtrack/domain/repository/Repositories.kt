@@ -6,6 +6,7 @@ import com.example.fluffypawtrack.domain.model.AppNotification
 import com.example.fluffypawtrack.domain.model.ContactDetails
 import com.example.fluffypawtrack.domain.model.ContactRequest
 import com.example.fluffypawtrack.domain.model.NewAdoptionRequest
+import com.example.fluffypawtrack.domain.model.NewListing
 import com.example.fluffypawtrack.domain.model.NotificationType
 import com.example.fluffypawtrack.domain.model.NewReport
 import com.example.fluffypawtrack.domain.model.Organization
@@ -153,6 +154,15 @@ interface AdoptionRepository {
      * requests become rejected with "El animal ya fue adoptado" and their requesters are notified.
      */
     suspend fun markAdopted(listingId: String, affiliateUserId: String): Result<AdoptionListing>
+
+    /**
+     * The signed-in affiliate publishes an available animal for their adoption center. Needs
+     * every field and at least one photo; local photos go to `adoption-photos/<organization>/`.
+     */
+    suspend fun createListing(listing: NewListing): Result<AdoptionListing>
+
+    /** An affiliate of the listing's center edits it; its status does not change. */
+    suspend fun updateListing(listingId: String, listing: NewListing): Result<AdoptionListing>
 }
 
 /**

@@ -8,7 +8,9 @@ import com.example.fluffypawtrack.domain.model.ContactRequest
 import com.example.fluffypawtrack.domain.model.ContactRequestRules
 import com.example.fluffypawtrack.domain.model.ContactRequestStatus
 import com.example.fluffypawtrack.domain.model.InvalidAuthDataException
+import com.example.fluffypawtrack.domain.model.ListingRules
 import com.example.fluffypawtrack.domain.model.ListingStatus
+import com.example.fluffypawtrack.domain.model.NewListing
 import com.example.fluffypawtrack.domain.model.NewReport
 import com.example.fluffypawtrack.domain.model.NotificationType
 import com.example.fluffypawtrack.domain.model.Organization
@@ -335,8 +337,10 @@ class FakeOrganizationRepository(
     override fun observeActiveOrganizations(): Flow<List<Organization>> =
         organizations.map { list -> list.filter { it.status == OrganizationStatus.Approved && it.active } }
 
-    override suspend fun getOrganization(id: String): Organization? =
-        organizations.value.firstOrNull { it.id == id }
+    override suspend fun getOrganization(id: String): Organization? = findOrganization(id)
+
+    /** Non-suspending lookup for the other fakes (stands in for a join on `organizations`). */
+    internal fun findOrganization(id: String): Organization? = organizations.value.firstOrNull { it.id == id }
 
     override fun observePendingAffiliations(): Flow<List<Organization>> =
         organizations.map { list -> list.filter { it.status == OrganizationStatus.Pending } }
@@ -510,7 +514,50 @@ class FakeOrganizationRepository(
 class FakeAdoptionRepository(
     initialListings: List<AdoptionListing> = SampleData.adoptionListings,
     private val findUser: (String) -> UserProfile? = { id -> SampleData.users.firstOrNull { it.id == id } },
+    /** The session, for the listing editor (`adoption_listings_*_center` policies). */
+    private val currentUser: () -> UserProfile? = { null },
+    private val findOrganization: (String) -> Organization? = { id -> SampleData.organizations.firstOrNull { it.id == id } },
 ) : AdoptionRepository {
+    private var nextId = 1
+
+    override suspend fun createListing(listing: NewListing): Result<AdoptionListing> {
+        val user = currentUser()
+        val organization = user?.takeIf { it.role == Role.Affiliate }?.organizationId?.let(findOrganization)
+        if (organization?.type != OrganizationType.AdoptionCenter || organization.status != OrganizationStatus.Approved) {
+            return Result.failure(IllegalStateException("Solo los centros de adopción afiliados pueden publicar animales"))
+        }
+        ListingRules.problemOf(listing)?.let { return Result.failure(IllegalStateException(it)) }
+        val created = listing.toListing(id = "listing-new-${nextId++}", organizationId = organization.id)
+        listings.update { it + created }
+        return Result.success(created)
+    }
+
+    override suspend fun updateListing(listingId: String, listing: NewListing): Result<AdoptionListing> {
+        val current = getListing(listingId) ?: return Result.failure(IllegalStateException("El animal no existe"))
+        val user = currentUser()
+        if (user?.role != Role.Affiliate || user.organizationId != current.organizationId) {
+            return Result.failure(IllegalStateException("Solo el centro de este animal puede editarlo"))
+        }
+        ListingRules.problemOf(listing)?.let { return Result.failure(IllegalStateException(it)) }
+        val updated = listing.toListing(id = listingId, organizationId = current.organizationId)
+            .copy(status = current.status)
+        listings.update { list -> list.map { if (it.id == listingId) updated else it } }
+        return Result.success(updated)
+    }
+
+    private fun NewListing.toListing(id: String, organizationId: String): AdoptionListing = AdoptionListing(
+        id = id,
+        organizationId = organizationId,
+        name = name.trim(),
+        species = species.trim(),
+        breed = breed.trim(),
+        age = age.trim(),
+        vaccination = vaccination.trim(),
+        description = description.trim(),
+        photoUrls = photoUrls.filter { it.isNotBlank() },
+        status = ListingStatus.Available,
+    )
+
     init {
         require(initialListings.all { it.photoUrls.isNotEmpty() }) { "Every adoption listing needs at least one photo" }
     }

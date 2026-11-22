@@ -25,7 +25,7 @@ class SupabaseRepositories(client: SupabaseClient) {
     val auth: AuthRepository = SupabaseAuthRepository(client, scope, queries)
     val reports: ReportRepository = SupabaseReportRepository(client, queries, photos)
     val organizations: OrganizationRepository = SupabaseOrganizationRepository(client, queries, photos)
-    val adoptions: AdoptionRepository = SupabaseAdoptionRepository(client, queries)
+    val adoptions: AdoptionRepository = SupabaseAdoptionRepository(client, queries, photos)
     val favorites: FavoritesRepository = SupabaseFavoritesRepository(client, queries)
     val notifications: NotificationRepository = SupabaseNotificationRepository(client, queries)
     val contactRequests: ContactRequestRepository = SupabaseContactRequestRepository(client, queries, photos)

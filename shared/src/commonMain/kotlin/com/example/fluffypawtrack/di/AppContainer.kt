@@ -54,7 +54,14 @@ class AppContainer(private val supabaseConfig: SupabaseConfig? = null) {
             notifications = notificationRepository,
         )
     val adoptionRepository: AdoptionRepository =
-        supabase?.adoptions ?: FakeAdoptionRepository(findUser = profileLookup(authRepository))
+        supabase?.adoptions ?: FakeAdoptionRepository(
+            findUser = profileLookup(authRepository),
+            currentUser = { authRepository.currentUser.value },
+            findOrganization = { id ->
+                (organizationRepository as? FakeOrganizationRepository)?.findOrganization(id)
+                    ?: SampleData.organizations.firstOrNull { it.id == id }
+            },
+        )
     val favoritesRepository: FavoritesRepository = supabase?.favorites ?: FakeFavoritesRepository()
     val contactRequestRepository: ContactRequestRepository = supabase?.contactRequests
         ?: FakeContactRequestRepository(

@@ -137,6 +137,31 @@ internal data class ListingDto(
     val status: String,
 )
 
+/** Insert body of `adoption_listings`; status and timestamps come from column defaults. */
+@Serializable
+internal data class NewListingDto(
+    @SerialName("organization_id") val organizationId: String,
+    val name: String,
+    val species: String,
+    val breed: String,
+    val age: String,
+    val vaccination: String,
+    val description: String,
+    @SerialName("photo_urls") val photoUrls: List<String>,
+)
+
+/** The columns an affiliate edits on a listing; the organization and status stay. */
+@Serializable
+internal data class ListingUpdateDto(
+    val name: String,
+    val species: String,
+    val breed: String,
+    val age: String,
+    val vaccination: String,
+    val description: String,
+    @SerialName("photo_urls") val photoUrls: List<String>,
+)
+
 @Serializable
 internal data class AdoptionRequestDto(
     val id: String,
