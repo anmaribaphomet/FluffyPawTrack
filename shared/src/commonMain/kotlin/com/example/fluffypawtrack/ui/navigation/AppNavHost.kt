@@ -20,6 +20,10 @@ import com.example.fluffypawtrack.di.LocalAppContainer
 import com.example.fluffypawtrack.domain.model.OrganizationType
 import com.example.fluffypawtrack.ui.account.FavoritesRoute
 import com.example.fluffypawtrack.ui.adoptions.AdoptionFormRoute
+import com.example.fluffypawtrack.ui.affiliation.AffiliationRequestRoute
+import com.example.fluffypawtrack.ui.contact.ContactRequestAction
+import com.example.fluffypawtrack.ui.contact.ContactRequestFormRoute
+import com.example.fluffypawtrack.ui.contact.ContactRequestsRoute
 import com.example.fluffypawtrack.ui.adoptions.AnimalDetailRoute
 import com.example.fluffypawtrack.ui.adoptions.CenterDetailRoute
 import com.example.fluffypawtrack.ui.components.PillActionButton
@@ -53,6 +57,7 @@ fun AppNavHost(navController: NavHostController = rememberNavController()) {
                 onSignedIn = { navController.navigateClearingStack(Route.Home) },
                 onCreateAccount = dropUnlessResumed { navController.navigate(Route.Register) },
                 onReportAnonymously = { navController.navigateClearingStack(Route.NewReport) },
+                onRequestAffiliation = dropUnlessResumed { navController.navigate(Route.AffiliationRequest) },
             )
         }
         composable<Route.Register> {
@@ -86,6 +91,7 @@ fun AppNavHost(navController: NavHostController = rememberNavController()) {
                 onPersonalInfo = dropUnlessResumed { navController.navigate(Route.PersonalInfo) },
                 onMyReports = dropUnlessResumed { navController.navigate(Route.MyReports) },
                 onFavorites = dropUnlessResumed { navController.navigate(Route.Favorites) },
+                onContactRequests = dropUnlessResumed { navController.navigate(Route.ContactRequests) },
             )
         }
         composable<Route.PersonalInfo> {
@@ -128,6 +134,12 @@ fun AppNavHost(navController: NavHostController = rememberNavController()) {
             MapRoute(
                 onBack = dropUnlessResumed { navController.popBackStack() },
                 initialFilter = if (route.adoptionsOnly) MapFilter.Adoptions else MapFilter.All,
+                reportActions = { report ->
+                    ContactRequestAction(
+                        report = report,
+                        onRequest = { id -> navController.navigate(Route.ContactRequestForm(id)) },
+                    )
+                },
                 placeActions = { organization ->
                     if (organization.type == OrganizationType.AdoptionCenter || organization.type == OrganizationType.Shelter) {
                         PillActionButton(
@@ -144,6 +156,26 @@ fun AppNavHost(navController: NavHostController = rememberNavController()) {
                         onClick = { navController.navigate(Route.AnimalDetail(listing.id)) },
                     )
                 },
+            )
+        }
+        composable<Route.ContactRequestForm> { entry ->
+            ContactRequestFormRoute(
+                reportId = entry.toRoute<Route.ContactRequestForm>().reportId,
+                onBack = dropUnlessResumed { navController.popBackStack() },
+                onSent = {
+                    navController.navigate(Route.ContactRequests) {
+                        popUpTo<Route.ContactRequestForm> { inclusive = true }
+                    }
+                },
+            )
+        }
+        composable<Route.ContactRequests> {
+            ContactRequestsRoute(onBack = dropUnlessResumed { navController.popBackStack() })
+        }
+        composable<Route.AffiliationRequest> {
+            AffiliationRequestRoute(
+                onBack = dropUnlessResumed { navController.popBackStack() },
+                onDone = { navController.popBackStack() },
             )
         }
         composable<Route.CenterDetail> { entry ->

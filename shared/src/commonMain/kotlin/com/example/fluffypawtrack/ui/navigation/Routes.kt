@@ -50,6 +50,15 @@ sealed interface Route {
     @Serializable
     data class AdoptionForm(val organizationId: String, val listingId: String? = null) : Route
 
+    @Serializable
+    data class ContactRequestForm(val reportId: String) : Route
+
+    @Serializable
+    data object ContactRequests : Route
+
+    @Serializable
+    data object AffiliationRequest : Route
+
     /** [topic] is a `SettingsTopic` name. */
     @Serializable
     data class SettingsInfo(val topic: String) : Route

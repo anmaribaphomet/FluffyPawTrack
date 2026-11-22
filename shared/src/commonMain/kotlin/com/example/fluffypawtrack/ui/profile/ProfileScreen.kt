@@ -44,6 +44,7 @@ import com.example.fluffypawtrack.ui.theme.FluffyShadows
 import com.example.fluffypawtrack.ui.theme.FluffyShapes
 import fluffypawtrack.shared.generated.resources.Res
 import fluffypawtrack.shared.generated.resources.ic_person_outline
+import fluffypawtrack.shared.generated.resources.ic_notification
 import fluffypawtrack.shared.generated.resources.ic_report
 import fluffypawtrack.shared.generated.resources.ic_star
 import fluffypawtrack.shared.generated.resources.ic_user
@@ -70,6 +71,7 @@ fun ProfileRoute(
     onMyReports: () -> Unit,
     onFavorites: () -> Unit,
     modifier: Modifier = Modifier,
+    onContactRequests: () -> Unit = {},
 ) {
     val container = LocalAppContainer.current
     val viewModel = viewModel {
@@ -83,6 +85,7 @@ fun ProfileRoute(
         onPersonalInfo = onPersonalInfo,
         onMyReports = onMyReports,
         onFavorites = onFavorites,
+        onContactRequests = onContactRequests,
     )
 }
 
@@ -95,6 +98,7 @@ fun ProfileScreen(
     onPersonalInfo: () -> Unit = {},
     onMyReports: () -> Unit = {},
     onFavorites: () -> Unit = {},
+    onContactRequests: () -> Unit = {},
 ) {
     Box(modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
         ProfileBackdrop()
@@ -142,6 +146,12 @@ fun ProfileScreen(
                     subtitle = "Animales y publicaciones guardados",
                     onClick = onFavorites,
                     iconSize = 25.dp,
+                )
+                ProfileOptionRow(
+                    icon = painterResource(Res.drawable.ic_notification),
+                    title = "Solicitudes de contacto",
+                    subtitle = "Enviadas y recibidas",
+                    onClick = onContactRequests,
                 )
             }
         }

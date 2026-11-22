@@ -49,6 +49,7 @@ fun LoginRoute(
     onSignedIn: () -> Unit,
     onCreateAccount: () -> Unit,
     onReportAnonymously: () -> Unit,
+    onRequestAffiliation: () -> Unit = {},
 ) {
     val container = LocalAppContainer.current
     val viewModel = viewModel { LoginViewModel(container.authRepository) }
@@ -72,6 +73,7 @@ fun LoginRoute(
         onSubmit = viewModel::onSubmit,
         onCreateAccount = onCreateAccount,
         onReportAnonymously = viewModel::onReportAnonymously,
+        onRequestAffiliation = onRequestAffiliation,
     )
 }
 
@@ -85,6 +87,7 @@ fun LoginScreen(
     onCreateAccount: () -> Unit,
     onReportAnonymously: () -> Unit,
     modifier: Modifier = Modifier,
+    onRequestAffiliation: () -> Unit = {},
 ) {
     val focusManager = LocalFocusManager.current
     Column(
@@ -168,7 +171,15 @@ fun LoginScreen(
                 icon = painterResource(Res.drawable.ic_camera),
                 onClick = { if (!state.isLoading) onReportAnonymously() },
             )
-            Spacer(Modifier.height(24.dp))
+            TextButton(onClick = onRequestAffiliation, enabled = !state.isLoading) {
+                Text(
+                    text = "¿Eres un albergue o centro de adopción? Solicita tu afiliación",
+                    style = MaterialTheme.typography.labelLarge,
+                    color = FluffyColors.Brown900,
+                    textAlign = TextAlign.Center,
+                )
+            }
+            Spacer(Modifier.height(16.dp))
             // Demo build only: the fake repository accepts this account.
             Text(
                 text = "Cuenta de prueba: demo@correo.com / demo1234",
