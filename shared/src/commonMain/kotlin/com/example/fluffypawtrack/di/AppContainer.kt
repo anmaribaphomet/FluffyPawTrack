@@ -41,12 +41,16 @@ class AppContainer(private val supabaseConfig: SupabaseConfig? = null) {
     private val supabase: SupabaseRepositories? = supabaseClient?.let(::SupabaseRepositories)
 
     val authRepository: AuthRepository = supabase?.auth ?: FakeAuthRepository()
-    val reportRepository: ReportRepository = supabase?.reports ?: FakeReportRepository()
+    val notificationRepository: NotificationRepository = supabase?.notifications ?: FakeNotificationRepository()
+    val reportRepository: ReportRepository = supabase?.reports
+        ?: FakeReportRepository(
+            currentUser = { authRepository.currentUser.value },
+            notifications = notificationRepository,
+        )
     val organizationRepository: OrganizationRepository = supabase?.organizations ?: FakeOrganizationRepository()
     val adoptionRepository: AdoptionRepository =
         supabase?.adoptions ?: FakeAdoptionRepository(findUser = profileLookup(authRepository))
     val favoritesRepository: FavoritesRepository = supabase?.favorites ?: FakeFavoritesRepository()
-    val notificationRepository: NotificationRepository = supabase?.notifications ?: FakeNotificationRepository()
     val contactRequestRepository: ContactRequestRepository = supabase?.contactRequests
         ?: FakeContactRequestRepository(
             reportRepository = reportRepository,

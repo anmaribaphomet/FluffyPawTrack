@@ -3,6 +3,7 @@ package com.example.fluffypawtrack.data.supabase
 import com.example.fluffypawtrack.domain.model.NewReport
 import com.example.fluffypawtrack.domain.model.Report
 import com.example.fluffypawtrack.domain.model.ReportStatus
+import com.example.fluffypawtrack.domain.model.StatusHistoryEntry
 import com.example.fluffypawtrack.domain.repository.ReportRepository
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.auth.auth
@@ -77,21 +78,75 @@ internal class SupabaseReportRepository(
     }.thenRefresh(queries)
 
     /** Allowed to the assigned organization and the admin (`set_report_status`). */
-    override suspend fun closeReport(id: String): Result<Report> = remote {
+    override suspend fun closeReport(id: String): Result<Report> = setStatus(id, ReportStatus.Closed)
+
+    override fun observeInbox(organizationId: String): Flow<List<Report>> =
+        queries.observe("reports:inbox:$organizationId", emptyList()) {
+            selectReports(newestFirst = true) {
+                neq("status", ReportStatus.Closed.dbValue)
+                eq("hidden", false)
+            }.filter { it.assignedOrganizationId == null || it.assignedOrganizationId == organizationId }
+        }
+
+    override fun observeCasesOf(organizationId: String): Flow<List<Report>> =
+        queries.observe("reports:cases:$organizationId", emptyList()) {
+            selectReports(newestFirst = true) {
+                eq("assigned_org_id", organizationId)
+                neq("status", ReportStatus.Closed.dbValue)
+                eq("hidden", false)
+            }
+        }
+
+    /** RLS returns every row, hidden ones included, only to the admin. */
+    override fun observeAllForAdmin(): Flow<List<Report>> =
+        queries.observe("reports:admin", emptyList()) { selectReports(newestFirst = true) {} }
+
+    override suspend fun takeReport(reportId: String): Result<Report> = remote {
+        client.postgrest.rpc("take_report", buildJsonObject { put("p_report_id", reportId) })
+            .decodeAs<ReportDto>().toDomain()
+    }.thenRefresh(queries)
+
+    override suspend fun setStatus(reportId: String, status: ReportStatus): Result<Report> = remote {
         client.postgrest.rpc(
             "set_report_status",
             buildJsonObject {
-                put("p_report_id", id)
-                put("p_status", ReportStatus.Closed.dbValue)
+                put("p_report_id", reportId)
+                put("p_status", status.dbValue)
             },
         ).decodeAs<ReportDto>().toDomain()
     }.thenRefresh(queries)
 
+    override suspend fun setHidden(reportId: String, hidden: Boolean): Result<Report> = remote {
+        client.postgrest.rpc(
+            "set_report_hidden",
+            buildJsonObject {
+                put("p_report_id", reportId)
+                put("p_hidden", hidden)
+            },
+        ).decodeAs<ReportDto>().toDomain()
+    }.thenRefresh(queries)
+
+    override fun observeStatusHistory(reportId: String): Flow<List<StatusHistoryEntry>> =
+        queries.observe("reports:history:$reportId", emptyList()) {
+            val report = client.from(TABLE).select { filter { eq("id", reportId) } }
+                .decodeList<ReportDto>().firstOrNull() ?: return@observe emptyList()
+            val rows = client.from("report_status_history").select {
+                filter { eq("report_id", reportId) }
+                order("created_at", Order.ASCENDING)
+            }.decodeList<StatusHistoryDto>()
+            val organizationName = report.assignedOrgId?.let { orgId ->
+                client.from("organizations").select { filter { eq("id", orgId) } }
+                    .decodeList<OrganizationDto>().firstOrNull()?.name
+            }
+            statusHistoryOf(rows, report, organizationName)
+        }
+
     private suspend fun selectReports(
+        newestFirst: Boolean = false,
         filters: PostgrestFilterBuilder.() -> Unit,
     ): List<Report> = client.from(TABLE).select {
         filter(filters)
-        order("created_at", Order.ASCENDING)
+        order("created_at", if (newestFirst) Order.DESCENDING else Order.ASCENDING)
     }.decodeList<ReportDto>().map { it.toDomain() }
 
     private companion object {

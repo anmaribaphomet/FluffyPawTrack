@@ -17,6 +17,8 @@ import com.example.fluffypawtrack.domain.model.OrganizationType
 import com.example.fluffypawtrack.domain.model.Report
 import com.example.fluffypawtrack.domain.model.ReportCategory
 import com.example.fluffypawtrack.domain.model.ReportStatus
+import com.example.fluffypawtrack.domain.model.ReportStatusRules
+import com.example.fluffypawtrack.domain.model.StatusHistoryEntry
 import com.example.fluffypawtrack.domain.model.contactRecipient
 import com.example.fluffypawtrack.domain.model.isActive
 import com.example.fluffypawtrack.domain.model.Role
@@ -35,7 +37,9 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlin.time.Clock
+import kotlin.time.Duration.Companion.hours
 import kotlin.time.ExperimentalTime
+import kotlin.time.Instant
 
 // In-memory implementations backed by SampleData. State lives only while the app runs.
 
@@ -101,13 +105,142 @@ class FakeAuthRepository(initialUser: UserProfile? = null) : AuthRepository {
     }
 }
 
+/**
+ * Enforces the RF-04 and RF-07 rules of `take_report`, `set_report_status` and
+ * `set_report_hidden`. [currentUser] stands in for the session (`auth.uid()`),
+ * [findOrganizationName] for the `organizations` table, and [notifications] receives the
+ * reporter notifications the server trigger inserts.
+ */
 @OptIn(ExperimentalTime::class)
-class FakeReportRepository(private val clock: Clock = Clock.System) : ReportRepository {
+class FakeReportRepository(
+    private val clock: Clock = Clock.System,
+    private val currentUser: () -> UserProfile? = { null },
+    private val findOrganizationName: (String) -> String? = { id ->
+        SampleData.organizations.firstOrNull { it.id == id }?.name
+    },
+    private val notifications: NotificationRepository? = null,
+) : ReportRepository {
     private val reports = MutableStateFlow(SampleData.reports)
+    private val history = MutableStateFlow(SampleData.reports.associate { it.id to sampleHistory(it) })
+    private val changeListeners = mutableListOf<suspend (before: Report, after: Report) -> Unit>()
     private var nextId = 1
 
+    /** One row of `report_status_history`; [changedBy] is a user id, null for seed data. */
+    private data class HistoryRow(val status: ReportStatus, val at: Instant, val changedBy: String?)
+
     override fun observeActiveReports(): Flow<List<Report>> =
-        reports.map { list -> list.filter { it.status != ReportStatus.Closed } }
+        reports.map { list -> list.filter { it.status != ReportStatus.Closed && !it.hidden } }
+
+    override fun observeInbox(organizationId: String): Flow<List<Report>> = reports.map { list ->
+        list.filter {
+            it.status != ReportStatus.Closed && !it.hidden &&
+                (it.assignedOrganizationId == null || it.assignedOrganizationId == organizationId)
+        }.sortedByDescending { it.createdAt }
+    }
+
+    override fun observeCasesOf(organizationId: String): Flow<List<Report>> = reports.map { list ->
+        // RLS hides hidden reports from affiliates, so a hidden case leaves the list too.
+        list.filter { it.assignedOrganizationId == organizationId && it.status != ReportStatus.Closed && !it.hidden }
+            .sortedByDescending { it.createdAt }
+    }
+
+    override fun observeAllForAdmin(): Flow<List<Report>> =
+        reports.map { list -> list.sortedByDescending { it.createdAt } }
+
+    override suspend fun takeReport(reportId: String): Result<Report> {
+        val organizationId = currentUser()?.takeIf { it.role == Role.Affiliate }?.organizationId
+            ?: return failure("Solo los albergues afiliados pueden tomar casos")
+        val report = reports.value.firstOrNull { it.id == reportId }?.takeUnless { it.hidden }
+            ?: return failure(NOT_FOUND)
+        if (report.status == ReportStatus.Closed) return failure("Este caso ya está cerrado")
+        if (report.status != ReportStatus.Pending || report.assignedOrganizationId != null) {
+            return failure("Este caso ya fue tomado por otro albergue")
+        }
+        return Result.success(
+            save(report, report.copy(assignedOrganizationId = organizationId, status = ReportStatus.OnTheWay)),
+        )
+    }
+
+    override suspend fun setStatus(reportId: String, status: ReportStatus): Result<Report> {
+        val report = reports.value.firstOrNull { it.id == reportId } ?: return failure(NOT_FOUND)
+        val user = currentUser()
+        if (user?.role != Role.Admin) {
+            val isAssigned = user?.role == Role.Affiliate && user.organizationId != null &&
+                user.organizationId == report.assignedOrganizationId
+            if (!isAssigned) return failure("Solo el albergue asignado puede cambiar el estado del reporte")
+            if (!ReportStatusRules.canAdvance(report.status, status)) {
+                return failure("El estado del reporte solo puede avanzar")
+            }
+        }
+        return Result.success(save(report, report.copy(status = status)))
+    }
+
+    override suspend fun setHidden(reportId: String, hidden: Boolean): Result<Report> {
+        if (currentUser()?.role != Role.Admin) return failure("Solo el administrador puede ocultar reportes")
+        val report = reports.value.firstOrNull { it.id == reportId } ?: return failure(NOT_FOUND)
+        return Result.success(save(report, report.copy(hidden = hidden)))
+    }
+
+    override fun observeStatusHistory(reportId: String): Flow<List<StatusHistoryEntry>> =
+        history.map { all ->
+            val report = reports.value.firstOrNull { it.id == reportId }
+            val organizationName = report?.assignedOrganizationId?.let(findOrganizationName)
+            all[reportId].orEmpty().sortedBy { it.at }.map { row ->
+                StatusHistoryEntry(
+                    status = row.status,
+                    changedAt = row.at,
+                    responsibleName = ReportStatusRules.responsibleName(
+                        row.status, row.changedBy, report?.reporterId, organizationName,
+                    ),
+                )
+            }
+        }
+
+    /**
+     * Lets [FakeContactRequestRepository] reject pending requests when a report is closed or
+     * hidden, like the `reports_reject_on_close` and `reports_release_on_hide` triggers.
+     */
+    internal fun addChangeListener(listener: suspend (before: Report, after: Report) -> Unit) {
+        changeListeners += listener
+    }
+
+    /** Stores [updated], records a status change in the history and notifies the reporter. */
+    private suspend fun save(before: Report, updated: Report): Report {
+        reports.update { list -> list.map { if (it.id == updated.id) updated else it } }
+        if (updated.status != before.status) {
+            val changedBy = currentUser()?.id
+            history.update { all ->
+                all + (updated.id to all[updated.id].orEmpty() + HistoryRow(updated.status, clock.now(), changedBy))
+            }
+            val reporterId = updated.reporterId
+            if (reporterId != null && reporterId != changedBy) {
+                notifications?.notify(
+                    reporterId,
+                    ReportStatusRules.STATUS_CHANGED_TITLE,
+                    ReportStatusRules.statusChangedMessage(updated.status),
+                    NotificationType.Report,
+                )
+            }
+        }
+        changeListeners.forEach { it(before, updated) }
+        return updated
+    }
+
+    private fun <T> failure(message: String): Result<T> = Result.failure(IllegalStateException(message))
+
+    private companion object {
+        const val NOT_FOUND = "El reporte no existe"
+
+        /** Every status up to the current one, an hour apart, the first one by the reporter. */
+        fun sampleHistory(report: Report): List<HistoryRow> =
+            ReportStatus.entries.filter { it <= report.status }.mapIndexed { index, status ->
+                HistoryRow(
+                    status = status,
+                    at = report.createdAt + index.hours,
+                    changedBy = report.reporterId.takeIf { status == ReportStatus.Pending },
+                )
+            }
+    }
 
     override fun observeReportsBy(reporterId: String): Flow<List<Report>> =
         reports.map { list -> list.filter { it.reporterId == reporterId } }
@@ -130,6 +263,7 @@ class FakeReportRepository(private val clock: Clock = Clock.System) : ReportRepo
             createdAt = clock.now(),
         )
         reports.update { it + created }
+        history.update { all -> all + (created.id to listOf(HistoryRow(created.status, created.createdAt, reporterId))) }
         return Result.success(created)
     }
 
@@ -155,9 +289,7 @@ class FakeReportRepository(private val clock: Clock = Clock.System) : ReportRepo
     override suspend fun closeReport(id: String): Result<Report> {
         val current = reports.value.firstOrNull { it.id == id }
             ?: return Result.failure(NoSuchElementException("El reporte no existe"))
-        val closed = current.copy(status = ReportStatus.Closed)
-        reports.update { list -> list.map { if (it.id == id) closed else it } }
-        return Result.success(closed)
+        return Result.success(save(current, current.copy(status = ReportStatus.Closed)))
     }
 }
 
@@ -325,6 +457,29 @@ class FakeContactRequestRepository(
     private val requests = MutableStateFlow(SampleData.contactRequests)
     private var nextId = 1
 
+    init {
+        // Server triggers: closing or hiding a report rejects its pending requests.
+        (reportRepository as? FakeReportRepository)?.addChangeListener { before, after ->
+            when {
+                after.status == ReportStatus.Closed && before.status != ReportStatus.Closed ->
+                    rejectPending(after.id, ContactRequestRules.CASE_CLOSED_NOTE)
+                after.hidden && !before.hidden -> rejectPending(after.id, ReportStatusRules.REPORT_UNAVAILABLE_NOTE)
+            }
+        }
+    }
+
+    private fun rejectPending(reportId: String, note: String) {
+        requests.update { list ->
+            list.map {
+                if (it.reportId == reportId && it.status == ContactRequestStatus.Pending) {
+                    it.copy(status = ContactRequestStatus.Rejected, statusNote = note)
+                } else {
+                    it
+                }
+            }
+        }
+    }
+
     override fun observeSent(userId: String): Flow<List<ContactRequest>> =
         requests.map { list -> list.filter { it.requesterId == userId } }
 
@@ -407,15 +562,8 @@ class FakeContactRequestRepository(
         val report = reportRepository.getReport(request.reportId) ?: return failure("El reporte ya no está disponible")
         if (report.status == ReportStatus.Closed) return failure("Este caso ya está cerrado")
         reportRepository.closeReport(report.id).onFailure { return Result.failure(it) }
-        requests.update { list ->
-            list.map {
-                if (it.reportId == report.id && it.status == ContactRequestStatus.Pending) {
-                    it.copy(status = ContactRequestStatus.Rejected, statusNote = ContactRequestRules.CASE_CLOSED_NOTE)
-                } else {
-                    it
-                }
-            }
-        }
+        // Also done by the change listener when the report repository is the fake one.
+        rejectPending(report.id, ContactRequestRules.CASE_CLOSED_NOTE)
         return Result.success(request)
     }
 

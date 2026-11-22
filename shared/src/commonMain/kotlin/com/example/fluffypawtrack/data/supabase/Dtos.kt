@@ -50,6 +50,15 @@ internal data class ReportDto(
     val status: String,
     @SerialName("assigned_org_id") val assignedOrgId: String? = null,
     @SerialName("created_at") val createdAt: String,
+    val hidden: Boolean = false,
+)
+
+/** A row of `report_status_history`, written only by the `reports_track_status` trigger. */
+@Serializable
+internal data class StatusHistoryDto(
+    val status: String,
+    @SerialName("changed_by") val changedBy: String? = null,
+    @SerialName("created_at") val createdAt: String,
 )
 
 /** Insert body of `reports`; status, flags and timestamps come from column defaults and triggers. */

@@ -10,7 +10,10 @@ import com.example.fluffypawtrack.domain.model.NewAdoptionRequest
 import com.example.fluffypawtrack.domain.model.NewReport
 import com.example.fluffypawtrack.domain.model.Organization
 import com.example.fluffypawtrack.domain.model.Report
+import com.example.fluffypawtrack.domain.model.ReportStatus
+import com.example.fluffypawtrack.domain.model.ReportStatusRules
 import com.example.fluffypawtrack.domain.model.Role
+import com.example.fluffypawtrack.domain.model.StatusHistoryEntry
 import com.example.fluffypawtrack.domain.model.UserProfile
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.buildJsonObject
@@ -71,7 +74,26 @@ internal fun ReportDto.toDomain(): Report = Report(
     status = fromDb(status),
     assignedOrganizationId = assignedOrgId,
     createdAt = timestamp(createdAt),
+    hidden = hidden,
 )
+
+/**
+ * History rows of [report] (its raw row, so anonymous reporters still match their own changes),
+ * oldest first. [organizationName] is the assigned organization's name, if any.
+ */
+@OptIn(ExperimentalTime::class)
+internal fun statusHistoryOf(
+    rows: List<StatusHistoryDto>,
+    report: ReportDto,
+    organizationName: String?,
+): List<StatusHistoryEntry> = rows.map { row ->
+    val status = fromDb<ReportStatus>(row.status)
+    StatusHistoryEntry(
+        status = status,
+        changedAt = timestamp(row.createdAt),
+        responsibleName = ReportStatusRules.responsibleName(status, row.changedBy, report.reporterId, organizationName),
+    )
+}.sortedBy { it.changedAt }
 
 /** [photoUrl] is the stored photo (already uploaded when the form held a local one). */
 internal fun NewReport.toInsertDto(reporterId: String, photoUrl: String): NewReportDto = NewReportDto(

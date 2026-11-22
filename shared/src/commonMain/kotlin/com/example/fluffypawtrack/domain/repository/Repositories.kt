@@ -11,6 +11,8 @@ import com.example.fluffypawtrack.domain.model.NewReport
 import com.example.fluffypawtrack.domain.model.Organization
 import com.example.fluffypawtrack.domain.model.OrganizationType
 import com.example.fluffypawtrack.domain.model.Report
+import com.example.fluffypawtrack.domain.model.ReportStatus
+import com.example.fluffypawtrack.domain.model.StatusHistoryEntry
 import com.example.fluffypawtrack.domain.model.UserProfile
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
@@ -54,6 +56,36 @@ interface ReportRepository {
 
     /** Moves the report to "Caso cerrado", for example when the lost pet was delivered. */
     suspend fun closeReport(id: String): Result<Report>
+
+    /**
+     * Affiliate inbox: open (not closed), non-hidden reports that no other organization took,
+     * newest first. Radius filtering (RF-03) arrives in Phase 4; filter by [Report.priority].
+     */
+    fun observeInbox(organizationId: String): Flow<List<Report>>
+
+    /** Non-hidden cases assigned to the organization that are not closed yet, newest first. */
+    fun observeCasesOf(organizationId: String): Flow<List<Report>>
+
+    /** Every report, hidden and closed ones included, newest first (RF-07 supervision). */
+    fun observeAllForAdmin(): Flow<List<Report>>
+
+    /**
+     * The signed-in affiliate's organization takes a pending case (`take_report`); it becomes
+     * "En camino". Only one organization can take it.
+     */
+    suspend fun takeReport(reportId: String): Result<Report>
+
+    /**
+     * The assigned organization moves the case forward only; the admin may set any status
+     * (`set_report_status`). The reporter is notified of each change.
+     */
+    suspend fun setStatus(reportId: String, status: ReportStatus): Result<Report>
+
+    /** Admin only (`set_report_hidden`). Hiding rejects the report's pending contact requests. */
+    suspend fun setHidden(reportId: String, hidden: Boolean): Result<Report>
+
+    /** RF-04 history, oldest first: every status with its date and responsible. */
+    fun observeStatusHistory(reportId: String): Flow<List<StatusHistoryEntry>>
 }
 
 interface OrganizationRepository {
