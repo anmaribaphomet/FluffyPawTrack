@@ -19,7 +19,7 @@ Branch: `master` (project rule: commit per unit, push at phase end). Strategy: s
 | T2 | S2 | inline | done (platform expect/actual deferred to Phase 1 features) | 71a1051 |
 | T3 | S3 | inline | done — RED compile failure, GREEN 15/15 | 6b2c980 |
 | T4 | S4 | inline | done — cards grow with text (user chose A) | 4d07c01, next commit |
-| T5 | S5 | inline | pending | |
+| T5 | S5 | inline | done — 17/17 tests, assembleDebug OK, pushed | see push |
 
 Route evidence: one sequential feature, no parallel independent units, no context backstop → no writer trigger.
 
@@ -33,3 +33,4 @@ Route evidence: one sequential feature, no parallel independent units, no contex
 - L6: Old build `com.example.fluffypawtrack` is still installed on the emulator next to `mx.unison.fluffypawtrack`.
 - L7 (2026-11-22, user): "A.- Cambia las tarjetas pero que queden esteticamente correctas y que la fuente sea bien legible"
 - L8: HouseCard now measures its text and grows (min = Figma height), illustration and text centered; pill button fills the text column, 40 dp tall. Checked on emulator at font scale 1.0 and 1.3: no clipping in cards. Known: at 1.3 the bottom-nav label "Notificaciones" is clipped (fixed-width tab) → Phase 4 polish.
+- L9: Native review (lineage review-89835f8296ea05f8, lenses risk + reliability, user granted) approved and acknowledged; 4 non-blocking findings. Fixed now: navigation double-tap guard (dropUnlessResumed, launchSingleTop), all Typography slots use Inter, contact-request test asserted exact ids, new tests for markAsRead and email normalization (17/17). Deferred to roadmap: demo auth out of release (Phase 2), nav label clipping at 1.3 (Phase 4).

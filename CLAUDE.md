@@ -96,13 +96,13 @@ Rules:
 ## Roadmap
 
 ### Phase 0 — Foundations
-- [ ] Add the navigation library and replace the `enum` + `when` navigation
-- [ ] Create the layer structure (`domain`, `data`, `platform`, `di`, `ui/navigation`)
-- [ ] Domain models and repository interfaces for reports, places, adoptions, auth,
+- [x] Add the navigation library and replace the `enum` + `when` navigation
+- [x] Create the layer structure (`domain`, `data`, `di`, `ui/navigation`); `platform` arrives with the Phase 1 features that need it
+- [x] Domain models and repository interfaces for reports, places, adoptions, auth,
       notifications, favorites, and contact requests
-- [ ] Fake repositories with Hermosillo sample data: reports, shelters, adoption listings
-- [ ] Align `ui/theme` with `docs/design-system.md` (Inter only, consolidated tokens)
-- [ ] `assembleDebug` passes; push
+- [x] Fake repositories with Hermosillo sample data: reports, shelters, adoption listings
+- [x] Align `ui/theme` with `docs/design-system.md` (Inter only, consolidated tokens)
+- [x] `assembleDebug` passes; push
 
 ### Phase 1 — All user screens with fake data (target: Monday, Nov 23, 2026)
 - [ ] Splash, login, and registration
@@ -125,6 +125,7 @@ Rules:
 - [ ] `get_contact_details(request_id)` RPC
 - [ ] Storage buckets `report-photos` and `adoption-photos`; compress photos before upload
 - [ ] Supabase repositories; switch `AppContainer` from fake to Supabase
+- [ ] Keep the fake auth and `SampleData.DEMO_PASSWORD` out of release builds
 - [ ] `assembleDebug` passes; push
 
 ### Phase 3 — Affiliate and admin views
@@ -140,4 +141,5 @@ Rules:
 - [ ] FCM push (app closed): device tokens, Edge Function, tap opens the report,
       `POST_NOTIFICATIONS` permission screen
 - [ ] Polish: accessibility, empty and error states, Figma copy fixes
+- [ ] Bottom-nav labels must not clip at large font scales ("Notificaciones" clips at 1.3)
 - [ ] `assembleDebug` passes; push
