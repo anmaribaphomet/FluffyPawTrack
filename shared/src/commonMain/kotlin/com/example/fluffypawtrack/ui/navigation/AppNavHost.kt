@@ -15,7 +15,19 @@ import com.example.fluffypawtrack.ui.home.HomeScreen
 import com.example.fluffypawtrack.ui.map.MapFilter
 import com.example.fluffypawtrack.ui.map.MapRoute
 import com.example.fluffypawtrack.ui.notifications.NotificationsRoute
+import androidx.compose.runtime.rememberCoroutineScope
+import com.example.fluffypawtrack.di.LocalAppContainer
+import com.example.fluffypawtrack.domain.model.OrganizationType
 import com.example.fluffypawtrack.ui.account.FavoritesRoute
+import com.example.fluffypawtrack.ui.adoptions.AdoptionFormRoute
+import com.example.fluffypawtrack.ui.adoptions.AnimalDetailRoute
+import com.example.fluffypawtrack.ui.adoptions.CenterDetailRoute
+import com.example.fluffypawtrack.ui.components.PillActionButton
+import fluffypawtrack.shared.generated.resources.Res
+import fluffypawtrack.shared.generated.resources.ic_heart
+import fluffypawtrack.shared.generated.resources.ic_home
+import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.painterResource
 import com.example.fluffypawtrack.ui.account.MyReportsRoute
 import com.example.fluffypawtrack.ui.account.PersonalInfoRoute
 import com.example.fluffypawtrack.ui.profile.ProfileRoute
@@ -85,8 +97,7 @@ fun AppNavHost(navController: NavHostController = rememberNavController()) {
         composable<Route.Favorites> {
             FavoritesRoute(
                 onBack = dropUnlessResumed { navController.popBackStack() },
-                // The animal detail screen arrives with T5; until then open adoptions on the map.
-                onListingClick = { navController.navigate(Route.Map(adoptionsOnly = true)) },
+                onListingClick = { id -> navController.navigate(Route.AnimalDetail(id)) },
             )
         }
         composable<Route.NewReport> {
@@ -117,6 +128,54 @@ fun AppNavHost(navController: NavHostController = rememberNavController()) {
             MapRoute(
                 onBack = dropUnlessResumed { navController.popBackStack() },
                 initialFilter = if (route.adoptionsOnly) MapFilter.Adoptions else MapFilter.All,
+                placeActions = { organization ->
+                    if (organization.type == OrganizationType.AdoptionCenter || organization.type == OrganizationType.Shelter) {
+                        PillActionButton(
+                            text = "Ver centro",
+                            icon = painterResource(Res.drawable.ic_home),
+                            onClick = { navController.navigate(Route.CenterDetail(organization.id)) },
+                        )
+                    }
+                },
+                adoptionActions = { listing ->
+                    PillActionButton(
+                        text = "Ver ficha",
+                        icon = painterResource(Res.drawable.ic_heart),
+                        onClick = { navController.navigate(Route.AnimalDetail(listing.id)) },
+                    )
+                },
+            )
+        }
+        composable<Route.CenterDetail> { entry ->
+            CenterDetailRoute(
+                organizationId = entry.toRoute<Route.CenterDetail>().organizationId,
+                onBack = dropUnlessResumed { navController.popBackStack() },
+                onListingClick = { id -> navController.navigate(Route.AnimalDetail(id)) },
+                onAdoptionForm = { orgId, listingId -> navController.navigate(Route.AdoptionForm(orgId, listingId)) },
+            )
+        }
+        composable<Route.AnimalDetail> { entry ->
+            val adoptionRepository = LocalAppContainer.current.adoptionRepository
+            val scope = rememberCoroutineScope()
+            AnimalDetailRoute(
+                listingId = entry.toRoute<Route.AnimalDetail>().listingId,
+                onBack = dropUnlessResumed { navController.popBackStack() },
+                onCenterClick = { orgId -> navController.navigate(Route.CenterDetail(orgId)) },
+                onAdopt = { listingId ->
+                    scope.launch {
+                        val listing = adoptionRepository.getListing(listingId) ?: return@launch
+                        navController.navigate(Route.AdoptionForm(listing.organizationId, listingId))
+                    }
+                },
+            )
+        }
+        composable<Route.AdoptionForm> { entry ->
+            val route = entry.toRoute<Route.AdoptionForm>()
+            AdoptionFormRoute(
+                organizationId = route.organizationId,
+                listingId = route.listingId,
+                onBack = dropUnlessResumed { navController.popBackStack() },
+                onDone = { navController.popBackStack() },
             )
         }
         composable<Route.Notifications> {
