@@ -55,6 +55,10 @@ sealed interface Route {
     @Serializable
     data object MyAdoptionRequests : Route
 
+    /** Cuenta → "Solicitudes de adopción" of the affiliate's center. */
+    @Serializable
+    data object CenterAdoptionRequests : Route
+
     @Serializable
     data class ContactRequestForm(val reportId: String) : Route
 

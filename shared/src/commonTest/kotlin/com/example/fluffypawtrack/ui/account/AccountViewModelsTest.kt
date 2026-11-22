@@ -70,6 +70,19 @@ class AccountViewModelsTest {
     }
 
     @Test
+    fun profileTellsAffiliatesApartFromUsers() = runTest {
+        val affiliate = collecting(
+            ProfileViewModel(FakeAuthRepository(SampleData.demoAffiliate), FakeReportRepository(), FakeFavoritesRepository()).uiState,
+        ).value
+        assertTrue(affiliate.isAffiliate)
+
+        val user = collecting(
+            ProfileViewModel(FakeAuthRepository(demo), FakeReportRepository(), FakeFavoritesRepository()).uiState,
+        ).value
+        assertTrue(!user.isAffiliate)
+    }
+
+    @Test
     fun personalInfoShowsTheSignedInUser() = runTest {
         val state = collecting(PersonalInfoViewModel(FakeAuthRepository(initialUser = demo)).uiState).value
         assertEquals(demo.firstName, state.firstName)

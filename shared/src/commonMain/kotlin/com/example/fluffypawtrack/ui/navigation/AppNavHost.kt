@@ -30,6 +30,7 @@ import fluffypawtrack.shared.generated.resources.ic_home
 import org.jetbrains.compose.resources.painterResource
 import com.example.fluffypawtrack.ui.account.MyAdoptionRequestsRoute
 import com.example.fluffypawtrack.ui.account.MyReportsRoute
+import com.example.fluffypawtrack.ui.affiliate.CenterAdoptionRequestsRoute
 import com.example.fluffypawtrack.ui.account.PersonalInfoRoute
 import com.example.fluffypawtrack.ui.profile.ProfileRoute
 import com.example.fluffypawtrack.ui.report.NewReportRoute
@@ -90,6 +91,7 @@ fun AppNavHost(navController: NavHostController = rememberNavController()) {
                 onFavorites = dropUnlessResumed { navController.navigate(Route.Favorites) },
                 onContactRequests = dropUnlessResumed { navController.navigate(Route.ContactRequests) },
                 onMyAdoptionRequests = dropUnlessResumed { navController.navigate(Route.MyAdoptionRequests) },
+                onCenterAdoptionRequests = dropUnlessResumed { navController.navigate(Route.CenterAdoptionRequests) },
             )
         }
         composable<Route.PersonalInfo> {
@@ -193,6 +195,9 @@ fun AppNavHost(navController: NavHostController = rememberNavController()) {
         }
         composable<Route.MyAdoptionRequests> {
             MyAdoptionRequestsRoute(onBack = dropUnlessResumed { navController.popBackStack() })
+        }
+        composable<Route.CenterAdoptionRequests> {
+            CenterAdoptionRequestsRoute(onBack = dropUnlessResumed { navController.popBackStack() })
         }
         composable<Route.Notifications> {
             NotificationsRoute(onBack = dropUnlessResumed { navController.popBackStack() })
