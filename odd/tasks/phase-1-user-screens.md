@@ -27,8 +27,8 @@ Branch: `master` (commit per unit, push at phase end). Parallel units run in iso
 | T2 | S4 | delegated W2 (worktree) | done — merged, emulator: full anonymous flow to "¡Reporte publicado!" | 5a3f912, b0b1da9 |
 | T3 | S5, S9 | delegated W3 (worktree) | done — merged, emulator: account data, my reports, settings OK | 6881c7f, 69ddbf0, 7ea1216 |
 | T4 | S7 | delegated W4 (worktree) | done — merged, emulator: splash → login → home | 074f888, e1158d3 |
-| T5 | S6 | delegated W5 (worktree) | in progress | |
-| T6 | S8, S11 | delegated W6 (worktree) | in progress | |
+| T5 | S6 | delegated W5 (worktree) | done — merged and wired (map "Ver ficha" / "Ver centro") | de9e869 |
+| T6 | S8, S11 | delegated W6 (worktree) | done — merged and wired (map "Es mi mascota", Cuenta → Solicitudes, Login → afiliación) | d45eaf5, d62506f, c075a09 |
 | T7 | S10 | inline | done — RED compile, GREEN 4/4, emulator checked | see log |
 | T8 | S1, S12 | inline — wire routes, merge, build, push | pending | |
 
@@ -42,3 +42,5 @@ Route evidence: writer trigger (a) — four independent units with disjoint edit
 - L4: Shared labels/pin colors/date format committed before launching writers (7df92a2). T7 notifications wired to the repository with "Marcar todas como leídas".
 - L5: Worktrees branch from `origin/master` (cb31946), not local master; writers were told to `git merge master` first. Batch 1 merged without conflicts; 80/80 tests, assembleDebug OK. Emulator fixes: photo frame 4:3 so camera/gallery buttons stay visible. Map detail sheets got `reportActions` / `placeActions` / `adoptionActions` slots so batch 2 does not edit `ui/map`.
 - L6: Open decisions reported by W2 (kept as built): photo optional; GPS address saved as coordinates; anonymous-session users send their anonymous id.
+- L7: Native review for batch 1 (user granted) stopped with `lens_context_budget_exceeded` (64 files, ~5,700 lines): no review authority created. Splitting would rewrite committed history; deferred — Phase 2 real auth will use small commits so review fits.
+- L8: Batch 2 writers hit the usage limit and were resumed. W5 and W6 merged without conflicts; 144/144 tests, assembleDebug OK. Added entry points: "Solicitudes de contacto" row in Cuenta, affiliation link on Login. W6 added `ReportRepository.closeReport` and `OrganizationRepository.requestAffiliation`; received requests for organizations are listed in Phase 3 (affiliate side).
