@@ -17,9 +17,9 @@ Branch: `master`, small commits (each unit reviewable on its own), push at phase
 
 | ID | Specs | Route | Status | Commit |
 |---|---|---|---|---|
-| T1 | S3–S7 contract | delegated (worktree) — repository additions in domain, fake and Supabase | pending | |
-| T2 | S3, S5, S6 | delegated (worktree, after T1, parallel with T3) — affiliate screens | pending | |
-| T3 | S4 | delegated (worktree, after T1, parallel with T2) — admin screens | pending | |
+| T1 | S3–S7 contract | delegated (worktree) — repository additions in domain, fake and Supabase | done — 288 tests | 29e9264..8862c40 |
+| T2 | S3, S5, S6 | delegated (worktree, parallel with T3) — affiliate screens | in progress | |
+| T3 | S4 | delegated (worktree, parallel with T2) — admin screens | in progress | |
 | T4 | S2 | inline/delegated after T2+T3 — role-based home and navigation wiring | pending | |
 | T5 | S1 | emulator check against Supabase (needs patitas affiliate + an admin account), push | pending | |
 
@@ -28,3 +28,4 @@ Route evidence: T1 is the shared contract both screen units need; T2 and T3 are 
 ## Log
 
 - L1 (2026-11-22, user): "Empieza con la siguiente fase"
+- L2: T1 merged. Deviations: reviewAffiliation has no reason (RPC/table have none); prefs update takes userId; status-history responsible shows the org name or "Administración" because other profiles are private under RLS. Demo: admin@correo.com, patitas@correo.com (case report-7, request-3), carlos@correo.com requester of Rescate Animal Norte.
