@@ -26,7 +26,6 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.example.fluffypawtrack.domain.model.AdoptionListing
 import com.example.fluffypawtrack.ui.common.AppImage
-import com.example.fluffypawtrack.ui.common.PhotoThumbnail
 import com.example.fluffypawtrack.ui.theme.FluffyColors
 import com.example.fluffypawtrack.ui.theme.FluffyShadows
 import com.example.fluffypawtrack.ui.theme.FluffyShapes
@@ -61,28 +60,37 @@ internal fun ListingGallery(listing: AdoptionListing, height: Dp, modifier: Modi
 }
 
 
-/** Peach row for one adoption listing, opening its detail. */
+/**
+ * Collapsed card for one animal in a center's "Animales en adopción" section: cover photo,
+ * name, type, breed and age, plus an arrow. The whole card (arrow included) opens the
+ * animal's full detail.
+ */
 @Composable
-internal fun ListingRow(listing: AdoptionListing, onClick: () -> Unit, modifier: Modifier = Modifier) {
+internal fun AnimalCardRow(card: AnimalCard, onClick: () -> Unit, modifier: Modifier = Modifier) {
     Row(
         modifier
             .fillMaxWidth()
             .dropShadow(FluffyShapes.OptionRow, FluffyShadows.Drop)
             .clip(FluffyShapes.OptionRow)
             .background(FluffyColors.Peach200)
-            .clickable(role = Role.Button, onClickLabel = "Ver a ${listing.name}", onClick = onClick)
+            .clickable(role = Role.Button, onClickLabel = "Ver ficha de ${card.name}", onClick = onClick)
             .padding(horizontal = 16.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        PhotoThumbnail(listing.photoUrls.first(), contentDescription = null)
+        AppImage(
+            card.coverPhotoUrl,
+            contentDescription = "Foto de ${card.name}",
+            modifier = Modifier.size(64.dp).clip(FluffyShapes.Card),
+        )
         Spacer(Modifier.width(12.dp))
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-            Text(listing.name, style = MaterialTheme.typography.bodyLarge, color = FluffyColors.Brown900)
+            Text(card.name, style = MaterialTheme.typography.bodyLarge, color = FluffyColors.Brown900)
             Text(
-                "${listing.species} · ${listing.breed} · ${listing.age}",
+                "${card.species} · ${card.breed}",
                 style = MaterialTheme.typography.bodyMedium,
                 color = FluffyColors.Brown900,
             )
+            Text(card.age, style = MaterialTheme.typography.bodyMedium, color = FluffyColors.Brown900)
         }
         Image(
             painter = painterResource(Res.drawable.ic_chevron_right),

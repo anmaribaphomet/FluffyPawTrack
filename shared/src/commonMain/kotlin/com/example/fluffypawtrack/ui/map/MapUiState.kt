@@ -65,15 +65,18 @@ sealed interface MapItem {
         override val title get() = organization.name
     }
 
-    /** An adoption listing, pinned next to its organization ([location] is slightly offset from it). */
-    data class Adoption(
-        val listing: AdoptionListing,
+    /**
+     * An adoption center with available animals: one pin on the center itself (SC). Its
+     * [listings] are not pinned; they only feed the search and are listed in the center detail.
+     */
+    data class AdoptionCenter(
         val organization: Organization,
-        override val location: GeoPoint,
+        val listings: List<AdoptionListing>,
     ) : MapItem {
-        override val id get() = listing.id
+        override val id get() = organization.id
+        override val location get() = organization.location
         override val color get() = PinColors.Adoption
-        override val title get() = listing.name
+        override val title get() = organization.name
     }
 }
 

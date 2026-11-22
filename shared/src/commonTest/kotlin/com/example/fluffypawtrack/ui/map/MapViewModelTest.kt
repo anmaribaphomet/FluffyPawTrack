@@ -44,14 +44,31 @@ class MapViewModelTest {
     private suspend fun activePlaceIds() = organizations.observeActiveOrganizations().first().map { it.id }.toSet()
     private suspend fun listingIds() = adoptions.observeAvailableListings().first().map { it.id }.toSet()
 
+    /** Active adoption centers with at least one available listing: only Patitas in the sample data. */
+    private val adoptionCenterIds = setOf("org-patitas")
+
     private fun MapViewModel.visibleIds() = uiState.value.items.map { it.id }.toSet()
 
     @Test
-    fun allFilterShowsActiveReportsPlacesAndAvailableListings() = runTest {
+    fun allFilterShowsActiveReportsAndOnePinPerPlace() = runTest {
         val vm = viewModel()
 
         assertEquals(MapFilter.All, vm.uiState.value.filter)
-        assertEquals(activeReportIds() + activePlaceIds() + listingIds(), vm.visibleIds())
+        assertEquals(activeReportIds() + activePlaceIds(), vm.visibleIds())
+        val pinIds = vm.uiState.value.pins.map { it.id }
+        assertEquals(pinIds.size, pinIds.toSet().size)
+    }
+
+    @Test
+    fun mapHasNoIndividualAdoptionListingPins() = runTest {
+        val vm = viewModel()
+        val listings = listingIds()
+        assertTrue(listings.isNotEmpty())
+
+        listOf(MapFilter.All, MapFilter.Adoptions).forEach { filter ->
+            vm.onFilterSelected(filter)
+            assertTrue(vm.uiState.value.pins.none { it.id in listings }, "filter $filter")
+        }
     }
 
     @Test
@@ -85,22 +102,35 @@ class MapViewModelTest {
     }
 
     @Test
-    fun adoptionsFilterShowsOnlyAvailableListings() = runTest {
+    fun adoptionsFilterShowsExactlyOnePinPerAdoptionCenterWithAnimals() = runTest {
         val vm = viewModel()
 
         vm.onFilterSelected(MapFilter.Adoptions)
 
-        assertEquals(listingIds(), vm.visibleIds())
-        assertTrue(vm.uiState.value.items.all { it is MapItem.Adoption && it.color == PinColors.Adoption })
+        assertEquals(adoptionCenterIds, vm.visibleIds())
+        assertEquals(adoptionCenterIds.toList(), vm.uiState.value.pins.map { it.id })
+        assertTrue(vm.uiState.value.items.all { it is MapItem.AdoptionCenter && it.color == PinColors.Adoption })
+        val patitas = vm.uiState.value.items.single() as MapItem.AdoptionCenter
+        assertEquals(listingIds(), patitas.listings.map { it.id }.toSet())
     }
 
     @Test
-    fun supportPlacesFilterShowsOnlyActiveOrganizations() = runTest {
+    fun adoptionCenterPinSitsOnTheCenter() = runTest {
+        val vm = viewModel(initialFilter = MapFilter.Adoptions)
+        val places = organizations.observeActiveOrganizations().first().associateBy { it.id }
+
+        vm.uiState.value.items.forEach { item ->
+            assertEquals(places.getValue(item.id).location, item.location)
+        }
+    }
+
+    @Test
+    fun supportPlacesFilterShowsTheOtherActiveOrganizations() = runTest {
         val vm = viewModel()
 
         vm.onFilterSelected(MapFilter.SupportPlaces)
 
-        assertEquals(activePlaceIds(), vm.visibleIds())
+        assertEquals(activePlaceIds() - adoptionCenterIds, vm.visibleIds())
         assertTrue(vm.uiState.value.items.all { it is MapItem.Place && it.color == PinColors.SupportPlace })
     }
 
@@ -109,19 +139,7 @@ class MapViewModelTest {
         val vm = viewModel(initialFilter = MapFilter.Adoptions)
 
         assertEquals(MapFilter.Adoptions, vm.uiState.value.filter)
-        assertEquals(listingIds(), vm.visibleIds())
-    }
-
-    @Test
-    fun adoptionListingsArePlacedNearTheirOrganization() = runTest {
-        val vm = viewModel(initialFilter = MapFilter.Adoptions)
-        val places = organizations.observeActiveOrganizations().first().associateBy { it.id }
-
-        vm.uiState.value.items.filterIsInstance<MapItem.Adoption>().forEach { item ->
-            val center = places.getValue(item.listing.organizationId).location
-            assertTrue(kotlin.math.abs(item.location.latitude - center.latitude) < 0.002)
-            assertTrue(kotlin.math.abs(item.location.longitude - center.longitude) < 0.002)
-        }
+        assertEquals(adoptionCenterIds, vm.visibleIds())
     }
 
     @Test
@@ -129,8 +147,8 @@ class MapViewModelTest {
         val vm = viewModel()
 
         vm.onQueryChange("LABRADOR")
-        // report-5 description and listing-3 breed.
-        assertEquals(setOf("report-5", "listing-3"), vm.visibleIds())
+        // report-5 description and Patitas, whose animal Toby is a "Labrador mestizo".
+        assertEquals(setOf("report-5", "org-patitas"), vm.visibleIds())
 
         vm.onQueryChange("pino suarez")
         // report-2 address "Calle Pino Suárez 210".
@@ -141,7 +159,7 @@ class MapViewModelTest {
         assertEquals(setOf("org-imbpa"), vm.visibleIds())
 
         vm.onQueryChange("  ")
-        assertEquals(activeReportIds() + activePlaceIds() + listingIds(), vm.visibleIds())
+        assertEquals(activeReportIds() + activePlaceIds(), vm.visibleIds())
     }
 
     @Test
@@ -151,8 +169,26 @@ class MapViewModelTest {
         vm.onFilterSelected(MapFilter.Adoptions)
         vm.onQueryChange("labrador")
 
-        assertEquals(setOf("listing-3"), vm.visibleIds())
+        assertEquals(setOf("org-patitas"), vm.visibleIds())
         assertEquals("labrador", vm.uiState.value.query)
+    }
+
+    @Test
+    fun adoptionsSearchByAnimalNameOrSpeciesFindsItsCenter() = runTest {
+        val vm = viewModel(initialFilter = MapFilter.Adoptions)
+
+        vm.onQueryChange("Canela")
+        assertEquals(setOf("org-patitas"), vm.visibleIds())
+
+        vm.onQueryChange("gato")
+        assertEquals(setOf("org-patitas"), vm.visibleIds())
+
+        vm.onQueryChange("patitas")
+        assertEquals(setOf("org-patitas"), vm.visibleIds())
+
+        // Luna was already adopted, so she does not lead to the center.
+        vm.onQueryChange("Luna")
+        assertTrue(vm.visibleIds().isEmpty())
     }
 
     @Test
@@ -165,6 +201,10 @@ class MapViewModelTest {
 
         vm.onPinClick("org-petcare")
         assertTrue(vm.uiState.value.selected is MapItem.Place)
+
+        vm.onPinClick("org-patitas")
+        val center = vm.uiState.value.selected
+        assertTrue(center is MapItem.AdoptionCenter && center.organization.id == "org-patitas")
 
         vm.onDismissDetail()
         assertNull(vm.uiState.value.selected)
