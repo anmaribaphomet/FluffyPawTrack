@@ -30,3 +30,6 @@ Thumbs.db
 
 # iOS dependencies
 Pods/
+
+# Local AI agent tooling
+.atl/
