@@ -8,6 +8,7 @@ import com.example.fluffypawtrack.data.fake.FakeFavoritesRepository
 import com.example.fluffypawtrack.data.fake.FakeNotificationRepository
 import com.example.fluffypawtrack.data.fake.FakeOrganizationRepository
 import com.example.fluffypawtrack.data.fake.FakeReportRepository
+import com.example.fluffypawtrack.data.fake.SampleData
 import com.example.fluffypawtrack.domain.repository.AdoptionRepository
 import com.example.fluffypawtrack.domain.repository.AuthRepository
 import com.example.fluffypawtrack.domain.repository.ContactRequestRepository
@@ -21,7 +22,8 @@ import com.example.fluffypawtrack.domain.repository.ReportRepository
  * ones here; screens and ViewModels only see the interfaces.
  */
 class AppContainer(
-    val authRepository: AuthRepository = FakeAuthRepository(),
+    // Demo session until the login screen exists (Phase 1); then start signed out.
+    val authRepository: AuthRepository = FakeAuthRepository(initialUser = SampleData.demoUser),
     val reportRepository: ReportRepository = FakeReportRepository(),
     val organizationRepository: OrganizationRepository = FakeOrganizationRepository(),
     val adoptionRepository: AdoptionRepository = FakeAdoptionRepository(),

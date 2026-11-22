@@ -29,12 +29,12 @@ import kotlin.time.ExperimentalTime
 
 // In-memory implementations backed by SampleData. State lives only while the app runs.
 
-class FakeAuthRepository : AuthRepository {
+class FakeAuthRepository(initialUser: UserProfile? = null) : AuthRepository {
     private val accounts = SampleData.users
         .mapNotNull { user -> user.email?.let { it to (user to SampleData.DEMO_PASSWORD) } }
         .toMap()
         .toMutableMap()
-    private val session = MutableStateFlow<UserProfile?>(null)
+    private val session = MutableStateFlow(initialUser)
     private var nextId = 1
 
     override val currentUser: StateFlow<UserProfile?> = session.asStateFlow()
