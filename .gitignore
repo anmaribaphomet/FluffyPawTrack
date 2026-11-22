@@ -17,3 +17,16 @@ captures
 !*.xcworkspace/contents.xcworkspacedata
 **/xcshareddata/WorkspaceSettings.xcsettings
 node_modules/
+
+# Signing and secrets
+*.jks
+*.keystore
+.env
+.env.*
+
+# Logs and OS files
+*.log
+Thumbs.db
+
+# iOS dependencies
+Pods/
