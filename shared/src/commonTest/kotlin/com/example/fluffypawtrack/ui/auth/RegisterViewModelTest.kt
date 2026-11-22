@@ -1,6 +1,7 @@
 package com.example.fluffypawtrack.ui.auth
 
 import com.example.fluffypawtrack.data.fake.FakeAuthRepository
+import com.example.fluffypawtrack.domain.model.EmailConfirmationRequiredException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
@@ -131,6 +132,19 @@ class RegisterViewModelTest {
 
         val state = viewModel.uiState.value
         assertEquals(CONNECTION_ERROR_MESSAGE, state.errorMessage)
+        assertFalse(state.registered)
+        assertFalse(state.isLoading)
+    }
+
+    @Test
+    fun emailConfirmationRequiredAsksToCheckTheInbox() = runTest {
+        viewModel = RegisterViewModel(FailingAuthRepository(EmailConfirmationRequiredException()))
+        fillValidForm()
+
+        viewModel.onSubmit()
+
+        val state = viewModel.uiState.value
+        assertEquals("Revisa tu correo para confirmar tu cuenta.", state.errorMessage)
         assertFalse(state.registered)
         assertFalse(state.isLoading)
     }

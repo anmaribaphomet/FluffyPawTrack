@@ -5,9 +5,12 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.produceState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import com.example.fluffypawtrack.platform.PhotoPreview
@@ -34,7 +37,15 @@ import fluffypawtrack.shared.generated.resources.sample_report_labrador
 import fluffypawtrack.shared.generated.resources.sample_report_street_dog
 import fluffypawtrack.shared.generated.resources.sample_report_weak_puppy
 import fluffypawtrack.shared.generated.resources.sample_report_white_cat
+import io.ktor.client.HttpClient
+import io.ktor.client.request.get
+import io.ktor.client.statement.bodyAsBytes
+import io.ktor.http.isSuccess
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.jetbrains.compose.resources.DrawableResource
+import org.jetbrains.compose.resources.decodeToImageBitmap
 import org.jetbrains.compose.resources.painterResource
 
 /**
@@ -42,7 +53,7 @@ import org.jetbrains.compose.resources.painterResource
  * of these references as their photo:
  * - `res:<drawable_name>`: a sample photo bundled with the app (fake data),
  * - `content://…` or `memory://photo/N`: a photo the user just took or picked ([PhotoPreview]),
- * - `http(s)://…`: a Supabase Storage URL (Phase 2).
+ * - `http(s)://…`: a Supabase Storage URL, downloaded and kept in a small memory cache.
  */
 internal sealed interface ImageSource {
     data class Bundled(val name: String) : ImageSource
@@ -107,8 +118,12 @@ fun AppImage(
         }
         // PhotoPreview always crops to fill.
         is ImageSource.Local -> PhotoPreview(source.ref, contentDescription, modifier)
-        // TODO(Phase 2): load Supabase Storage URLs with a network image loader.
-        is ImageSource.Remote -> ImagePlaceholder(modifier)
+        is ImageSource.Remote ->
+            if (source.url.isBlank()) {
+                ImagePlaceholder(modifier)
+            } else {
+                RemoteImage(source.url, contentDescription, modifier, contentScale)
+            }
     }
 }
 
@@ -116,6 +131,70 @@ fun AppImage(
 @Composable
 internal fun PhotoThumbnail(ref: String, contentDescription: String?, modifier: Modifier = Modifier) {
     AppImage(ref, contentDescription, modifier.size(52.dp).clip(FluffyShapes.Card))
+}
+
+/** Shows the placeholder while the photo downloads or when it cannot be loaded. */
+@Composable
+private fun RemoteImage(url: String, contentDescription: String?, modifier: Modifier, contentScale: ContentScale) {
+    val image by produceState(initialValue = RemoteImages.cached(url), url) {
+        if (value == null) value = RemoteImages.load(url)
+    }
+    val loaded = image
+    if (loaded == null) {
+        ImagePlaceholder(modifier)
+    } else {
+        Image(loaded, contentDescription, modifier, contentScale = contentScale)
+    }
+}
+
+/**
+ * Downloads photos with Ktor (already in the app through supabase-kt) and decodes them with
+ * Compose, so no image library is needed. Used only from composition, which runs on the main
+ * thread, so the cache needs no lock; decoding runs on [Dispatchers.Default].
+ */
+private object RemoteImages {
+    /** About 24 MB of decoded bitmaps: a few screens of 1280 px photos. */
+    private const val MAX_CACHE_BYTES = 24L * 1024 * 1024
+
+    private val client by lazy { HttpClient() }
+    private val cache = ImageCache(MAX_CACHE_BYTES)
+
+    fun cached(url: String): ImageBitmap? = cache[url]
+
+    suspend fun load(url: String): ImageBitmap? {
+        cache[url]?.let { return it }
+        return try {
+            val response = client.get(url)
+            if (!response.status.isSuccess()) return null
+            val bytes = response.bodyAsBytes()
+            withContext(Dispatchers.Default) { bytes.decodeToImageBitmap() }.also { cache.put(url, it) }
+        } catch (e: CancellationException) {
+            throw e
+        } catch (_: Throwable) {
+            null
+        }
+    }
+}
+
+/** Least recently used bitmaps go first once the decoded size passes [maxBytes]. */
+private class ImageCache(private val maxBytes: Long) {
+    // Insertion order; a hit re-inserts the entry, so the first key is the least recently used.
+    private val entries = LinkedHashMap<String, ImageBitmap>()
+    private var bytes = 0L
+
+    operator fun get(key: String): ImageBitmap? = entries.remove(key)?.also { entries[key] = it }
+
+    fun put(key: String, image: ImageBitmap) {
+        entries.remove(key)?.let { bytes -= it.byteSize }
+        entries[key] = image
+        bytes += image.byteSize
+        while (bytes > maxBytes && entries.size > 1) {
+            val eldest = entries.keys.first()
+            entries.remove(eldest)?.let { bytes -= it.byteSize }
+        }
+    }
+
+    private val ImageBitmap.byteSize: Long get() = width.toLong() * height * 4
 }
 
 @Composable

@@ -24,16 +24,16 @@ import com.example.fluffypawtrack.ui.theme.FluffyColors
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-private const val MemoryScheme = "memory://photo/"
+internal const val MemoryScheme = "memory://photo/"
 
 /** Longest edge, in pixels, of a gallery photo decoded for the preview. */
 private const val PreviewMaxEdge = 1280
 
 /**
- * Camera thumbnails live only in memory until the Supabase Storage upload exists (Phase 2).
- * The fake repository stores the "memory://" key as the report photo reference.
+ * Camera thumbnails live only in memory. The fake repositories store the "memory://" key as
+ * the photo reference; the Supabase ones compress and upload it ([compressPhoto]).
  */
-private object CapturedPhotos {
+internal object CapturedPhotos {
     private val photos = mutableMapOf<String, Bitmap>()
     private var nextId = 1
 
@@ -44,8 +44,18 @@ private object CapturedPhotos {
     fun get(ref: String): Bitmap? = photos[ref]
 }
 
+/**
+ * The application context the launchers ran in, so [compressPhoto] can read the
+ * `content://` refs they returned without a Composable.
+ */
+internal object PhotoContext {
+    @Volatile
+    var application: Context? = null
+}
+
 @Composable
 actual fun rememberPhotoLaunchers(onPhoto: (String) -> Unit): PhotoLaunchers {
+    PhotoContext.application = LocalContext.current.applicationContext
     val callback = rememberUpdatedState(onPhoto)
     // TakePicturePreview needs no CAMERA permission and no FileProvider; it returns a thumbnail.
     val camera = rememberLauncherForActivityResult(ActivityResultContracts.TakePicturePreview()) { bitmap ->

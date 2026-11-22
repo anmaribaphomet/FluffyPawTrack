@@ -12,6 +12,7 @@ import com.example.fluffypawtrack.data.fake.FakeReportRepository
 import com.example.fluffypawtrack.data.fake.SampleData
 import com.example.fluffypawtrack.data.supabase.SupabaseClientProvider
 import com.example.fluffypawtrack.data.supabase.SupabaseConfig
+import com.example.fluffypawtrack.data.supabase.SupabaseRepositories
 import com.example.fluffypawtrack.domain.model.UserProfile
 import com.example.fluffypawtrack.domain.repository.AdoptionRepository
 import com.example.fluffypawtrack.domain.repository.AdoptionRequestRepository
@@ -24,38 +25,40 @@ import com.example.fluffypawtrack.domain.repository.ReportRepository
 import io.github.jan.supabase.SupabaseClient
 
 /**
- * Manual dependency wiring. Phase 2 swaps the fake implementations for the Supabase
- * ones here; screens and ViewModels only see the interfaces.
+ * Manual dependency wiring. Screens and ViewModels only see the repository interfaces.
  *
- * Without a complete [supabaseConfig] (missing or blank values) the app runs on the fakes,
- * which keeps tests and previews working offline.
+ * With a complete [supabaseConfig] every repository is the Supabase one. Without it (missing or
+ * blank values) the app runs on the fakes, which keeps tests and previews working offline.
  */
-class AppContainer(
-    private val supabaseConfig: SupabaseConfig? = null,
-    val authRepository: AuthRepository = FakeAuthRepository(),
-    val reportRepository: ReportRepository = FakeReportRepository(),
-    val organizationRepository: OrganizationRepository = FakeOrganizationRepository(),
-    val adoptionRepository: AdoptionRepository = FakeAdoptionRepository(findUser = profileLookup(authRepository)),
-    val favoritesRepository: FavoritesRepository = FakeFavoritesRepository(),
-    val notificationRepository: NotificationRepository = FakeNotificationRepository(),
-    val contactRequestRepository: ContactRequestRepository = FakeContactRequestRepository(
-        reportRepository = reportRepository,
-        findUser = profileLookup(authRepository),
-        findOrganization = organizationRepository::getOrganization,
-    ),
-    val adoptionRequestRepository: AdoptionRequestRepository = FakeAdoptionRequestRepository(
-        adoptionRepository = adoptionRepository,
-        notificationRepository = notificationRepository,
-        findUser = profileLookup(authRepository),
-    ),
-) {
+class AppContainer(private val supabaseConfig: SupabaseConfig? = null) {
     /** True when both Supabase settings are present. */
     val usesSupabase: Boolean = supabaseConfig?.isConfigured == true
 
-    /** The single Supabase client, created on first use; null while running on the fakes. */
-    val supabaseClient: SupabaseClient? by lazy {
+    /** The single Supabase client; null while running on the fakes. */
+    val supabaseClient: SupabaseClient? =
         supabaseConfig?.takeIf { it.isConfigured }?.let(SupabaseClientProvider::create)
-    }
+
+    private val supabase: SupabaseRepositories? = supabaseClient?.let(::SupabaseRepositories)
+
+    val authRepository: AuthRepository = supabase?.auth ?: FakeAuthRepository()
+    val reportRepository: ReportRepository = supabase?.reports ?: FakeReportRepository()
+    val organizationRepository: OrganizationRepository = supabase?.organizations ?: FakeOrganizationRepository()
+    val adoptionRepository: AdoptionRepository =
+        supabase?.adoptions ?: FakeAdoptionRepository(findUser = profileLookup(authRepository))
+    val favoritesRepository: FavoritesRepository = supabase?.favorites ?: FakeFavoritesRepository()
+    val notificationRepository: NotificationRepository = supabase?.notifications ?: FakeNotificationRepository()
+    val contactRequestRepository: ContactRequestRepository = supabase?.contactRequests
+        ?: FakeContactRequestRepository(
+            reportRepository = reportRepository,
+            findUser = profileLookup(authRepository),
+            findOrganization = organizationRepository::getOrganization,
+        )
+    val adoptionRequestRepository: AdoptionRequestRepository = supabase?.adoptionRequests
+        ?: FakeAdoptionRequestRepository(
+            adoptionRepository = adoptionRepository,
+            notificationRepository = notificationRepository,
+            findUser = profileLookup(authRepository),
+        )
 }
 
 /** The signed-in profile first, so accounts created at runtime pass the fake rules too. */

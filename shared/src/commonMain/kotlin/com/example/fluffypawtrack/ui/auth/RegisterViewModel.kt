@@ -17,7 +17,10 @@ data class RegisterUiState(
     val password: String = "",
     val confirmPassword: String = "",
     val isLoading: Boolean = false,
-    /** [INVALID_DATA_MESSAGE] for invalid data, [CONNECTION_ERROR_MESSAGE] for any other failure. */
+    /**
+     * [INVALID_DATA_MESSAGE] for invalid data, [EMAIL_CONFIRMATION_MESSAGE] when the account
+     * waits for email confirmation, [CONNECTION_ERROR_MESSAGE] for any other failure.
+     */
     val errorMessage: String? = null,
     val registered: Boolean = false,
 )

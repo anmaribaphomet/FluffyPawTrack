@@ -1,0 +1,160 @@
+package com.example.fluffypawtrack.data.supabase
+
+import com.example.fluffypawtrack.domain.model.AdoptionListing
+import com.example.fluffypawtrack.domain.model.AdoptionRequest
+import com.example.fluffypawtrack.domain.model.AppNotification
+import com.example.fluffypawtrack.domain.model.ContactDetails
+import com.example.fluffypawtrack.domain.model.ContactRequest
+import com.example.fluffypawtrack.domain.model.GeoPoint
+import com.example.fluffypawtrack.domain.model.NewAdoptionRequest
+import com.example.fluffypawtrack.domain.model.NewReport
+import com.example.fluffypawtrack.domain.model.Organization
+import com.example.fluffypawtrack.domain.model.Report
+import com.example.fluffypawtrack.domain.model.Role
+import com.example.fluffypawtrack.domain.model.UserProfile
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
+import kotlin.time.ExperimentalTime
+import kotlin.time.Instant
+
+// Explicit DTO <-> domain conversions; enums go through EnumMapping.kt.
+
+@OptIn(ExperimentalTime::class)
+private fun timestamp(value: String): Instant = Instant.parse(value)
+
+internal fun ProfileDto.toDomain(email: String?, isAnonymous: Boolean): UserProfile = UserProfile(
+    id = id,
+    email = email,
+    firstName = firstName,
+    lastName = lastName,
+    phone = phone,
+    role = fromDb<Role>(role),
+    organizationId = organizationId,
+    isAnonymous = isAnonymous,
+)
+
+/** The signed-in user; a session whose profile row could not be read is a plain `user`. */
+internal fun userProfileOf(id: String, email: String?, isAnonymous: Boolean, profile: ProfileDto?): UserProfile =
+    (profile ?: ProfileDto(id = id)).toDomain(email = email, isAnonymous = isAnonymous)
+
+internal fun OrganizationDto.toDomain(): Organization = Organization(
+    id = id,
+    type = fromDb(type),
+    name = name,
+    description = description,
+    location = GeoPoint(lat, lng),
+    address = address,
+    schedule = schedule,
+    phone = phone,
+    email = email,
+    social = social,
+    photoUrl = photoUrl,
+    status = fromDb(status),
+    active = active,
+)
+
+@OptIn(ExperimentalTime::class)
+internal fun ReportDto.toDomain(): Report = Report(
+    id = id,
+    // README open question 1: anonymous sessions still store their uid, but the app treats
+    // those reports as having no reporter (no contact recipient, RF-05).
+    reporterId = reporterId.takeUnless { reporterIsAnonymous },
+    category = fromDb(category),
+    priority = fromDb(priority),
+    description = description,
+    photoUrl = photoUrl,
+    location = GeoPoint(lat, lng),
+    // The Geocoder may fail; the coordinates are the only address then.
+    address = address?.takeIf { it.isNotBlank() } ?: "$lat, $lng",
+    reference = reference,
+    status = fromDb(status),
+    assignedOrganizationId = assignedOrgId,
+    createdAt = timestamp(createdAt),
+)
+
+/** [photoUrl] is the stored photo (already uploaded when the form held a local one). */
+internal fun NewReport.toInsertDto(reporterId: String, photoUrl: String): NewReportDto = NewReportDto(
+    reporterId = reporterId,
+    category = category.dbValue,
+    priority = priority.dbValue,
+    description = description,
+    photoUrl = photoUrl,
+    lat = location.latitude,
+    lng = location.longitude,
+    address = address.takeIf { it.isNotBlank() },
+    reference = reference,
+)
+
+internal fun ListingDto.toDomain(): AdoptionListing = AdoptionListing(
+    id = id,
+    organizationId = organizationId,
+    name = name,
+    species = species,
+    breed = breed,
+    age = age,
+    vaccination = vaccination,
+    description = description,
+    photoUrls = photoUrls,
+    status = fromDb(status),
+)
+
+@OptIn(ExperimentalTime::class)
+internal fun AdoptionRequestDto.toDomain(): AdoptionRequest = AdoptionRequest(
+    id = id,
+    listingId = listingId,
+    organizationId = organizationId,
+    requesterId = requesterId,
+    fullName = fullName,
+    phone = phone,
+    email = email,
+    housingType = fromDb(housingType),
+    housingTenure = fromDb(housingTenure),
+    hasOtherPets = hasOtherPets,
+    otherPets = otherPets,
+    reason = reason,
+    status = fromDb(status),
+    rejectionReason = rejectionReason,
+    createdAt = timestamp(createdAt),
+    respondedAt = respondedAt?.let(::timestamp),
+)
+
+/** Parameters of the `submit_adoption_request` RPC (supabase/README.md). */
+internal fun NewAdoptionRequest.toSubmitParams(): JsonObject = buildJsonObject {
+    put("p_listing_id", listingId)
+    put("p_full_name", fullName)
+    put("p_phone", phone)
+    put("p_email", email)
+    put("p_housing_type", housingType.dbValue)
+    put("p_housing_tenure", housingTenure.dbValue)
+    put("p_has_other_pets", hasOtherPets)
+    put("p_other_pets", otherPets)
+    put("p_reason", reason)
+}
+
+@OptIn(ExperimentalTime::class)
+internal fun ContactRequestDto.toDomain(): ContactRequest = ContactRequest(
+    id = id,
+    reportId = reportId.orEmpty(),
+    requesterId = requesterId,
+    requesterFirstName = requesterFirstName,
+    recipientUserId = recipientUserId,
+    recipientOrganizationId = recipientOrgId,
+    message = message,
+    photoUrl = photoUrl,
+    status = fromDb(status),
+    statusNote = statusNote,
+    createdAt = timestamp(createdAt),
+)
+
+@OptIn(ExperimentalTime::class)
+internal fun NotificationDto.toDomain(): AppNotification = AppNotification(
+    id = id,
+    title = title,
+    message = body,
+    receivedAt = timestamp(createdAt),
+    type = fromDb(type),
+    isRead = read,
+)
+
+internal fun ContactDetailsDto.toDomain(): ContactDetails = ContactDetails(fullName, phone, email)

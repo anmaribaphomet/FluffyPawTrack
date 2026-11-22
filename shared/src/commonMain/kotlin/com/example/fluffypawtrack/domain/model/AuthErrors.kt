@@ -6,3 +6,9 @@ package com.example.fluffypawtrack.domain.model
  * cannot reveal which part was wrong or whether the email exists.
  */
 class InvalidAuthDataException : Exception()
+
+/**
+ * The account was created, but the project requires confirming the email before the first
+ * session, so the user is not signed in yet.
+ */
+class EmailConfirmationRequiredException : Exception()
