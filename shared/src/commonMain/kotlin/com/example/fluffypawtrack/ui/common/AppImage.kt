@@ -54,7 +54,8 @@ private const val BundledPrefix = "res:"
 
 internal fun imageSourceOf(ref: String): ImageSource = when {
     ref.startsWith(BundledPrefix) -> ImageSource.Bundled(ref.removePrefix(BundledPrefix))
-    ref.startsWith("http://") || ref.startsWith("https://") -> ImageSource.Remote(ref)
+    // Blank (e.g. a listing that broke the "at least one photo" rule) falls back to the placeholder.
+    ref.isBlank() || ref.startsWith("http://") || ref.startsWith("https://") -> ImageSource.Remote(ref)
     else -> ImageSource.Local(ref)
 }
 

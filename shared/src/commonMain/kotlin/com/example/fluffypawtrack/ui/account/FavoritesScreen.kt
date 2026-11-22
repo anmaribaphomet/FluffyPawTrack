@@ -37,6 +37,7 @@ import com.example.fluffypawtrack.ui.theme.FluffyShapes
 import fluffypawtrack.shared.generated.resources.Res
 import fluffypawtrack.shared.generated.resources.ic_heart
 import org.jetbrains.compose.resources.painterResource
+import com.example.fluffypawtrack.domain.model.coverPhotoUrl
 
 /** "Mis Favoritos": adoption listings the user saved. */
 @Composable
@@ -91,7 +92,7 @@ private fun FavoriteRow(listing: AdoptionListing, onClick: () -> Unit, onRemove:
             .padding(start = 12.dp, top = 8.dp, bottom = 8.dp, end = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        PhotoThumbnail(listing.photoUrls.first(), contentDescription = null)
+        PhotoThumbnail(listing.coverPhotoUrl, contentDescription = null)
         Spacer(Modifier.width(12.dp))
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
             Text(listing.name, style = MaterialTheme.typography.bodyLarge, color = FluffyColors.Brown900)

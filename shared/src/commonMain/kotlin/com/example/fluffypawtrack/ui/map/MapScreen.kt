@@ -57,7 +57,6 @@ import fluffypawtrack.shared.generated.resources.map_ic_search
 import org.jetbrains.compose.resources.painterResource
 import com.example.fluffypawtrack.domain.model.Report
 import com.example.fluffypawtrack.domain.model.Organization
-import com.example.fluffypawtrack.domain.model.AdoptionListing
 import androidx.compose.foundation.layout.ColumnScope
 
 /**
@@ -76,9 +75,6 @@ fun MapRoute(
     initialFilter: MapFilter = MapFilter.All,
     reportActions: @Composable ColumnScope.(Report) -> Unit = {},
     placeActions: @Composable ColumnScope.(Organization) -> Unit = {},
-    @Suppress("UNUSED_PARAMETER")
-    // Ignored compatibility shim: Adoption listings are no longer pinned (SC); remove this argument from the caller.
-    adoptionActions: @Composable ColumnScope.(AdoptionListing) -> Unit = {},
 ) {
     val container = LocalAppContainer.current
     val viewModel = viewModel {

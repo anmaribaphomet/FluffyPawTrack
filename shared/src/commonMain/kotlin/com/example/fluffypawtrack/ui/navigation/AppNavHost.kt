@@ -28,7 +28,6 @@ import com.example.fluffypawtrack.ui.adoptions.AnimalDetailRoute
 import com.example.fluffypawtrack.ui.adoptions.CenterDetailRoute
 import com.example.fluffypawtrack.ui.components.PillActionButton
 import fluffypawtrack.shared.generated.resources.Res
-import fluffypawtrack.shared.generated.resources.ic_heart
 import fluffypawtrack.shared.generated.resources.ic_home
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.painterResource
@@ -149,13 +148,6 @@ fun AppNavHost(navController: NavHostController = rememberNavController()) {
                         )
                     }
                 },
-                adoptionActions = { listing ->
-                    PillActionButton(
-                        text = "Ver ficha",
-                        icon = painterResource(Res.drawable.ic_heart),
-                        onClick = { navController.navigate(Route.AnimalDetail(listing.id)) },
-                    )
-                },
             )
         }
         composable<Route.ContactRequestForm> { entry ->
@@ -183,7 +175,6 @@ fun AppNavHost(navController: NavHostController = rememberNavController()) {
                 organizationId = entry.toRoute<Route.CenterDetail>().organizationId,
                 onBack = dropUnlessResumed { navController.popBackStack() },
                 onListingClick = { id -> navController.navigate(Route.AnimalDetail(id)) },
-                onAdoptionForm = { orgId, listingId -> navController.navigate(Route.AdoptionForm(orgId, listingId)) },
             )
         }
         composable<Route.AnimalDetail> { entry ->

@@ -38,9 +38,6 @@ fun CenterDetailRoute(
     onBack: () -> Unit,
     onListingClick: (String) -> Unit,
     modifier: Modifier = Modifier,
-    @Suppress("UNUSED_PARAMETER")
-    // Ignored compatibility shim: The center no longer opens the adoption form (SC); remove this argument from the caller.
-    onAdoptionForm: (organizationId: String, listingId: String?) -> Unit = { _, _ -> },
 ) {
     val container = LocalAppContainer.current
     val viewModel = viewModel(key = "center-$organizationId") {

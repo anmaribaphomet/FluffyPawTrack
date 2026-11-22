@@ -19,3 +19,7 @@ data class AdoptionListing(
     val photoUrls: List<String>,
     val status: ListingStatus,
 )
+
+/** First photo, used on cards; blank if a backend ever breaks the non-empty rule. */
+val AdoptionListing.coverPhotoUrl: String
+    get() = photoUrls.firstOrNull().orEmpty()

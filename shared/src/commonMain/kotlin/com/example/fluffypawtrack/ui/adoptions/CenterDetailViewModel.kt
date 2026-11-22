@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.stateIn
+import com.example.fluffypawtrack.domain.model.coverPhotoUrl
 
 /** Collapsed card of one available animal in the center detail (SC). */
 data class AnimalCard(
@@ -34,7 +35,7 @@ data class CenterDetailUiState(
     val loaded: Boolean = false,
 ) {
     val animalCards: List<AnimalCard> = listings.map {
-        AnimalCard(it.id, it.name, it.species, it.breed, it.age, it.photoUrls.first())
+        AnimalCard(it.id, it.name, it.species, it.breed, it.age, it.coverPhotoUrl)
     }
 }
 
