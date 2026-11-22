@@ -148,3 +148,28 @@ Column notes for the mapping:
 - The user's email comes from the auth session, not from `profiles`.
 - Seed images keep the `res:sample_*` refs of `SampleData`; uploaded photos use the public
   Storage URL.
+
+## Review fixes (apply after the seed)
+
+`20261122000600_review_fixes.sql` comes from the independent security review:
+
+- Closing a report by any path rejects its pending contact requests with "El caso se cerró",
+  and a request on a closed report can no longer be accepted.
+- Deleting an organization returns its affiliates to the `user` role instead of failing the
+  `profiles_affiliate_has_org` check.
+
+## Regression probes
+
+Run in the SQL Editor as `authenticated` (set `request.jwt.claims`) on a test project:
+
+1. `update profiles set role = 'admin' where id = auth.uid()` → permission denied.
+2. Anonymous claims (`"is_anonymous": true`): `send_contact_request`, `submit_adoption_request`,
+   `request_affiliation`, `insert into favorites` → fail; `insert into reports` (own reporter, pending) → succeeds.
+3. Anon role: `select phone from profiles` and `select * from contact_requests` → denied.
+4. `insert into notifications` as authenticated → denied.
+5. A third user calling `get_contact_details(<accepted id>)` → 0 rows; the requester of an
+   organization-recipient request gets the organization's phone and email.
+6. Two affiliates calling `take_report` on the same report → the second fails.
+7. Storage: upload to `report-photos/<other uid>/x.jpg` → denied; a `text/plain` file → rejected.
+8. `set_report_status(r, 'closed')`, then `respond_contact_request(<pending>, true)` → fails with "El caso se cerró".
+9. As admin, `delete from organizations where id = <org with affiliates>` → succeeds; its affiliates become `user`.
