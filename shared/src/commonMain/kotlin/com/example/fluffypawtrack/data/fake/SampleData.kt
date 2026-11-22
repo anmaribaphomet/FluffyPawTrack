@@ -28,6 +28,9 @@ object SampleData {
 
     const val DEMO_PASSWORD = "demo1234"
 
+    /** Plaza Zaragoza, used where a place has no exact location yet. */
+    val HERMOSILLO_CENTER = GeoPoint(29.0729, -110.9559)
+
     val demoUser = UserProfile(
         id = "user-demo",
         email = "demo@correo.com",
