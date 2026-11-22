@@ -43,6 +43,9 @@ interface ReportRepository {
     suspend fun createReport(reporterId: String?, report: NewReport): Result<Report>
 
     suspend fun deleteReport(id: String): Result<Unit>
+
+    /** Edits the reporter's text fields. Fails for unknown reports or ones no longer pending. */
+    suspend fun updateReport(id: String, description: String, reference: String?): Result<Report>
 }
 
 interface OrganizationRepository {

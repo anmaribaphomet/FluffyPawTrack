@@ -130,6 +130,17 @@ class FakeReportRepository(private val clock: Clock = Clock.System) : ReportRepo
         reports.update { list -> list.filterNot { it.id == id } }
         return Result.success(Unit)
     }
+
+    override suspend fun updateReport(id: String, description: String, reference: String?): Result<Report> {
+        val current = reports.value.firstOrNull { it.id == id }
+            ?: return Result.failure(NoSuchElementException("El reporte no existe"))
+        if (current.status != ReportStatus.Pending) {
+            return Result.failure(IllegalStateException("Solo puedes editar reportes pendientes de atención"))
+        }
+        val updated = current.copy(description = description, reference = reference)
+        reports.update { list -> list.map { if (it.id == id) updated else it } }
+        return Result.success(updated)
+    }
 }
 
 class FakeOrganizationRepository : OrganizationRepository {
