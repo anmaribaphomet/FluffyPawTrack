@@ -81,8 +81,10 @@ Rules derived from this table:
 - Text on colored surfaces is always `brown-900`, never white. This changes the
   Settings screen, which uses white labels on `sage-400` in Figma.
 - `brown-600` is for decorative elements and dividers, not for readable text.
-- Body text inside `surface-card` must be placed on a `white` pill or the card color
-  must be lightened (open decision, see section 3).
+- `surface-card` keeps `brown-300`. Because `brown-900` on it is 4.13:1, text placed
+  directly on the card must qualify as WCAG large text: ≥ 24 sp at any weight, or
+  ≥ 19 sp Bold (700). Use `title-card` or larger. SemiBold (600) does not count as bold.
+  Smaller text (labels, buttons) goes on a `white` pill, where contrast is 9.51:1.
 
 ---
 
@@ -95,7 +97,8 @@ Single family: **Inter**. All other families in the Figma file
 |---|---|---|---|---|
 | `display` | 32 / 40 sp | SemiBold (600) | Inter 32 | Home greeting |
 | `headline` | 24 / 32 sp | SemiBold (600) | Inter 24 (SemiBold, Regular) | Screen titles, modal titles |
-| `title` | 20 / 28 sp | SemiBold (600) | Inter 20 | Card titles, section titles |
+| `title` | 20 / 28 sp | SemiBold (600) | Inter 20 | Section titles |
+| `title-card` | 20 / 28 sp | Bold (700) | Inter 20 | Text placed directly on `surface-card` |
 | `body-large` | 16 / 24 sp | SemiBold (600) | Inter 16, Istok Web Bold 16 | Settings rows, menu items, primary buttons |
 | `body` | 14 / 20 sp | Regular (400) | Inter 13, 14, 15, Istok Web Bold 13 | Descriptions, card body text, addresses |
 | `label` | 12 / 16 sp | SemiBold (600) | Inter 12 | Pill button labels, chips, filters |
@@ -113,7 +116,9 @@ Notes:
 
 ## 3. Open decisions
 
-1. `surface-card` (`brown-300`) gives only 4.13:1 with `brown-900`. Options:
-   keep it and restrict card text to `title` or larger, or lighten the card color.
+1. The Home card descriptions ("Ayúdanos a encontrarle un hogar…", "Checa en el
+   mapa…") sit directly on `surface-card` at about 13 sp. That size fails contrast
+   even in Bold (needs ≥ 19 sp Bold). Keeping both the card color and the current
+   layout leaves this text non-compliant; it needs a decision.
 2. Figma typos to fix when the copy is implemented: "Patitas Calljeras",
    "dispositvo", "Guardas" (→ "Guardados"), "atentido" (→ "atendido").
