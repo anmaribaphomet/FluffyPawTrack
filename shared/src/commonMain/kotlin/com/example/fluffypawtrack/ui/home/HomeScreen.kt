@@ -4,9 +4,13 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -24,6 +28,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.fluffypawtrack.ui.components.BottomNavBar
 import com.example.fluffypawtrack.ui.components.BottomNavBarHeight
+import com.example.fluffypawtrack.ui.components.BottomNavBarSpaceBelowBar
 import com.example.fluffypawtrack.ui.components.CardCallToAction
 import com.example.fluffypawtrack.ui.components.CardIllustration
 import com.example.fluffypawtrack.ui.components.HomeDestination
@@ -51,13 +56,16 @@ fun HomeScreen(
     onNavigate: (HomeDestination) -> Unit = {},
 ) {
     var selected by remember { mutableStateOf(HomeDestination.Inicio) }
+    // The grass block may slide down into its own bottom margin, never below the system navigation bar.
+    val systemNavBar = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
+    val navDrop = (BottomNavBarSpaceBelowBar - systemNavBar - NavBarMinClearance).coerceIn(0.dp, MaxNavDrop)
 
     Box(modifier.fillMaxSize().background(FluffySemanticColors.BackgroundHome)) {
         Column(
             Modifier
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
-                .padding(top = HomeHeaderHeight, bottom = 234.dp),
+                .padding(top = HomeHeaderHeight - GreetingLift, bottom = BottomNavBarHeight + 15.dp - navDrop),
         ) {
             Text(
                 text = "¡Hola, amante de los\nanimales!",
@@ -67,7 +75,7 @@ fun HomeScreen(
                 textAlign = TextAlign.Center,
             )
             ReportAnimalCard(onReportAnimal)
-            Spacer(Modifier.height(20.dp))
+            Spacer(Modifier.height(CardGap))
             AdoptionCard(onSeeAdoptions)
         }
 
@@ -79,10 +87,26 @@ fun HomeScreen(
                 selected = it
                 onNavigate(it)
             },
-            modifier = Modifier.align(Alignment.BottomCenter).height(BottomNavBarHeight),
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .offset(y = navDrop)
+                .height(BottomNavBarHeight),
         )
     }
 }
+
+// Space savings so both cards and their buttons sit above the grass on a ~900 dp tall phone.
+/** The greeting starts this much higher, still below the header wave (which ends at ~145 dp). */
+private val GreetingLift = 18.dp
+
+/** Gap between the two cards (Figma uses 20 dp; the second card's ears already add 47 dp). */
+private val CardGap = 8.dp
+
+/** Minimum space kept between the glass bar and the system navigation bar. */
+private val NavBarMinClearance = 8.dp
+
+/** How far the grass block may slide down at most. */
+private val MaxNavDrop = 24.dp
 
 @Composable
 private fun ReportAnimalCard(onClick: () -> Unit) {

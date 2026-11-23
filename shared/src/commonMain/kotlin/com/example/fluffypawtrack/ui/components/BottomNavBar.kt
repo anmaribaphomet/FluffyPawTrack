@@ -47,6 +47,9 @@ enum class HomeDestination(val label: String, val icon: DrawableResource) {
 /** Alto del bloque inferior (desde el borde superior del pasto hasta el fondo de pantalla). */
 internal val BottomNavBarHeight = 219.dp
 
+/** Pasto visible debajo de la barra de vidrio (la barra ocupa de 77 a 163 dp del bloque). */
+internal val BottomNavBarSpaceBelowBar = BottomNavBarHeight - 163.dp
+
 /** Pasto ondulado con una barra de navegación tipo "vidrio" encima. */
 @Composable
 fun BottomNavBar(
