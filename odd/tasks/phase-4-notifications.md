@@ -19,8 +19,8 @@ Branch: `master`. Every unit is a small commit set that goes through native revi
 | T1 | S2 | delegated (worktree) — SQL: notify affiliates in radius by priority on new reports, prefs respected | done — reviewed (approved) + follow-ups 0900/1000 reviewed (approved) | 75c6a72, 919c3c9, 4ddefdf |
 | T2 | S5 | delegated (worktree) — polish | done — reviewed (approved); Home fix partial (button ~10 dp under the wave), emulator check pending | 1299afc..06cd3be |
 | T3 | S3 | delegated (worktree) + follow-up — Realtime notifications, unread badge, error/retry | done — 2 reviews approved | f24311c..98b84eb, 6b6fa0a, 5233d8e |
-| T4 | S4 | delegated after T3 — FCM client: tokens, permission screen, tap opens report | in progress | |
-| T5 | S4 | delegated after T4 — Edge Function + trigger to send pushes | pending | |
+| T4 | S4 | delegated — FCM client: tokens, permission screen, tap opens report | done — 2 reviews approved | ebd37ce..2f14330, 9728c75..21734e8 |
+| T5 | S4 | delegated — Edge Function + trigger to send pushes, plus FCM deleteToken on sign-out | in progress | |
 | T6 | S1 | user: Firebase project, google-services.json, Edge Function deploy + secret; parent emulator check; push | pending | |
 
 Route evidence: T1 (`supabase/`) and T2 (`ui/`) are independent with disjoint surfaces → parallel. T3–T5 depend on each other (notification repository, Gradle, manifest) → sequential. Each unit reviewed natively before the next.
@@ -31,3 +31,4 @@ Route evidence: T1 (`supabase/`) and T2 (`ui/`) are independent with disjoint su
 - L2 (2026-11-22, user): "Ya ejecute el archivo, puedes seguir con la fase 4"
 - L3: Reviews: T1 approved (lineage review-cb51ab19a084440e); 0900+polish approved (review-5d61d4f46b353b65); 1000 approved (review-4a431e4b65287616). Follow-ups applied: exception-safe nearby notify, per-reporter rate limit serialized with advisory lock, server-set created_at. Documented: anonymous-session rotation relies on Supabase anonymous sign-in rate limit. User must apply migrations 0800, 0900, 1000.
 - L4: T3 reviews approved (review-c50b2960ccdeb30e, review-560e9ef803e8e9f8). Follow-up fixed: retry on any channel stop, catch-up after every resubscribe, DELETE handling, HomeRoute. Remaining non-blocking (polish later): flapping channel resets the retry budget; give-up flag can be cleared by an unrelated refresh; repository-level live wiring has no tests; one tautological badge assertion. User added androidApp/google-services.json (gitignored in ac6cccc).
+- L5: T4 reviews approved (review-c95e9d7b659041dd, review-1caa9408dd780de9). Correction budget for T4 used. Remaining risk (slow-network sign-out can leave a token row; a late retry can re-register) is closed in T5 by invalidating the FCM token on the device at sign-out (FirebaseMessaging.deleteToken) and by the Edge Function deleting UNREGISTERED tokens. Permission pref migration not needed: the app has not been released.
