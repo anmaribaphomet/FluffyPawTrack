@@ -49,6 +49,7 @@ class MapViewModel(
             query = query,
             items = items.filter { it.matches(filter) && it.matches(query) },
             selected = selectedId?.let { id -> items.firstOrNull { it.id == id } },
+            loaded = true,
         )
     }.stateIn(viewModelScope, SharingStarted.Eagerly, MapUiState(filter = initialFilter))
 

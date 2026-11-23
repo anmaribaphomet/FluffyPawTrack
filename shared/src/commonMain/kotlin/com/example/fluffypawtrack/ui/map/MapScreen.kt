@@ -154,7 +154,7 @@ fun MapScreen(
                     },
                     modifier = Modifier.align(Alignment.End),
                 )
-            } else if (state.items.isEmpty() && state.query.isNotBlank()) {
+            } else if (state.showNoResults) {
                 Spacer(Modifier.height(8.dp))
                 Text(
                     text = "No hay resultados en el mapa",
