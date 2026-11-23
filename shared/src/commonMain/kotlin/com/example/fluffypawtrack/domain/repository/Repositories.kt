@@ -21,6 +21,7 @@ import com.example.fluffypawtrack.domain.model.StatusHistoryEntry
 import com.example.fluffypawtrack.domain.model.UserProfile
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.flowOf
 
 // Each interface has a fake (data/fake) and a Supabase (data/supabase) implementation.
 
@@ -204,6 +205,15 @@ interface FavoritesRepository {
 
 interface NotificationRepository {
     fun observeNotifications(userId: String): Flow<List<AppNotification>>
+
+    /**
+     * True while the last load of [userId]'s notifications failed (the list then keeps its last
+     * rows, or is empty). In-memory repositories never fail.
+     */
+    fun observeLoadFailed(userId: String): Flow<Boolean> = flowOf(false)
+
+    /** Loads [userId]'s notifications again, for example after a failure. */
+    suspend fun reload(userId: String) {}
 
     suspend fun markAsRead(notificationId: String)
 

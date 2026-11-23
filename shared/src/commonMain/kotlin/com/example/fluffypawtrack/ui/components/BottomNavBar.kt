@@ -6,9 +6,12 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.text.BasicText
@@ -63,6 +66,8 @@ fun BottomNavBar(
     selected: HomeDestination,
     onSelect: (HomeDestination) -> Unit,
     modifier: Modifier = Modifier,
+    /** Shown as a badge on the "Notificaciones" tab when above 0. */
+    unreadNotifications: Int = 0,
 ) {
     DesignFrame(height = BottomNavBarHeight, modifier = modifier) {
         Box(
@@ -92,6 +97,7 @@ fun BottomNavBar(
                 NavBarItem(
                     destination = destination,
                     selected = destination == selected,
+                    badgeCount = if (destination == HomeDestination.Notificaciones) unreadNotifications else 0,
                     onClick = { onSelect(destination) },
                     modifier = Modifier.weight(1f),
                 )
@@ -104,20 +110,60 @@ fun BottomNavBar(
 private fun NavBarItem(
     destination: HomeDestination,
     selected: Boolean,
+    badgeCount: Int,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(modifier, horizontalAlignment = Alignment.CenterHorizontally) {
-        CircleIconButton(
-            icon = painterResource(destination.icon),
-            contentDescription = destination.label,
-            containerColor = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.secondaryContainer,
-            onClick = onClick,
-        )
+        Box {
+            CircleIconButton(
+                icon = painterResource(destination.icon),
+                contentDescription = if (destination == HomeDestination.Notificaciones) {
+                    notificationsTabDescription(badgeCount)
+                } else {
+                    destination.label
+                },
+                containerColor = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.secondaryContainer,
+                onClick = onClick,
+            )
+            if (badgeCount > 0) {
+                CountBadge(badgeCount, Modifier.align(Alignment.TopEnd).offset(x = 6.dp, y = (-4).dp))
+            }
+        }
         Spacer(Modifier.height(6.dp))
         NavBarLabel(destination.label)
     }
 }
+
+/**
+ * Unread count on a tab. Brown-900 text on cream-50 (8.59:1) inside an orange-700 ring; the
+ * button's description already says the count, so the badge is hidden from TalkBack.
+ */
+@Composable
+private fun CountBadge(count: Int, modifier: Modifier = Modifier) {
+    Box(
+        modifier
+            .defaultMinSize(minWidth = 20.dp, minHeight = 20.dp)
+            .background(FluffyColors.Cream50, CircleShape)
+            .border(2.dp, FluffyColors.Orange700, CircleShape)
+            .padding(horizontal = 5.dp)
+            .clearAndSetSemantics {},
+        contentAlignment = Alignment.Center,
+    ) {
+        BasicText(
+            text = badgeText(count),
+            style = MaterialTheme.typography.labelSmall.copy(color = FluffyColors.Brown900, textAlign = TextAlign.Center),
+            maxLines = 1,
+        )
+    }
+}
+
+/** What TalkBack reads for the Notifications tab, e.g. "Notificaciones, 3 sin leer". */
+internal fun notificationsTabDescription(unread: Int): String =
+    if (unread > 0) "${HomeDestination.Notificaciones.label}, $unread sin leer" else HomeDestination.Notificaciones.label
+
+/** The badge keeps its size with large counts. */
+internal fun badgeText(count: Int): String = if (count > 99) "99+" else count.toString()
 
 /**
  * Tab label. It may spill a little into the neighbor tabs (whose labels are short), and with very
@@ -155,6 +201,6 @@ private val NavBarLabelMaxWidth = 96.dp
 private fun BottomNavBarPreview() {
     FluffyPawTrackTheme {
         var selected by remember { mutableStateOf(HomeDestination.Inicio) }
-        BottomNavBar(selected, { selected = it }, Modifier.background(FluffyColors.Peach200))
+        BottomNavBar(selected, { selected = it }, Modifier.background(FluffyColors.Peach200), unreadNotifications = 3)
     }
 }

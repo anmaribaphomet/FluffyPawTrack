@@ -57,6 +57,8 @@ fun NotificationsRoute(onBack: () -> Unit, modifier: Modifier = Modifier) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     NotificationsScreen(
         notifications = state.notifications,
+        loadFailed = state.loadFailed,
+        onRetry = viewModel::onRetry,
         onBack = onBack,
         modifier = modifier,
         onNotificationClick = { viewModel.onNotificationClick(it.id) },
@@ -73,6 +75,8 @@ fun NotificationsScreen(
     modifier: Modifier = Modifier,
     onNotificationClick: (AppNotification) -> Unit = {},
     onMarkAllAsRead: () -> Unit = {},
+    loadFailed: Boolean = false,
+    onRetry: () -> Unit = {},
 ) {
     val now = Clock.System.now()
     val hasUnread = notifications.any { !it.isRead }
@@ -105,8 +109,17 @@ fun NotificationsScreen(
                     }
                 }
             }
+            if (loadFailed) {
+                // With no rows the error replaces the empty state; otherwise it sits above the last rows.
+                item(key = "error") {
+                    LoadError(
+                        onRetry = onRetry,
+                        modifier = if (notifications.isEmpty()) Modifier.fillParentMaxHeight(0.6f) else Modifier,
+                    )
+                }
+            }
             if (notifications.isEmpty()) {
-                item(key = "empty") {
+                if (!loadFailed) item(key = "empty") {
                     EmptyNotifications(Modifier.fillParentMaxHeight(0.6f))
                 }
             } else {
@@ -157,6 +170,33 @@ private fun EmptyNotifications(modifier: Modifier = Modifier) {
     }
 }
 
+@Composable
+private fun LoadError(onRetry: () -> Unit, modifier: Modifier = Modifier) {
+    Column(
+        modifier = modifier.width(260.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center,
+    ) {
+        Text(
+            text = "No pudimos cargar tus notificaciones",
+            style = MaterialTheme.typography.titleLarge,
+            color = FluffyColors.Brown900,
+            textAlign = TextAlign.Center,
+        )
+        Spacer(Modifier.height(6.dp))
+        Text(
+            text = "Revisa tu conexión e intenta de nuevo.",
+            style = MaterialTheme.typography.bodyMedium,
+            color = FluffyColors.Brown900,
+            textAlign = TextAlign.Center,
+        )
+        Spacer(Modifier.height(8.dp))
+        TextButton(onClick = onRetry) {
+            Text(text = "Reintentar", style = MaterialTheme.typography.labelLarge, color = FluffyColors.Brown900)
+        }
+    }
+}
+
 @OptIn(ExperimentalTime::class)
 private fun sampleNotifications(): List<AppNotification> {
     val now = Clock.System.now()
@@ -199,5 +239,13 @@ private fun NotificationsScreenPreview() {
 private fun NotificationsScreenEmptyPreview() {
     FluffyPawTrackTheme {
         NotificationsScreen(notifications = emptyList(), onBack = {})
+    }
+}
+
+@Preview
+@Composable
+private fun NotificationsScreenErrorPreview() {
+    FluffyPawTrackTheme {
+        NotificationsScreen(notifications = emptyList(), onBack = {}, loadFailed = true)
     }
 }

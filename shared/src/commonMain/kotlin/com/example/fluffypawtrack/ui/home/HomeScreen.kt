@@ -26,6 +26,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.fluffypawtrack.di.LocalAppContainer
 import com.example.fluffypawtrack.ui.components.BottomNavBar
 import com.example.fluffypawtrack.ui.components.BottomNavBarHeight
 import com.example.fluffypawtrack.ui.components.BottomNavBarSpaceBelowBar
@@ -54,6 +57,7 @@ fun HomeScreen(
     onReportAnimal: () -> Unit = {},
     onSeeAdoptions: () -> Unit = {},
     onNavigate: (HomeDestination) -> Unit = {},
+    unreadNotifications: Int = unreadNotificationCount(),
 ) {
     var selected by remember { mutableStateOf(HomeDestination.Inicio) }
     // The grass block may slide down into its own bottom margin, never below the system navigation bar.
@@ -83,6 +87,7 @@ fun HomeScreen(
 
         BottomNavBar(
             selected = selected,
+            unreadNotifications = unreadNotifications,
             onSelect = {
                 selected = it
                 onNavigate(it)
@@ -93,6 +98,15 @@ fun HomeScreen(
                 .height(BottomNavBarHeight),
         )
     }
+}
+
+/** Unread count of the signed-in account, from [HomeViewModel] (fakes or Supabase, per AppContainer). */
+@Composable
+private fun unreadNotificationCount(): Int {
+    val container = LocalAppContainer.current
+    val viewModel = viewModel { HomeViewModel(container.notificationRepository, container.authRepository) }
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
+    return state.unreadNotifications
 }
 
 // Space savings so both cards and their buttons sit above the grass on a ~900 dp tall phone.
@@ -147,6 +161,6 @@ private fun AdoptionCard(onClick: () -> Unit) {
 @Composable
 private fun HomeScreenPreview() {
     FluffyPawTrackTheme {
-        HomeScreen()
+        HomeScreen(unreadNotifications = 3)
     }
 }
