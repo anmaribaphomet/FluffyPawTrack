@@ -10,6 +10,7 @@ import com.example.fluffypawtrack.domain.repository.NotificationRepository
 import com.example.fluffypawtrack.domain.repository.OrganizationRepository
 import com.example.fluffypawtrack.domain.repository.PushTokenRepository
 import com.example.fluffypawtrack.domain.repository.ReportRepository
+import com.example.fluffypawtrack.platform.currentPushToken
 import io.github.jan.supabase.SupabaseClient
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -19,7 +20,10 @@ import kotlinx.coroutines.SupervisorJob
  * Every Supabase repository on one [client], sharing one [QueryRegistry] so a mutation in any
  * of them refreshes the lists the others show.
  */
-class SupabaseRepositories(client: SupabaseClient) {
+class SupabaseRepositories(
+    client: SupabaseClient,
+    deviceToken: suspend () -> String? = ::currentPushToken,
+) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private val queries = QueryRegistry()
     private val photos = PhotoUploader(client)
@@ -33,5 +37,5 @@ class SupabaseRepositories(client: SupabaseClient) {
     val notificationPrefs: NotificationPrefsRepository = SupabaseNotificationPrefsRepository(client, queries)
     val contactRequests: ContactRequestRepository = SupabaseContactRequestRepository(client, queries, photos)
     val adoptionRequests: AdoptionRequestRepository = SupabaseAdoptionRequestRepository(client, queries)
-    val pushTokens: PushTokenRepository = SupabasePushTokenRepository(client)
+    val pushTokens: PushTokenRepository = SupabasePushTokenRepository(client, deviceToken)
 }

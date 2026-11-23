@@ -3,9 +3,12 @@ package com.example.fluffypawtrack.ui.settings
 import com.example.fluffypawtrack.data.fake.FakeAuthRepository
 import com.example.fluffypawtrack.data.fake.FakePushTokenRepository
 import com.example.fluffypawtrack.data.fake.SampleData
+import com.example.fluffypawtrack.domain.repository.PushTokenRepository
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
@@ -16,6 +19,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
+import kotlin.time.Duration.Companion.seconds
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class SettingsViewModelTest {
@@ -40,7 +44,7 @@ class SettingsViewModelTest {
     }
 
     @Test
-    fun signOutClearsTheSession() = runTest {
+    fun signOutClearsTheSessionEvenWhenTheTokenCannotBeDeleted() = runTest {
         val auth = FakeAuthRepository(initialUser = SampleData.demoUser)
         val viewModel = SettingsViewModel(auth, FakePushTokenRepository(currentUser = { auth.currentUser.value }))
         assertFalse(viewModel.uiState.value.signedOut)
@@ -62,5 +66,22 @@ class SettingsViewModelTest {
 
         assertEquals(emptySet(), tokens.tokensOf(SampleData.demoUser.id))
         assertNull(auth.currentUser.value)
+    }
+
+    @Test
+    fun signOutContinuesWhenDeletingTheTokenTimesOut() = runTest {
+        val auth = FakeAuthRepository(initialUser = SampleData.demoUser)
+        val hanging = object : PushTokenRepository {
+            override suspend fun register(token: String) = Result.success(Unit)
+            override suspend fun unregister(): Result<Unit> = awaitCancellation()
+        }
+        val viewModel = SettingsViewModel(auth, hanging)
+
+        viewModel.signOut()
+        assertFalse(viewModel.uiState.value.signedOut, "waits for the delete first")
+        advanceTimeBy(3.seconds + 1.seconds)
+
+        assertNull(auth.currentUser.value)
+        assertTrue(viewModel.uiState.value.signedOut)
     }
 }

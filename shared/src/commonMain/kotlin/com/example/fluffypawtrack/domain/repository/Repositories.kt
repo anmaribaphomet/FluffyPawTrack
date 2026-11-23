@@ -270,6 +270,10 @@ interface PushTokenRepository {
      */
     suspend fun register(token: String): Result<Unit>
 
-    /** Deletes this device's token. Call it before signing out, while RLS still allows it. */
+    /**
+     * Deletes the row of this device's current FCM token (the one registered last when FCM cannot
+     * report it) for the signed-in account. Fails without a session or when the token is unknown.
+     * Call it before signing out, while RLS still allows it.
+     */
     suspend fun unregister(): Result<Unit>
 }

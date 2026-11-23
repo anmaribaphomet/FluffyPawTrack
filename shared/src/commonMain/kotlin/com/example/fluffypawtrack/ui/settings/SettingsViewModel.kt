@@ -9,6 +9,9 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
 
 /** Toggles are local for Phase 1; they are not persisted yet. */
 data class SettingsUiState(
@@ -21,6 +24,7 @@ data class SettingsUiState(
 class SettingsViewModel(
     private val authRepository: AuthRepository,
     private val pushTokenRepository: PushTokenRepository,
+    private val unregisterTimeout: Duration = 3.seconds,
 ) : ViewModel() {
 
     private val state = MutableStateFlow(SettingsUiState())
@@ -33,8 +37,8 @@ class SettingsViewModel(
     fun signOut() {
         viewModelScope.launch {
             // RLS only lets the account delete its own token, so it goes before the session ends.
-            // A failure (offline) does not keep the user signed in.
-            pushTokenRepository.unregister()
+            // A failure or a slow network (timeout) does not keep the user signed in.
+            withTimeoutOrNull(unregisterTimeout) { pushTokenRepository.unregister() }
             authRepository.signOut()
             state.update { it.copy(signedOut = true) }
         }
