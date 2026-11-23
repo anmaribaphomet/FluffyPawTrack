@@ -322,19 +322,27 @@ private fun MapDetailSheet(
         ) {
             content()
         }
-        Image(
-            painter = painterResource(Res.drawable.map_ic_close),
-            contentDescription = "Cerrar",
-            colorFilter = ColorFilter.tint(FluffyColors.Brown900),
-            modifier = Modifier
+        // 48 dp touch target around the same 36 dp circle (still 8 dp from the sheet's corner).
+        Box(
+            Modifier
                 .align(Alignment.TopEnd)
-                .padding(8.dp)
-                .size(36.dp)
+                .padding(2.dp)
+                .size(48.dp)
                 .clip(FluffyShapes.Ellipse)
-                .background(FluffyColors.Cream100)
-                .clickable(role = Role.Button, onClick = onClose)
-                .padding(8.dp),
-        )
+                .clickable(role = Role.Button, onClickLabel = "Cerrar", onClick = onClose),
+            contentAlignment = Alignment.Center,
+        ) {
+            Image(
+                painter = painterResource(Res.drawable.map_ic_close),
+                contentDescription = "Cerrar",
+                colorFilter = ColorFilter.tint(FluffyColors.Brown900),
+                modifier = Modifier
+                    .size(36.dp)
+                    .clip(FluffyShapes.Ellipse)
+                    .background(FluffyColors.Cream100)
+                    .padding(8.dp),
+            )
+        }
     }
 }
 
