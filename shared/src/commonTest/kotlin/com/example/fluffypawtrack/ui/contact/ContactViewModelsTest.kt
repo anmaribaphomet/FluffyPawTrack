@@ -154,6 +154,24 @@ class ContactViewModelsTest {
     }
 
     @Test
+    fun affiliatesOpenOnRecibidasWithTheRequestsOfTheirOrganization() = runTest {
+        val auth = FakeAuthRepository(SampleData.demoAffiliate)
+        val reports = FakeReportRepository()
+        val requests = FakeContactRequestRepository(reports)
+        val vm = ContactRequestsViewModel(auth, requests, reports, initialTab = ContactRequestsTab.Received)
+        val state = collecting(vm.uiState)
+
+        assertEquals(ContactRequestsTab.Received, state.value.tab)
+        val item = state.value.visible.single()
+        assertEquals("request-3", item.request.id)
+        assertEquals("report-7", item.report?.id)
+        assertTrue(item.canRespond)
+
+        vm.reject("request-3")
+        assertEquals(ContactRequestStatus.Rejected, state.value.received.single().request.status)
+    }
+
+    @Test
     fun pendingCardsShowNoContactDetails() = runTest {
         val state = collecting(setup().list().uiState)
         assertTrue((state.value.sent + state.value.received).all { it.contact == null })

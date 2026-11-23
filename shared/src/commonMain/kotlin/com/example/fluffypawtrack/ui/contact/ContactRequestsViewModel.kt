@@ -53,15 +53,19 @@ data class ContactRequestsUiState(
 
 private data class Lists(val sent: List<ContactRequestItem>, val received: List<ContactRequestItem>)
 
-/** "Solicitudes de contacto" with the Enviadas and Recibidas tabs (RF-05). */
+/**
+ * "Solicitudes de contacto" with the Enviadas and Recibidas tabs (RF-05). For an affiliate,
+ * Recibidas also lists the requests sent to their organization.
+ */
 @OptIn(ExperimentalCoroutinesApi::class, ExperimentalTime::class)
 class ContactRequestsViewModel(
     private val authRepository: AuthRepository,
     private val contactRequestRepository: ContactRequestRepository,
     private val reportRepository: ReportRepository,
+    initialTab: ContactRequestsTab = ContactRequestsTab.Sent,
 ) : ViewModel() {
 
-    private val tab = MutableStateFlow(ContactRequestsTab.Sent)
+    private val tab = MutableStateFlow(initialTab)
     private val message = MutableStateFlow<String?>(null)
 
     // Bumped after "Mascota entregada": the report closes even if no request changes.
