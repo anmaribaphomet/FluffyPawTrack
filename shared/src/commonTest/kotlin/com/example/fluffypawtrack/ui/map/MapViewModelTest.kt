@@ -17,6 +17,7 @@ import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
@@ -219,5 +220,25 @@ class MapViewModelTest {
         val pins = vm.uiState.value.pins
         assertEquals(vm.visibleIds(), pins.map { it.id }.toSet())
         assertTrue(pins.all { it.color == ReportCategory.PossiblyLost.pinColor })
+    }
+
+    @Test
+    fun searchWithoutMatchesShowsNoResults() = runTest {
+        val vm = viewModel()
+        assertFalse(vm.uiState.value.showNoResults)
+
+        vm.onQueryChange("zzzz sin coincidencias")
+
+        assertTrue(vm.uiState.value.items.isEmpty())
+        assertTrue(vm.uiState.value.showNoResults)
+    }
+
+    @Test
+    fun filterWithoutPinsShowsNoResultsOnlyAfterLoading() {
+        val filter = MapFilter.Category(ReportCategory.PossiblyLost)
+
+        assertFalse(MapUiState(filter = filter).showNoResults)
+        assertTrue(MapUiState(filter = filter, loaded = true).showNoResults)
+        assertFalse(MapUiState(loaded = true).showNoResults)
     }
 }

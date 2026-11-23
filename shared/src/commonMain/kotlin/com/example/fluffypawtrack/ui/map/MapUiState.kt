@@ -86,6 +86,11 @@ data class MapUiState(
     val items: List<MapItem> = emptyList(),
     val selected: MapItem? = null,
     val filterOptions: List<MapFilter> = MapFilter.options,
+    /** True once the repositories delivered their first data. */
+    val loaded: Boolean = false,
 ) {
     val pins: List<MapPin> = items.map { MapPin(it.id, it.location, it.color, it.title) }
+
+    /** A search or a filter (not "Todos") left the map without pins. */
+    val showNoResults: Boolean get() = loaded && items.isEmpty() && (query.isNotBlank() || filter != MapFilter.All)
 }

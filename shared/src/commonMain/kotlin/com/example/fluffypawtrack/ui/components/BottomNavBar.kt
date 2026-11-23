@@ -9,8 +9,11 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.wrapContentWidth
+import androidx.compose.foundation.text.BasicText
+import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -21,6 +24,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.innerShadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.fluffypawtrack.ui.theme.FluffyColors
@@ -46,6 +53,9 @@ enum class HomeDestination(val label: String, val icon: DrawableResource) {
 
 /** Alto del bloque inferior (desde el borde superior del pasto hasta el fondo de pantalla). */
 internal val BottomNavBarHeight = 219.dp
+
+/** Pasto visible debajo de la barra de vidrio (la barra ocupa de 77 a 163 dp del bloque). */
+internal val BottomNavBarSpaceBelowBar = BottomNavBarHeight - 163.dp
 
 /** Pasto ondulado con una barra de navegación tipo "vidrio" encima. */
 @Composable
@@ -105,15 +115,40 @@ private fun NavBarItem(
             onClick = onClick,
         )
         Spacer(Modifier.height(6.dp))
-        Text(
-            text = destination.label,
-            style = MaterialTheme.typography.labelSmall,
-            color = FluffyColors.Brown900,
-            maxLines = 1,
-            softWrap = false,
-        )
+        NavBarLabel(destination.label)
     }
 }
+
+/**
+ * Tab label. It may spill a little into the neighbor tabs (whose labels are short), and with very
+ * large font scales it shrinks down to the caption's design size (its size at font scale 1.0).
+ * The circle button already announces the label, so the text itself is hidden from TalkBack.
+ */
+@Composable
+private fun NavBarLabel(text: String) {
+    val caption = MaterialTheme.typography.labelSmall
+    val fontScale = LocalDensity.current.fontScale
+    val autoSize = if (fontScale > 1f) {
+        TextAutoSize.StepBased(minFontSize = caption.fontSize / fontScale, maxFontSize = caption.fontSize)
+    } else {
+        null
+    }
+    BasicText(
+        text = text,
+        modifier = Modifier
+            .wrapContentWidth(unbounded = true)
+            .widthIn(max = NavBarLabelMaxWidth)
+            .clearAndSetSemantics {},
+        style = caption.copy(color = FluffyColors.Brown900, textAlign = TextAlign.Center),
+        maxLines = 1,
+        softWrap = false,
+        overflow = TextOverflow.Ellipsis,
+        autoSize = autoSize,
+    )
+}
+
+/** Each tab is ~73 dp wide; "Notificaciones" needs ~91 dp at font scale 1.3. */
+private val NavBarLabelMaxWidth = 96.dp
 
 @Preview
 @Composable

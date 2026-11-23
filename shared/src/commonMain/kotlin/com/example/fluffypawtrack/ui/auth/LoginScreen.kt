@@ -74,6 +74,7 @@ fun LoginRoute(
         onCreateAccount = onCreateAccount,
         onReportAnonymously = viewModel::onReportAnonymously,
         onRequestAffiliation = onRequestAffiliation,
+        demoHint = demoAccountHint(container.usesSupabase),
     )
 }
 
@@ -88,6 +89,8 @@ fun LoginScreen(
     onReportAnonymously: () -> Unit,
     modifier: Modifier = Modifier,
     onRequestAffiliation: () -> Unit = {},
+    /** Demo-account hint; null (hidden) when the app runs on Supabase. */
+    demoHint: String? = null,
 ) {
     val focusManager = LocalFocusManager.current
     Column(
@@ -179,15 +182,16 @@ fun LoginScreen(
                     textAlign = TextAlign.Center,
                 )
             }
-            Spacer(Modifier.height(16.dp))
-            // Demo build only: the fake repository accepts this account.
-            Text(
-                text = "Cuenta de prueba: demo@correo.com / demo1234",
-                modifier = Modifier.fillMaxWidth(),
-                style = MaterialTheme.typography.bodySmall,
-                color = FluffyColors.Brown900,
-                textAlign = TextAlign.Center,
-            )
+            if (demoHint != null) {
+                Spacer(Modifier.height(16.dp))
+                Text(
+                    text = demoHint,
+                    modifier = Modifier.fillMaxWidth(),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = FluffyColors.Brown900,
+                    textAlign = TextAlign.Center,
+                )
+            }
         }
     }
 }
@@ -203,6 +207,7 @@ private fun LoginScreenPreview() {
             onSubmit = {},
             onCreateAccount = {},
             onReportAnonymously = {},
+            demoHint = DEMO_ACCOUNT_HINT,
         )
     }
 }
