@@ -57,6 +57,14 @@ class LiveNotificationsTest {
     }
 
     @Test
+    fun deletedNotificationIsRemovedAndUnknownIdsChangeNothing() {
+        val current = listOf(notification("a", 1), notification("b", 2))
+
+        assertEquals(listOf("b"), removeNotification(current, "a").map { it.id })
+        assertEquals(current, removeNotification(current, "missing"))
+    }
+
+    @Test
     fun liveUpdateChangesTheObservedQueryInPlace() = runTest {
         var loads = 0
         val queries = QueryRegistry()

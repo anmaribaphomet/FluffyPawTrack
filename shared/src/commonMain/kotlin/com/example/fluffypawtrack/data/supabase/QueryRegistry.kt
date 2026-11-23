@@ -79,6 +79,14 @@ internal class QueryRegistry {
         queries.value[key]?.refresh()
     }
 
+    /**
+     * Reports [key] as failed although its rows loaded, for example when its live updates
+     * stopped for good; the next successful load clears it.
+     */
+    fun markFailed(key: String) {
+        queries.value[key]?.failed?.value = true
+    }
+
     /** Applies a live change to the loaded rows of [key]; the caller knows the query's type. */
     suspend fun <T> update(key: String, transform: (T) -> T) {
         @Suppress("UNCHECKED_CAST")
