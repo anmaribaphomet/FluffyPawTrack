@@ -72,7 +72,11 @@ class AffiliationRequestsViewModel(
         it.copy(confirming = it.confirming?.copy(reason = reason, error = null))
     }
 
-    fun dismissReview() = state.update { it.copy(confirming = null) }
+    fun dismissReview() {
+        // Keep the dialog while a request is in flight so a failure is never shown to nobody.
+        if (state.value.isWorking) return
+        state.update { it.copy(confirming = null) }
+    }
 
     fun confirmReview() {
         val review = state.value.confirming ?: return
