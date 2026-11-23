@@ -1,11 +1,13 @@
 package com.example.fluffypawtrack.ui.navigation
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.compose.dropUnlessResumed
+import androidx.navigation.NavDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -40,6 +42,7 @@ import com.example.fluffypawtrack.ui.account.MyReportsRoute
 import com.example.fluffypawtrack.ui.affiliate.CenterAdoptionRequestsRoute
 import com.example.fluffypawtrack.ui.account.PersonalInfoRoute
 import com.example.fluffypawtrack.ui.profile.ProfileRoute
+import com.example.fluffypawtrack.ui.push.NotificationPermissionGate
 import com.example.fluffypawtrack.ui.push.ReportDetailRoute
 import com.example.fluffypawtrack.ui.report.NewReportRoute
 import com.example.fluffypawtrack.ui.settings.SettingsInfoRoute
@@ -48,7 +51,8 @@ import com.example.fluffypawtrack.ui.settings.SettingsTopic
 
 /**
  * [pendingReportId] comes from a tapped push notification; once an account is signed in and past
- * the splash and sign-in screens it opens that report and calls [onReportOpened].
+ * the splash and sign-in screens it opens that report and calls [onReportOpened]. At that point
+ * the POST_NOTIFICATIONS explainer may also show over the app (Android 13+).
  */
 @Composable
 fun AppNavHost(
@@ -62,19 +66,26 @@ fun AppNavHost(
     val user by authRepository.currentUser.collectAsStateWithLifecycle()
     val backStackEntry by navController.currentBackStackEntryAsState()
     val reportOpened by rememberUpdatedState(onReportOpened)
-    LaunchedEffect(pendingReportId, user, backStackEntry) {
+    // The splash and auth screens replace the whole stack when they finish; wait for them.
+    val pastAuthScreens = backStackEntry?.destination?.let { !it.isAuthScreen() } == true
+    LaunchedEffect(pendingReportId, user, pastAuthScreens) {
         val reportId = pendingReportId ?: return@LaunchedEffect
-        val destination = backStackEntry?.destination ?: return@LaunchedEffect
-        // The splash and auth screens replace the whole stack when they finish; wait for them.
-        if (destination.hasRoute(Route.Splash::class) || destination.hasRoute(Route.Login::class) ||
-            destination.hasRoute(Route.Register::class)
-        ) {
-            return@LaunchedEffect
-        }
+        if (!pastAuthScreens) return@LaunchedEffect
         val route = reportRouteFor(user, reportId) ?: return@LaunchedEffect
         navController.navigate(route) { launchSingleTop = true }
         reportOpened()
     }
+    Box {
+        AppNavGraph(navController, startRoute)
+        NotificationPermissionGate(active = pastAuthScreens && user?.isAnonymous == false)
+    }
+}
+
+private fun NavDestination.isAuthScreen(): Boolean =
+    hasRoute(Route.Splash::class) || hasRoute(Route.Login::class) || hasRoute(Route.Register::class)
+
+@Composable
+private fun AppNavGraph(navController: NavHostController, startRoute: () -> Route) {
     NavHost(navController = navController, startDestination = Route.Splash) {
         composable<Route.Splash> {
             SplashRoute(
