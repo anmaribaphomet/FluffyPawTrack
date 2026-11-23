@@ -178,9 +178,7 @@ Deno.test("AccessTokenCache drops only the token FCM rejected", async () => {
 
 Deno.test("AccessTokenCache reports an unusable private key without echoing it", async () => {
   const { account } = await testAccount();
-  const broken = { ...account, private_key: "-----BEGIN PRIVATE KEY-----
-not-base64-secret!
------END PRIVATE KEY-----" };
+  const broken = { ...account, private_key: "-----BEGIN PRIVATE KEY-----\nnot-base64-secret!\n-----END PRIVATE KEY-----" };
   const error = await assertRejects(() => new AccessTokenCache(broken, fetch).get(), PushConfigError);
   assertFalse(error.message.includes("not-base64-secret"));
 });
