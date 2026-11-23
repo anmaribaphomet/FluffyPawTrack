@@ -134,4 +134,25 @@ class OrganizationSettingsViewModelsTest {
         vm.onRadiusChange(40f)
         assertEquals(20, vm.uiState.value.radiusKm)
     }
+
+    // --- Inicio del afiliado ---
+
+    @Test
+    fun homeShowsTheOrganizationNameAndCenterShortcuts() = runTest {
+        val fakes = AffiliateFakes()
+        val state = collecting(AffiliateHomeViewModel(fakes.auth, fakes.organizations, fakes.reports).uiState).value
+
+        assertEquals("Patitas Callejeras HMO", state.organizationName)
+        assertTrue(state.isAdoptionCenter)
+        assertEquals(1, state.openCases)
+    }
+
+    @Test
+    fun shelterHomeHidesAdoptionShortcuts() = runTest {
+        val fakes = AffiliateFakes(SampleData.demoAffiliate.copy(organizationId = "org-huellitas"))
+        val state = collecting(AffiliateHomeViewModel(fakes.auth, fakes.organizations, fakes.reports).uiState).value
+
+        assertEquals("Refugio Huellitas del Desierto", state.organizationName)
+        assertFalse(state.isAdoptionCenter)
+    }
 }
