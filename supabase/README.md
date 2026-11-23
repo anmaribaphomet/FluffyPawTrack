@@ -20,6 +20,7 @@ can be run again safely.
 | 7 | `20261122000700_affiliation_rejection_reason.sql` | `organizations.rejection_reason`; `review_affiliation(org, approve, reason)` requires a reason when rejecting and sends it to the requester |
 | 8 | `20261122000800_nearby_report_notifications.sql` | RF-03: a new report notifies affiliates within their radius who accept its priority; status-change notifications respect the reporter's priorities |
 | 9 | `20261122000900_report_notification_safety.sql` | Nearby notifications never roll back a report; at most 5 reports per reporter every 10 minutes |
+| 10 | `20261122001000_report_rate_limit_hardening.sql` | Rate limit serialized per reporter (advisory lock) and server-set `created_at` |
 
 ## Dashboard settings
 
