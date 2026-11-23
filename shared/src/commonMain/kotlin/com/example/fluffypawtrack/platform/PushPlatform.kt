@@ -17,3 +17,10 @@ object PushTokenRefreshes {
         tokens.tryEmit(token)
     }
 }
+
+/**
+ * Deletes this device's FCM token in Firebase, so a row left in `device_tokens` stops receiving
+ * pushes (FCM then reports it `UNREGISTERED`). The next token request creates a new one.
+ * Never throws; on iOS and without Firebase config it does nothing.
+ */
+expect suspend fun deleteDevicePushToken()

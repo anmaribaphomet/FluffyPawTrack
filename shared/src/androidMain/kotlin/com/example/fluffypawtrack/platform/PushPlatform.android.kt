@@ -18,3 +18,16 @@ actual suspend fun currentPushToken(): String? = try {
 } catch (_: Exception) {
     null
 }
+
+actual suspend fun deleteDevicePushToken() {
+    try {
+        val task = FirebaseMessaging.getInstance().deleteToken()
+        suspendCancellableCoroutine { continuation ->
+            task.addOnCompleteListener { continuation.resume(Unit) }
+        }
+    } catch (e: CancellationException) {
+        throw e
+    } catch (_: Exception) {
+        // No Firebase config or no Play services: there is no token to delete.
+    }
+}

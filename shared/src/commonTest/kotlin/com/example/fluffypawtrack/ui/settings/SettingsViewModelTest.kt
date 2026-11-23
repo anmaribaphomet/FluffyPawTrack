@@ -33,7 +33,7 @@ class SettingsViewModelTest {
     @Test
     fun togglesFlipTheirLocalState() {
         val auth = FakeAuthRepository(initialUser = SampleData.demoUser)
-        val viewModel = SettingsViewModel(auth, FakePushTokenRepository(currentUser = { auth.currentUser.value }))
+        val viewModel = SettingsViewModel(auth, FakePushTokenRepository(currentUser = { auth.currentUser.value }), deleteDeviceToken = {})
         val initial = viewModel.uiState.value
 
         viewModel.toggleDarkMode()
@@ -46,7 +46,7 @@ class SettingsViewModelTest {
     @Test
     fun signOutClearsTheSessionEvenWhenTheTokenCannotBeDeleted() = runTest {
         val auth = FakeAuthRepository(initialUser = SampleData.demoUser)
-        val viewModel = SettingsViewModel(auth, FakePushTokenRepository(currentUser = { auth.currentUser.value }))
+        val viewModel = SettingsViewModel(auth, FakePushTokenRepository(currentUser = { auth.currentUser.value }), deleteDeviceToken = {})
         assertFalse(viewModel.uiState.value.signedOut)
 
         viewModel.signOut()
@@ -60,7 +60,7 @@ class SettingsViewModelTest {
         val auth = FakeAuthRepository(initialUser = SampleData.demoUser)
         val tokens = FakePushTokenRepository(currentUser = { auth.currentUser.value })
         tokens.register("device-token")
-        val viewModel = SettingsViewModel(auth, tokens)
+        val viewModel = SettingsViewModel(auth, tokens, deleteDeviceToken = {})
 
         viewModel.signOut()
 
@@ -75,7 +75,7 @@ class SettingsViewModelTest {
             override suspend fun register(token: String) = Result.success(Unit)
             override suspend fun unregister(): Result<Unit> = awaitCancellation()
         }
-        val viewModel = SettingsViewModel(auth, hanging)
+        val viewModel = SettingsViewModel(auth, hanging, deleteDeviceToken = {})
 
         viewModel.signOut()
         assertFalse(viewModel.uiState.value.signedOut, "waits for the delete first")
@@ -83,5 +83,54 @@ class SettingsViewModelTest {
 
         assertNull(auth.currentUser.value)
         assertTrue(viewModel.uiState.value.signedOut)
+    }
+
+    @Test
+    fun signOutDeletesTheFirebaseTokenAfterTheSessionEndsEvenWhenUnregisterFails() = runTest {
+        val auth = FakeAuthRepository(initialUser = SampleData.demoUser)
+        val failing = object : PushTokenRepository {
+            override suspend fun register(token: String) = Result.success(Unit)
+            override suspend fun unregister(): Result<Unit> = Result.failure(IllegalStateException("offline"))
+        }
+        val sessionWhenDeleted = mutableListOf<Any?>()
+        val viewModel = SettingsViewModel(auth, failing, deleteDeviceToken = { sessionWhenDeleted += auth.currentUser.value })
+
+        viewModel.signOut()
+
+        assertEquals(listOf<Any?>(null), sessionWhenDeleted, "deleted once, after the session ended")
+        assertTrue(viewModel.uiState.value.signedOut)
+    }
+
+    @Test
+    fun signOutDeletesTheFirebaseTokenWhenUnregisterTimesOut() = runTest {
+        val auth = FakeAuthRepository(initialUser = SampleData.demoUser)
+        val hanging = object : PushTokenRepository {
+            override suspend fun register(token: String) = Result.success(Unit)
+            override suspend fun unregister(): Result<Unit> = awaitCancellation()
+        }
+        var deletions = 0
+        val viewModel = SettingsViewModel(auth, hanging, deleteDeviceToken = { deletions++ })
+
+        viewModel.signOut()
+        assertEquals(0, deletions)
+        advanceTimeBy(3.seconds + 1.seconds)
+
+        assertEquals(1, deletions)
+        assertTrue(viewModel.uiState.value.signedOut)
+    }
+
+    @Test
+    fun signOutFinishesWhenDeletingTheFirebaseTokenHangsOrFails() = runTest {
+        val auth = FakeAuthRepository(initialUser = SampleData.demoUser)
+        val hangs = SettingsViewModel(auth, FakePushTokenRepository(currentUser = { auth.currentUser.value }), deleteDeviceToken = { awaitCancellation() })
+        hangs.signOut()
+        advanceTimeBy(3.seconds + 1.seconds)
+        assertTrue(hangs.uiState.value.signedOut)
+
+        val auth2 = FakeAuthRepository(initialUser = SampleData.demoUser)
+        val fails = SettingsViewModel(auth2, FakePushTokenRepository(currentUser = { auth2.currentUser.value }), deleteDeviceToken = { error("no Firebase") })
+        fails.signOut()
+        assertNull(auth2.currentUser.value)
+        assertTrue(fails.uiState.value.signedOut)
     }
 }
