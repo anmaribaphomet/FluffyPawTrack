@@ -36,3 +36,7 @@ Pods/
 
 # Claude Code agent worktrees
 .claude/worktrees/
+
+# Firebase config (never committed)
+androidApp/google-services.json
+*-firebase-adminsdk-*.json
