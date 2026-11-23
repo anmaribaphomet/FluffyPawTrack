@@ -152,12 +152,12 @@ Rules:
 - [x] `assembleDebug` passes; push
 
 ### Phase 3 — Affiliate and admin views
-- [ ] Role-based navigation after login
-- [ ] Affiliate: nearby reports inbox, take case and change status, my cases,
+- [x] Role-based navigation after login
+- [x] Affiliate: nearby reports inbox, take case and change status, my cases,
       received contact requests, adoption listings, organization profile and preferences
-- [ ] Admin: affiliation requests, places directory (CRUD), report supervision
-- [ ] Affiliates see contact requests received by their organization (Recibidas)
-- [ ] `assembleDebug` passes; push
+- [x] Admin: affiliation requests, places directory (CRUD), report supervision
+- [x] Affiliates see contact requests received by their organization (Recibidas)
+- [x] `assembleDebug` passes; push
 
 ### Phase 4 — Notifications and polish
 - [ ] Notifications to affiliates by radius and priority, respecting `notification_prefs`

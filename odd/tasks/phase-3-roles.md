@@ -21,7 +21,7 @@ Branch: `master`, small commits (each unit reviewable on its own), push at phase
 | T2 | S3, S5, S6 | delegated (worktree) — affiliate screens | done — 319 tests | 1b53243..b6385ec |
 | T3 | S4 | delegated (worktree) — admin screens | done — 317 tests | 06445e3..43e311a |
 | T4 | S2 | delegated — role-based start and wiring | done — 356 tests | 3c3f0bb |
-| T5 | S1 | emulator check against Supabase (needs patitas affiliate + an admin account), push | pending | |
+| T5 | S1 | emulator check against Supabase, push | done — see L4 | pushed |
 
 Route evidence: T1 is the shared contract both screen units need; T2 and T3 are independent units with disjoint surfaces (`ui/affiliate` vs `ui/admin`), each several files → parallel writers after T1. Navigation is owned by T4 to avoid conflicts.
 
@@ -30,3 +30,4 @@ Route evidence: T1 is the shared contract both screen units need; T2 and T3 are 
 - L1 (2026-11-22, user): "Empieza con la siguiente fase"
 - L2: T1 merged. Deviations: reviewAffiliation has no reason (RPC/table have none); prefs update takes userId; status-history responsible shows the org name or "Administración" because other profiles are private under RLS. Demo: admin@correo.com, patitas@correo.com (case report-7, request-3), carlos@correo.com requester of Rescate Animal Norte.
 - L3: T2-T4 merged. Choices to confirm with user: admin place editor requires phone (10 digits), email, schedule, description; affiliate prefs require at least one priority, radius 1-20 km; Cuenta for affiliate/admin shows Información personal + Ajustes. User asked to register patitas/admin and run the promotion SQL.
+- L4 (2026-11-22, user): "Listo ya me salieron como me dijiste que debian salir al ejecutar el comprobador". Live check on the real project: patitas@correo.com lands on the affiliate home ("¡Hola, Patitas Callejeras HMO!", 4 pending reports); inbox with priority chips; case detail → "Tomar caso" via take_report → status En camino, history shows Patitas Callejeras HMO, next action "Marcar como resguardado"; admin@correo.com lands on "Panel de administración" (1 pending affiliation); supervision lists all reports incl. the taken case; directory lists places with filters. Not exercised live (to avoid changing the user's data): approve/reject affiliation, directory edits/deletes, hide/close, listing create/edit, prefs save. Account creation by the agent was blocked by the permission system; the user registered both accounts.
