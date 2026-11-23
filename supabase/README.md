@@ -18,6 +18,7 @@ can be run again safely.
 | 5 | `20261122000500_seed.sql` | Optional demo content (organizations, listings, reports) |
 | 6 | `20261122000600_review_fixes.sql` | Fixes from the security review (close rejects pending contact requests; organization delete) |
 | 7 | `20261122000700_affiliation_rejection_reason.sql` | `organizations.rejection_reason`; `review_affiliation(org, approve, reason)` requires a reason when rejecting and sends it to the requester |
+| 8 | `20261122000800_nearby_report_notifications.sql` | RF-03: a new report notifies affiliates within their radius who accept its priority; status-change notifications respect the reporter's priorities |
 
 ## Dashboard settings
 
@@ -174,6 +175,23 @@ decide what succeeds, and an update or delete that returns no row is shown as a 
 - Deleting an organization returns its affiliates to the `user` role instead of failing the
   `profiles_affiliate_has_org` check.
 
+## Nearby report notifications (RF-03)
+
+`20261122000800_nearby_report_notifications.sql` adds the trigger `reports_notify_nearby`
+(after insert on `reports`):
+
+- Each affiliate of an `approved` and `active` organization receives one `report`
+  notification ("Nuevo reporte cercano", `report_id` set) when the organization is within
+  that affiliate's `notification_prefs.radius_km` and the report's priority is in
+  `notification_prefs.priorities`. No prefs row means 5 km and every priority.
+- Body: `<Categoría> · prioridad <Prioridad> a <X.X> km: <descripción>`, labels as in
+  `ui/common/Labels.kt`, description cut to 80 characters plus "…".
+- The reporter is never notified of their own report; hidden reports notify nobody.
+- Distance is haversine (`private.distance_km`), no PostGIS.
+- `private.reports_track_status` now also skips the reporter's status-change notification
+  when their prefs exclude the report's priority. Contact, adoption and affiliation
+  decisions are always delivered.
+
 ## Regression probes
 
 Run in the SQL Editor as `authenticated` (set `request.jwt.claims`) on a test project:
@@ -189,3 +207,11 @@ Run in the SQL Editor as `authenticated` (set `request.jwt.claims`) on a test pr
 7. Storage: upload to `report-photos/<other uid>/x.jpg` → denied; a `text/plain` file → rejected.
 8. `set_report_status(r, 'closed')`, then `respond_contact_request(<pending>, true)` → fails with "El caso se cerró".
 9. As admin, `delete from organizations where id = <org with affiliates>` → succeeds; its affiliates become `user`.
+10. Nearby reports (affiliates A of an approved organization ~1 km away, B of one ~20 km
+    away, C near with `priorities = '{urgent}'`; claims of a reporter R): `insert into reports`
+    with priority `high` → A has exactly one "Nuevo reporte cercano" for it; B and C have none.
+11. Claims of an affiliate of the near organization: their own `insert into reports` → they get
+    no notification for it. As service role, `insert into reports (..., hidden) values (..., true)`
+    → no notification has that `report_id`.
+12. A reporter with `priorities = '{low}'` whose `high` report changes status → no
+    "Actualización de tu reporte"; a reporter without prefs row → one.
