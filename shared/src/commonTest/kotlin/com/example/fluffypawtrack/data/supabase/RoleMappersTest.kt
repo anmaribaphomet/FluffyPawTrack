@@ -16,6 +16,7 @@ import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
@@ -78,6 +79,16 @@ class RoleMappersTest {
                 "status":"approved","active":true,"capacity":40}""",
         ).toDomain()
         assertEquals(40, org.capacity)
+        assertNull(org.rejectionReason)
+    }
+
+    @Test
+    fun organizationMapsRejectionReason() {
+        val org = json.decodeFromString<OrganizationDto>(
+            """{"id":"o1","type":"shelter","name":"N","photo_url":"res:p","lat":1.0,"lng":2.0,
+                "status":"rejected","active":true,"rejection_reason":"Faltan datos"}""",
+        ).toDomain()
+        assertEquals("Faltan datos", org.rejectionReason)
     }
 
     @Test

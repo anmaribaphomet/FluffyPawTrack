@@ -115,7 +115,7 @@ Call with `postgrest.rpc("<name>", params)`. Parameter names are exact.
 | `set_report_status` | `p_report_id`, `p_status` | RF-04: the assigned organization advances; the admin sets any |
 | `set_report_hidden` | `p_report_id`, `p_hidden` | RF-07: admin only; pending contact requests get "El reporte ya no está disponible" |
 | `request_affiliation` | `p_type`, `p_name`, `p_address`, `p_phone`, `p_email`, `p_description`, `p_photo_url` | Creates a pending organization |
-| `review_affiliation` | `p_organization_id`, `p_approve` | Admin approves (promotes the requester) or rejects |
+| `review_affiliation` | `p_organization_id`, `p_approve`, `p_reason` | Admin approves (promotes the requester) or rejects with a required reason (max 500 characters), stored in `organizations.rejection_reason` and sent to the requester |
 
 Triggers also store every report status in `report_status_history`, notify the reporter on
 each status change, and reject pending contact requests when a report is hidden or deleted.
@@ -164,8 +164,6 @@ decide what succeeds, and an update or delete that returns no row is shown as a 
 | `updateOwnOrganization` | `update organizations` (description, schedule, phone, email, social, photo_url) | `organizations_update_member` + `organizations_guard_update` |
 | `AdoptionRepository.createListing`, `updateListing` | `insert`/`update adoption_listings`; photos in `adoption-photos/<organization_id>/` | `adoption_listings_insert_center`, `adoption_listings_update_center` |
 | `NotificationPrefsRepository.update` | `upsert notification_prefs` on `user_id` (`priorities` as `report_priority[]`, `radius_km`, `push_enabled`) | `notification_prefs_own`; no row reads as the column defaults |
-
-`review_affiliation` takes no rejection reason, so the app does not ask for one.
 
 ## Review fixes (apply after the seed)
 

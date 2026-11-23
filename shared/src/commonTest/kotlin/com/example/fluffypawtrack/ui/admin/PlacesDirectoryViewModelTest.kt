@@ -54,7 +54,7 @@ class PlacesDirectoryViewModelTest {
         vm.onStatusFilter(PlaceStatus.Pending)
         assertEquals(listOf("org-norte"), vm.uiState.value.places.map { it.id })
 
-        fixture.organizations.reviewAffiliation("org-norte", approve = false)
+        fixture.organizations.reviewAffiliation("org-norte", approve = false, reason = "Faltan datos")
         vm.onStatusFilter(PlaceStatus.Rejected)
         assertEquals(listOf("org-norte"), vm.uiState.value.places.map { it.id })
 

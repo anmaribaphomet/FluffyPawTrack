@@ -33,6 +33,7 @@ internal data class OrganizationDto(
     val status: String,
     val active: Boolean,
     val capacity: Int? = null,
+    @SerialName("rejection_reason") val rejectionReason: String? = null,
 )
 
 /** Columns the admin writes when creating or editing a place; status and visibility are separate. */

@@ -81,12 +81,13 @@ internal class SupabaseOrganizationRepository(
             }.decodeList<OrganizationDto>().map { it.toDomain() }
         }
 
-    override suspend fun reviewAffiliation(organizationId: String, approve: Boolean): Result<Organization> = remote {
+    override suspend fun reviewAffiliation(organizationId: String, approve: Boolean, reason: String?): Result<Organization> = remote {
         client.postgrest.rpc(
             "review_affiliation",
             buildJsonObject {
                 put("p_organization_id", organizationId)
                 put("p_approve", approve)
+                put("p_reason", reason)
             },
         ).decodeAs<OrganizationDto>().toDomain()
     }.thenRefresh(queries)

@@ -345,14 +345,19 @@ class FakeOrganizationRepository(
     override fun observePendingAffiliations(): Flow<List<Organization>> =
         organizations.map { list -> list.filter { it.status == OrganizationStatus.Pending } }
 
-    override suspend fun reviewAffiliation(organizationId: String, approve: Boolean): Result<Organization> {
+    override suspend fun reviewAffiliation(organizationId: String, approve: Boolean, reason: String?): Result<Organization> {
         if (!isAdmin()) return failure("Solo el administrador puede revisar afiliaciones")
+        OrganizationRules.reviewProblemOf(approve, reason)?.let { return failure(it) }
+        val rejectionReason = if (approve) null else reason?.trim()
         val organization = getOrganization(organizationId) ?: return failure(NOT_FOUND)
         if (organization.status != OrganizationStatus.Pending) {
             return failure("Esta solicitud de afiliación ya fue revisada")
         }
         val reviewed = save(
-            organization.copy(status = if (approve) OrganizationStatus.Approved else OrganizationStatus.Rejected),
+            organization.copy(
+                status = if (approve) OrganizationStatus.Approved else OrganizationStatus.Rejected,
+                rejectionReason = rejectionReason,
+            ),
         )
         val requesterId = requesters[organizationId] ?: return Result.success(reviewed)
         if (approve) {
@@ -367,7 +372,11 @@ class FakeOrganizationRepository(
         notifications?.notify(
             requesterId,
             if (approve) "Afiliación aprobada" else "Afiliación no aprobada",
-            "Tu solicitud de afiliación para ${organization.name} ${if (approve) "fue aprobada" else "no fue aprobada"}.",
+            if (approve) {
+                "Tu solicitud de afiliación para ${organization.name} fue aprobada."
+            } else {
+                "Tu solicitud de afiliación para ${organization.name} no fue aprobada.\nMotivo: $rejectionReason"
+            },
             NotificationType.General,
         )
         return Result.success(reviewed)
@@ -389,7 +398,9 @@ class FakeOrganizationRepository(
         if (!isAdmin()) return failure(ADMIN_ONLY)
         val current = getOrganization(organizationId) ?: return failure(NOT_FOUND)
         OrganizationRules.problemOf(draft)?.let { return failure(it) }
-        return Result.success(save(draft.toOrganization(organizationId).copy(status = current.status, active = current.active)))
+        val edited = draft.toOrganization(organizationId)
+            .copy(status = current.status, active = current.active, rejectionReason = current.rejectionReason)
+        return Result.success(save(edited))
     }
 
     override suspend fun setActive(organizationId: String, active: Boolean): Result<Organization> {

@@ -119,10 +119,11 @@ interface OrganizationRepository {
 
     /**
      * Admin approves (the requester becomes an affiliate of it and it appears on the map) or
-     * rejects (it stays off the map) a pending affiliation (`review_affiliation`). The
-     * requester is notified. The RPC stores no rejection reason.
+     * rejects (it stays off the map) a pending affiliation (`review_affiliation`). Rejecting
+     * needs a [reason] of at most 500 characters; it is stored and sent to the requester in
+     * the notification. Approving ignores [reason].
      */
-    suspend fun reviewAffiliation(organizationId: String, approve: Boolean): Result<Organization>
+    suspend fun reviewAffiliation(organizationId: String, approve: Boolean, reason: String? = null): Result<Organization>
 
     /** Admin directory: every organization, pending, rejected and inactive ones included, by name. */
     fun observeAllForAdmin(): Flow<List<Organization>>

@@ -78,12 +78,48 @@ class FakeOrganizationAdminTest {
         val id = requestAsDemoUser()
         signInAdmin()
 
-        assertEquals(OrganizationStatus.Rejected, organizations.reviewAffiliation(id, approve = false).getOrThrow().status)
+        val rejected = organizations.reviewAffiliation(id, approve = false, reason = "  Faltan datos de contacto  ").getOrThrow()
 
+        assertEquals(OrganizationStatus.Rejected, rejected.status)
+        assertEquals("Faltan datos de contacto", rejected.rejectionReason)
+        assertEquals("Faltan datos de contacto", organizations.getOrganization(id)?.rejectionReason)
         assertFalse(organizations.observeActiveOrganizations().first().any { it.id == id })
         assertEquals(Role.User, auth.findUser(SampleData.demoUser.id)?.role)
-        assertEquals("Afiliación no aprobada", notifications.observeNotifications(SampleData.demoUser.id).first().last().title)
+        val notice = notifications.observeNotifications(SampleData.demoUser.id).first().last()
+        assertEquals("Afiliación no aprobada", notice.title)
+        assertEquals(
+            "Tu solicitud de afiliación para Refugio Nuevo no fue aprobada.\nMotivo: Faltan datos de contacto",
+            notice.message,
+        )
         assertEquals("Esta solicitud de afiliación ya fue revisada", organizations.reviewAffiliation(id, true).message())
+    }
+
+    @Test
+    fun rejectingNeedsAReasonOfAtMost500Characters() = runTest {
+        val id = requestAsDemoUser()
+        signInAdmin()
+
+        assertEquals("Escribe el motivo del rechazo", organizations.reviewAffiliation(id, approve = false).message())
+        assertEquals("Escribe el motivo del rechazo", organizations.reviewAffiliation(id, false, "   ").message())
+        assertEquals(
+            "El motivo debe tener como máximo 500 caracteres",
+            organizations.reviewAffiliation(id, false, "a".repeat(501)).message(),
+        )
+        assertEquals(OrganizationStatus.Pending, organizations.getOrganization(id)?.status)
+
+        val rejected = organizations.reviewAffiliation(id, false, "a".repeat(500)).getOrThrow()
+        assertEquals(500, rejected.rejectionReason?.length)
+    }
+
+    @Test
+    fun approvingStoresNoReason() = runTest {
+        val id = requestAsDemoUser()
+        signInAdmin()
+
+        val approved = organizations.reviewAffiliation(id, approve = true, reason = "Todo en orden").getOrThrow()
+
+        assertNull(approved.rejectionReason)
+        assertNull(organizations.getOrganization(id)?.rejectionReason)
     }
 
     @Test

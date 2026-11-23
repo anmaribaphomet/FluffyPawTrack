@@ -62,6 +62,7 @@ internal fun OrganizationDto.toDomain(): Organization = Organization(
     status = fromDb(status),
     active = active,
     capacity = capacity,
+    rejectionReason = rejectionReason,
 )
 
 /** [photoUrl] is the stored photo (already uploaded when the form held a local one). */
