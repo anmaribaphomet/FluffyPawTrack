@@ -12,7 +12,7 @@ import com.example.fluffypawtrack.ui.auth.LoginRoute
 import com.example.fluffypawtrack.ui.auth.RegisterRoute
 import com.example.fluffypawtrack.ui.components.HomeDestination
 import com.example.fluffypawtrack.ui.splash.SplashRoute
-import com.example.fluffypawtrack.ui.home.HomeScreen
+import com.example.fluffypawtrack.ui.home.HomeRoute
 import com.example.fluffypawtrack.ui.map.MapFilter
 import com.example.fluffypawtrack.ui.map.MapRoute
 import com.example.fluffypawtrack.ui.notifications.NotificationsRoute
@@ -69,7 +69,7 @@ fun AppNavHost(navController: NavHostController = rememberNavController()) {
             )
         }
         composable<Route.Home> {
-            HomeScreen(
+            HomeRoute(
                 // dropUnlessResumed ignores taps while a transition is running (double taps).
                 onProfileClick = dropUnlessResumed { navController.navigate(Route.Profile) },
                 onSeeAdoptions = dropUnlessResumed { navController.navigate(Route.Map(adoptionsOnly = true)) },

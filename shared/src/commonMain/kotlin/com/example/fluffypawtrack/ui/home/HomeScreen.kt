@@ -49,6 +49,28 @@ import fluffypawtrack.shared.generated.resources.img_cat_phone
 import fluffypawtrack.shared.generated.resources.img_dog_adopt
 import org.jetbrains.compose.resources.painterResource
 
+/** Home wired to [HomeViewModel] (fakes or Supabase, per AppContainer) for the unread badge. */
+@Composable
+fun HomeRoute(
+    modifier: Modifier = Modifier,
+    onProfileClick: () -> Unit = {},
+    onReportAnimal: () -> Unit = {},
+    onSeeAdoptions: () -> Unit = {},
+    onNavigate: (HomeDestination) -> Unit = {},
+) {
+    val container = LocalAppContainer.current
+    val viewModel = viewModel { HomeViewModel(container.notificationRepository, container.authRepository) }
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
+    HomeScreen(
+        modifier = modifier,
+        onProfileClick = onProfileClick,
+        onReportAnimal = onReportAnimal,
+        onSeeAdoptions = onSeeAdoptions,
+        onNavigate = onNavigate,
+        unreadNotifications = state.unreadNotifications,
+    )
+}
+
 /** Pantalla INICIO (Figma nodo 11:69). */
 @Composable
 fun HomeScreen(
@@ -57,7 +79,7 @@ fun HomeScreen(
     onReportAnimal: () -> Unit = {},
     onSeeAdoptions: () -> Unit = {},
     onNavigate: (HomeDestination) -> Unit = {},
-    unreadNotifications: Int = unreadNotificationCount(),
+    unreadNotifications: Int = 0,
 ) {
     var selected by remember { mutableStateOf(HomeDestination.Inicio) }
     // The grass block may slide down into its own bottom margin, never below the system navigation bar.
@@ -98,15 +120,6 @@ fun HomeScreen(
                 .height(BottomNavBarHeight),
         )
     }
-}
-
-/** Unread count of the signed-in account, from [HomeViewModel] (fakes or Supabase, per AppContainer). */
-@Composable
-private fun unreadNotificationCount(): Int {
-    val container = LocalAppContainer.current
-    val viewModel = viewModel { HomeViewModel(container.notificationRepository, container.authRepository) }
-    val state by viewModel.uiState.collectAsStateWithLifecycle()
-    return state.unreadNotifications
 }
 
 // Space savings so both cards and their buttons sit above the grass on a ~900 dp tall phone.

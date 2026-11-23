@@ -48,10 +48,15 @@ class HomeViewModelTest {
     }
 
     @Test
-    fun signedOutUserHasNoBadge() = runTest {
-        val vm = HomeViewModel(FakeNotificationRepository(), FakeAuthRepository())
+    fun signingOutClearsTheBadge() = runTest {
+        val auth = FakeAuthRepository(initialUser = SampleData.demoUser)
+        val vm = HomeViewModel(FakeNotificationRepository(), auth)
+        // Collection runs: the signed-in count reaches the state before the sign-out.
+        vm.uiState.first { it.unreadNotifications == 2 }
 
-        assertEquals(0, vm.uiState.value.unreadNotifications)
+        auth.signOut()
+
+        assertEquals(0, vm.uiState.first { it.unreadNotifications == 0 }.unreadNotifications)
     }
 
     @Test
