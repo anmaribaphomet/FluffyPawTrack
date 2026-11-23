@@ -9,13 +9,24 @@ What it does on each call:
 1. Rejects the request unless header `x-webhook-secret` equals the secret `PUSH_WEBHOOK_SECRET`.
 2. Skips the recipient when `notification_prefs.push_enabled` is false (no row means on).
    Priorities are already filtered when the notification row is inserted.
-3. Sends one message per row of the recipient in `device_tokens`.
-4. Deletes the tokens FCM reports as `UNREGISTERED` (or `INVALID_ARGUMENT` about the token).
-   Transient errors keep the token.
+3. Sends one message per row of the recipient in `device_tokens`. A `429`, `500` or `503` from
+   FCM is retried up to 2 times with backoff (250 ms, 500 ms, or the `Retry-After` delay) while
+   the send's 3 s budget allows. Each FCM request times out after 2 s and the OAuth request after
+   1.5 s, so the function answers before the webhook's 5 s timeout.
+4. Deletes a token only when FCM's error details say `errorCode: UNREGISTERED`, or
+   `INVALID_ARGUMENT` about the registration token (`message.token`). A bare `404 NOT_FOUND`
+   keeps the token: a wrong project id returns it too. Transient errors keep the token.
+
+Responses: `400` for a body that is not a JSON object or a record without `id`, `user_id` or
+`title`; `500` with `"error": "push misconfigured"` when nothing was sent or deleted and a send
+failed because of the setup (broken `FCM_SERVICE_ACCOUNT`, OAuth `invalid_grant`, FCM 401/403, or
+404 from a wrong project id), so it shows in the logs and the webhook history; `200` with
+`{ sent, deleted, failed }` otherwise.
 
 The OAuth2 access token is obtained from the service account (RS256 JWT signed with Web Crypto)
-and cached until 5 minutes before it expires. Logs never contain the secret, the access token or
-a full FCM token (only its last 6 characters).
+and cached until 5 minutes before it expires; concurrent sends share one token request. A `401`
+from FCM drops the cached token and retries once with a fresh one. Logs never contain the secret,
+the access token or a full FCM token (only its last 6 characters).
 
 ## Files
 
@@ -23,8 +34,8 @@ a full FCM token (only its last 6 characters).
 |---|---|
 | `index.ts` | Entry point: Supabase service-role client, FCM `fetch`, wiring |
 | `handler.ts` | Request handling with injected dependencies |
-| `fcm.ts` | Pure helpers: message builder, error check, JWT, token cache |
-| `*_test.ts` | `deno test` suites (no network) |
+| `fcm.ts` | Helpers without environment access: message builder, error checks, JWT, token cache, sender with retries |
+| `*_test.ts` | `deno test` suites (no network; `fetch` is faked) |
 
 ## Secrets (names only; values never go in the repository)
 

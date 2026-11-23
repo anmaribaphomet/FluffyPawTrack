@@ -260,7 +260,8 @@ priority so it arrives while the app is closed:
 - All `data` values are strings (FCM requirement).
 - If a `notification` block is ever added, also set `android.notification.channel_id = "avisos"`
   and keep `report_id` in `data`, so the tap still opens the report.
-- A token FCM reports as `UNREGISTERED` should be deleted from `device_tokens` by the function.
+- A token FCM reports with `errorCode: UNREGISTERED` (or `INVALID_ARGUMENT` about the token) is
+  deleted from `device_tokens` by the function; a bare `404` keeps it.
 
 The function is `functions/send-push`; its secrets, deploy command and Database Webhook setup
 are in `functions/send-push/README.md`. Signing out also deletes the FCM token on the phone, so
