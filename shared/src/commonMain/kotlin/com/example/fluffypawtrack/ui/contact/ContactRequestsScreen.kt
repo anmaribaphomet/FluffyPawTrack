@@ -41,12 +41,24 @@ import com.example.fluffypawtrack.ui.theme.FluffyColors
 import com.example.fluffypawtrack.ui.theme.FluffyShapes
 import kotlin.time.ExperimentalTime
 
-/** "Solicitudes de contacto" (RF-05), opened from Cuenta. */
+/**
+ * "Solicitudes de contacto" (RF-05), opened from Cuenta. Affiliates open it on
+ * [ContactRequestsTab.Received], where the requests of their organization appear.
+ */
 @Composable
-fun ContactRequestsRoute(onBack: () -> Unit, modifier: Modifier = Modifier) {
+fun ContactRequestsRoute(
+    onBack: () -> Unit,
+    modifier: Modifier = Modifier,
+    initialTab: ContactRequestsTab = ContactRequestsTab.Sent,
+) {
     val container = LocalAppContainer.current
-    val viewModel = viewModel {
-        ContactRequestsViewModel(container.authRepository, container.contactRequestRepository, container.reportRepository)
+    val viewModel = viewModel(key = "contact-requests-${initialTab.name}") {
+        ContactRequestsViewModel(
+            container.authRepository,
+            container.contactRequestRepository,
+            container.reportRepository,
+            initialTab,
+        )
     }
     val state by viewModel.uiState.collectAsStateWithLifecycle()
 
