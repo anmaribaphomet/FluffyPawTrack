@@ -42,6 +42,24 @@ val ReportStatus.label: String
         ReportStatus.Closed -> "Caso cerrado"
     }
 
+/** Priority chip color; the text on it is brown-900. */
+val Priority.color: Color
+    get() = when (this) {
+        Priority.Low -> FluffyColors.Sage200
+        Priority.Medium -> FluffyColors.Peach200
+        Priority.High -> FluffyColors.Orange500
+        Priority.Urgent -> FluffyColors.Pink400
+    }
+
+/** Report status chip color; the text on it is brown-900. */
+val ReportStatus.color: Color
+    get() = when (this) {
+        ReportStatus.Pending -> FluffyColors.Peach300
+        ReportStatus.OnTheWay -> FluffyColors.Orange500
+        ReportStatus.Sheltered -> FluffyColors.Sage400
+        ReportStatus.Closed -> FluffyColors.Neutral300
+    }
+
 val OrganizationType.label: String
     get() = when (this) {
         OrganizationType.Shelter -> "Albergue"
