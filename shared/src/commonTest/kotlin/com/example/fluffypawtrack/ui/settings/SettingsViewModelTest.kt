@@ -19,6 +19,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -86,23 +87,24 @@ class SettingsViewModelTest {
     }
 
     @Test
-    fun signOutDeletesTheFirebaseTokenAfterTheSessionEndsEvenWhenUnregisterFails() = runTest {
+    fun signOutDeletesTheFirebaseTokenEvenWhenUnregisterFails() = runTest {
         val auth = FakeAuthRepository(initialUser = SampleData.demoUser)
         val failing = object : PushTokenRepository {
             override suspend fun register(token: String) = Result.success(Unit)
             override suspend fun unregister(): Result<Unit> = Result.failure(IllegalStateException("offline"))
         }
-        val sessionWhenDeleted = mutableListOf<Any?>()
-        val viewModel = SettingsViewModel(auth, failing, deleteDeviceToken = { sessionWhenDeleted += auth.currentUser.value })
+        var deletions = 0
+        val viewModel = SettingsViewModel(auth, failing, deleteDeviceToken = { deletions++ })
 
         viewModel.signOut()
 
-        assertEquals(listOf<Any?>(null), sessionWhenDeleted, "deleted once, after the session ended")
+        assertEquals(1, deletions)
+        assertNull(auth.currentUser.value)
         assertTrue(viewModel.uiState.value.signedOut)
     }
 
     @Test
-    fun signOutDeletesTheFirebaseTokenWhenUnregisterTimesOut() = runTest {
+    fun signOutDeletesTheFirebaseTokenWhileUnregisterIsStillRunning() = runTest {
         val auth = FakeAuthRepository(initialUser = SampleData.demoUser)
         val hanging = object : PushTokenRepository {
             override suspend fun register(token: String) = Result.success(Unit)
@@ -112,11 +114,29 @@ class SettingsViewModelTest {
         val viewModel = SettingsViewModel(auth, hanging, deleteDeviceToken = { deletions++ })
 
         viewModel.signOut()
-        assertEquals(0, deletions)
+        assertEquals(1, deletions, "does not wait for the unregister")
         advanceTimeBy(3.seconds + 1.seconds)
 
         assertEquals(1, deletions)
         assertTrue(viewModel.uiState.value.signedOut)
+    }
+
+    @Test
+    fun signOutRunsBothCleanupsConcurrentlyWithinOneTimeout() = runTest {
+        val auth = FakeAuthRepository(initialUser = SampleData.demoUser)
+        val hanging = object : PushTokenRepository {
+            override suspend fun register(token: String) = Result.success(Unit)
+            override suspend fun unregister(): Result<Unit> = awaitCancellation()
+        }
+        val viewModel = SettingsViewModel(auth, hanging, deleteDeviceToken = { awaitCancellation() })
+
+        viewModel.signOut()
+        advanceTimeBy(3.seconds - 100.milliseconds)
+        assertFalse(viewModel.uiState.value.signedOut, "waits for the cleanups up to the timeout")
+        advanceTimeBy(200.milliseconds)
+
+        assertNull(auth.currentUser.value)
+        assertTrue(viewModel.uiState.value.signedOut, "both hanging cleanups end after one 3 s timeout, not 6 s")
     }
 
     @Test

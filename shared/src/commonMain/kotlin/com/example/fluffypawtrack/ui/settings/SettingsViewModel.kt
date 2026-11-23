@@ -6,6 +6,7 @@ import com.example.fluffypawtrack.domain.repository.AuthRepository
 import com.example.fluffypawtrack.domain.repository.PushTokenRepository
 import com.example.fluffypawtrack.platform.deleteDevicePushToken
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -26,7 +27,8 @@ data class SettingsUiState(
 class SettingsViewModel(
     private val authRepository: AuthRepository,
     private val pushTokenRepository: PushTokenRepository,
-    private val unregisterTimeout: Duration = 3.seconds,
+    /** Bounds both sign-out cleanups, which run at the same time, so sign-out waits at most this. */
+    private val pushCleanupTimeout: Duration = 3.seconds,
     private val deleteDeviceToken: suspend () -> Unit = ::deleteDevicePushToken,
 ) : ViewModel() {
 
@@ -39,21 +41,29 @@ class SettingsViewModel(
 
     fun signOut() {
         viewModelScope.launch {
-            // RLS only lets the account delete its own token, so it goes before the session ends.
-            // A failure or a slow network (timeout) does not keep the user signed in.
-            withTimeoutOrNull(unregisterTimeout) { pushTokenRepository.unregister() }
-            authRepository.signOut()
-            // Deleting the FCM token on the phone makes a row the unregister missed useless: FCM
-            // reports it UNREGISTERED and send-push removes it. It runs after the session ends so
-            // the token sync cannot register a rotated token for the old account.
-            try {
-                withTimeoutOrNull(unregisterTimeout) { deleteDeviceToken() }
-            } catch (e: CancellationException) {
-                throw e
-            } catch (_: Exception) {
-                // Best effort: sign-out never fails because of the device token.
+            // Both cleanups run at once while the session is open (RLS only lets the account
+            // delete its own row), each bounded, so a slow network delays sign-out by at most
+            // pushCleanupTimeout. Deleting the FCM token on the phone makes a row the unregister
+            // missed useless: FCM reports it UNREGISTERED and send-push removes it. Firebase only
+            // mints a new token on the next app start, so the token sync cannot register a
+            // rotated token for this account in the meantime.
+            coroutineScope {
+                launch { bestEffort { pushTokenRepository.unregister() } }
+                launch { bestEffort { deleteDeviceToken() } }
             }
+            authRepository.signOut()
             state.update { it.copy(signedOut = true) }
+        }
+    }
+
+    /** Sign-out never fails or hangs because of a push cleanup. */
+    private suspend fun bestEffort(cleanup: suspend () -> Unit) {
+        try {
+            withTimeoutOrNull(pushCleanupTimeout) { cleanup() }
+        } catch (e: CancellationException) {
+            throw e
+        } catch (_: Exception) {
+            // Best effort: the other cleanup still covers this device.
         }
     }
 }
