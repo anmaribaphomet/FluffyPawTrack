@@ -1,10 +1,16 @@
 package com.example.fluffypawtrack.ui.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.compose.dropUnlessResumed
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import com.example.fluffypawtrack.di.LocalAppContainer
@@ -34,16 +40,41 @@ import com.example.fluffypawtrack.ui.account.MyReportsRoute
 import com.example.fluffypawtrack.ui.affiliate.CenterAdoptionRequestsRoute
 import com.example.fluffypawtrack.ui.account.PersonalInfoRoute
 import com.example.fluffypawtrack.ui.profile.ProfileRoute
+import com.example.fluffypawtrack.ui.push.ReportDetailRoute
 import com.example.fluffypawtrack.ui.report.NewReportRoute
 import com.example.fluffypawtrack.ui.settings.SettingsInfoRoute
 import com.example.fluffypawtrack.ui.settings.SettingsRoute
 import com.example.fluffypawtrack.ui.settings.SettingsTopic
 
+/**
+ * [pendingReportId] comes from a tapped push notification; once an account is signed in and past
+ * the splash and sign-in screens it opens that report and calls [onReportOpened].
+ */
 @Composable
-fun AppNavHost(navController: NavHostController = rememberNavController()) {
+fun AppNavHost(
+    navController: NavHostController = rememberNavController(),
+    pendingReportId: String? = null,
+    onReportOpened: () -> Unit = {},
+) {
     val authRepository = LocalAppContainer.current.authRepository
     // Read when the user gets in, not at composition: the role picks each account's home.
     val startRoute = { startRouteFor(authRepository.currentUser.value) }
+    val user by authRepository.currentUser.collectAsStateWithLifecycle()
+    val backStackEntry by navController.currentBackStackEntryAsState()
+    val reportOpened by rememberUpdatedState(onReportOpened)
+    LaunchedEffect(pendingReportId, user, backStackEntry) {
+        val reportId = pendingReportId ?: return@LaunchedEffect
+        val destination = backStackEntry?.destination ?: return@LaunchedEffect
+        // The splash and auth screens replace the whole stack when they finish; wait for them.
+        if (destination.hasRoute(Route.Splash::class) || destination.hasRoute(Route.Login::class) ||
+            destination.hasRoute(Route.Register::class)
+        ) {
+            return@LaunchedEffect
+        }
+        val route = reportRouteFor(user, reportId) ?: return@LaunchedEffect
+        navController.navigate(route) { launchSingleTop = true }
+        reportOpened()
+    }
     NavHost(navController = navController, startDestination = Route.Splash) {
         composable<Route.Splash> {
             SplashRoute(
@@ -202,6 +233,12 @@ fun AppNavHost(navController: NavHostController = rememberNavController()) {
         }
         composable<Route.CenterAdoptionRequests> {
             CenterAdoptionRequestsRoute(onBack = dropUnlessResumed { navController.popBackStack() })
+        }
+        composable<Route.ReportDetail> { entry ->
+            ReportDetailRoute(
+                reportId = entry.toRoute<Route.ReportDetail>().reportId,
+                onBack = dropUnlessResumed { navController.popBackStack() },
+            )
         }
         affiliateScreens(navController)
         adminScreens(navController)

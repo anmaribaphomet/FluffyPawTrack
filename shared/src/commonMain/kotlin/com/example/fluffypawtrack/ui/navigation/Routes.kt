@@ -121,4 +121,8 @@ sealed interface Route {
 
     @Serializable
     data class AdminReportDetail(val reportId: String) : Route
+
+    /** Report detail of role `user`, opened from a push notification. */
+    @Serializable
+    data class ReportDetail(val reportId: String) : Route
 }

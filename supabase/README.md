@@ -227,3 +227,37 @@ Run in the SQL Editor as `authenticated` (set `request.jwt.claims`) on a test pr
 - A failed nearby notification is logged with `RAISE WARNING` and does not cancel the report.
   Each affiliate notification runs in its own subtransaction; this is fine for the expected
   number of affiliates per area in Hermosillo.
+
+## Push notifications (FCM contract for the Edge Function)
+
+The app registers its FCM token in `device_tokens` (`platform = 'android'`) when an account signs
+in or its session is restored, and again when FCM rotates the token. Signing out deletes this
+device's row first. Anonymous sessions never register a token.
+
+The Edge Function sends with the FCM HTTP v1 API to every `fcm_token` of the recipient. Send a
+**data message** (no `notification` block) so the app builds the notification itself, with high
+priority so it arrives while the app is closed:
+
+```json
+{
+  "message": {
+    "token": "<fcm_token>",
+    "android": { "priority": "high" },
+    "data": {
+      "title": "Nuevo reporte cerca",
+      "body": "Estado crítico a 1.2 km de tu organización",
+      "report_id": "<reports.id uuid>"
+    }
+  }
+}
+```
+
+- `title` (required) and `body` are shown as is on the "Avisos" channel (id `avisos`).
+- `report_id` is optional; when present, tapping the notification opens that report: a user sees
+  the report detail, an affiliate the case detail, an admin the supervision detail. Omit it for
+  pushes not about a report (contact requests, affiliation, adoption requests); the tap then just
+  opens the app.
+- All `data` values are strings (FCM requirement).
+- If a `notification` block is ever added, also set `android.notification.channel_id = "avisos"`
+  and keep `report_id` in `data`, so the tap still opens the report.
+- A token FCM reports as `UNREGISTERED` should be deleted from `device_tokens` by the function.
