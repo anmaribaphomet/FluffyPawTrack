@@ -9,6 +9,7 @@ import com.example.fluffypawtrack.data.fake.FakeFavoritesRepository
 import com.example.fluffypawtrack.data.fake.FakeNotificationPrefsRepository
 import com.example.fluffypawtrack.data.fake.FakeNotificationRepository
 import com.example.fluffypawtrack.data.fake.FakeOrganizationRepository
+import com.example.fluffypawtrack.data.fake.FakePushTokenRepository
 import com.example.fluffypawtrack.data.fake.FakeReportRepository
 import com.example.fluffypawtrack.data.fake.SampleData
 import com.example.fluffypawtrack.data.supabase.SupabaseClientProvider
@@ -22,9 +23,17 @@ import com.example.fluffypawtrack.domain.repository.ContactRequestRepository
 import com.example.fluffypawtrack.domain.repository.FavoritesRepository
 import com.example.fluffypawtrack.domain.repository.NotificationPrefsRepository
 import com.example.fluffypawtrack.domain.repository.NotificationRepository
+import com.example.fluffypawtrack.domain.push.PushTokenSync
 import com.example.fluffypawtrack.domain.repository.OrganizationRepository
+import com.example.fluffypawtrack.domain.repository.PushTokenRepository
 import com.example.fluffypawtrack.domain.repository.ReportRepository
+import com.example.fluffypawtrack.platform.PushTokenRefreshes
+import com.example.fluffypawtrack.platform.currentPushToken
 import io.github.jan.supabase.SupabaseClient
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
 
 /**
  * Manual dependency wiring. Screens and ViewModels only see the repository interfaces.
@@ -79,6 +88,24 @@ class AppContainer(private val supabaseConfig: SupabaseConfig? = null) {
             notificationRepository = notificationRepository,
             findUser = profileLookup(authRepository),
         )
+    val pushTokenRepository: PushTokenRepository = supabase?.pushTokens
+        ?: FakePushTokenRepository(currentUser = { authRepository.currentUser.value })
+
+    private var pushTokenSyncJob: Job? = null
+
+    /**
+     * Starts registering this device's FCM token for signed-in accounts (RF-03). `App` calls it
+     * once per process; tests and previews leave it off.
+     */
+    fun startPushTokenSync() {
+        if (pushTokenSyncJob != null) return
+        pushTokenSyncJob = PushTokenSync(
+            auth = authRepository,
+            tokens = pushTokenRepository,
+            currentToken = ::currentPushToken,
+            refreshedTokens = PushTokenRefreshes.refreshed,
+        ).start(CoroutineScope(SupervisorJob() + Dispatchers.Default))
+    }
 }
 
 /**

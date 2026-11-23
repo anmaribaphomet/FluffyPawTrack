@@ -59,7 +59,7 @@ fun SettingsRoute(
     modifier: Modifier = Modifier,
 ) {
     val container = LocalAppContainer.current
-    val viewModel = viewModel { SettingsViewModel(container.authRepository) }
+    val viewModel = viewModel { SettingsViewModel(container.authRepository, container.pushTokenRepository) }
     val state by viewModel.uiState.collectAsStateWithLifecycle()
 
     LaunchedEffect(state.signedOut) {

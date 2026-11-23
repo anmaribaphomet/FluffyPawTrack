@@ -17,7 +17,10 @@ import com.example.fluffypawtrack.ui.theme.FluffyPawTrackTheme
 private var appContainer: AppContainer? = null
 
 private fun appContainer(config: SupabaseConfig?): AppContainer =
-    appContainer ?: AppContainer(supabaseConfig = config).also { appContainer = it }
+    appContainer ?: AppContainer(supabaseConfig = config).also {
+        it.startPushTokenSync()
+        appContainer = it
+    }
 
 @Composable
 @Preview

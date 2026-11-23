@@ -218,6 +218,14 @@ internal data class NotificationPrefsDto(
     @SerialName("push_enabled") val pushEnabled: Boolean,
 )
 
+/** One row of `device_tokens`; `platform` is always `android` (RF-03). */
+@Serializable
+internal data class DeviceTokenDto(
+    @SerialName("user_id") val userId: String,
+    @SerialName("fcm_token") val fcmToken: String,
+    val platform: String,
+)
+
 @Serializable
 internal data class FavoriteDto(
     @SerialName("user_id") val userId: String,

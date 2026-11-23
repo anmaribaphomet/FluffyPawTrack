@@ -1,6 +1,7 @@
 package com.example.fluffypawtrack.ui.settings
 
 import com.example.fluffypawtrack.data.fake.FakeAuthRepository
+import com.example.fluffypawtrack.data.fake.FakePushTokenRepository
 import com.example.fluffypawtrack.data.fake.SampleData
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -11,6 +12,7 @@ import kotlinx.coroutines.test.setMain
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
+import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
@@ -26,7 +28,8 @@ class SettingsViewModelTest {
 
     @Test
     fun togglesFlipTheirLocalState() {
-        val viewModel = SettingsViewModel(FakeAuthRepository(initialUser = SampleData.demoUser))
+        val auth = FakeAuthRepository(initialUser = SampleData.demoUser)
+        val viewModel = SettingsViewModel(auth, FakePushTokenRepository(currentUser = { auth.currentUser.value }))
         val initial = viewModel.uiState.value
 
         viewModel.toggleDarkMode()
@@ -39,12 +42,25 @@ class SettingsViewModelTest {
     @Test
     fun signOutClearsTheSession() = runTest {
         val auth = FakeAuthRepository(initialUser = SampleData.demoUser)
-        val viewModel = SettingsViewModel(auth)
+        val viewModel = SettingsViewModel(auth, FakePushTokenRepository(currentUser = { auth.currentUser.value }))
         assertFalse(viewModel.uiState.value.signedOut)
 
         viewModel.signOut()
 
         assertNull(auth.currentUser.value)
         assertTrue(viewModel.uiState.value.signedOut)
+    }
+
+    @Test
+    fun signOutDeletesTheDeviceTokenWhileTheSessionIsStillOpen() = runTest {
+        val auth = FakeAuthRepository(initialUser = SampleData.demoUser)
+        val tokens = FakePushTokenRepository(currentUser = { auth.currentUser.value })
+        tokens.register("device-token")
+        val viewModel = SettingsViewModel(auth, tokens)
+
+        viewModel.signOut()
+
+        assertEquals(emptySet(), tokens.tokensOf(SampleData.demoUser.id))
+        assertNull(auth.currentUser.value)
     }
 }

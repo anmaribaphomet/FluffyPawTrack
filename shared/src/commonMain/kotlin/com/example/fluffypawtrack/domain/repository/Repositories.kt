@@ -261,3 +261,15 @@ interface ContactRequestRepository {
      */
     suspend fun getContactDetails(requestId: String, userId: String): ContactDetails?
 }
+
+/** FCM tokens of the signed-in account's devices (`device_tokens`, RF-03). */
+interface PushTokenRepository {
+    /**
+     * Saves [token] for the signed-in account. Fails for anonymous sessions or without a
+     * session: only accounts receive push notifications.
+     */
+    suspend fun register(token: String): Result<Unit>
+
+    /** Deletes this device's token. Call it before signing out, while RLS still allows it. */
+    suspend fun unregister(): Result<Unit>
+}

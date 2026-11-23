@@ -8,6 +8,7 @@ import com.example.fluffypawtrack.domain.repository.FavoritesRepository
 import com.example.fluffypawtrack.domain.repository.NotificationPrefsRepository
 import com.example.fluffypawtrack.domain.repository.NotificationRepository
 import com.example.fluffypawtrack.domain.repository.OrganizationRepository
+import com.example.fluffypawtrack.domain.repository.PushTokenRepository
 import com.example.fluffypawtrack.domain.repository.ReportRepository
 import io.github.jan.supabase.SupabaseClient
 import kotlinx.coroutines.CoroutineScope
@@ -32,4 +33,5 @@ class SupabaseRepositories(client: SupabaseClient) {
     val notificationPrefs: NotificationPrefsRepository = SupabaseNotificationPrefsRepository(client, queries)
     val contactRequests: ContactRequestRepository = SupabaseContactRequestRepository(client, queries, photos)
     val adoptionRequests: AdoptionRequestRepository = SupabaseAdoptionRequestRepository(client, queries)
+    val pushTokens: PushTokenRepository = SupabasePushTokenRepository(client)
 }
