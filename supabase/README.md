@@ -217,3 +217,13 @@ Run in the SQL Editor as `authenticated` (set `request.jwt.claims`) on a test pr
     → no notification has that `report_id`.
 12. A reporter with `priorities = '{low}'` whose `high` report changes status → no
     "Actualización de tu reporte"; a reporter without prefs row → one.
+
+## Report flood protection (limits)
+
+- Migrations 0900/1000 limit each reporter (including each anonymous session) to 5 reports
+  every 10 minutes. A client that keeps creating new anonymous sessions gets a new `auth.uid()`
+  each time, so the per-reporter limit alone does not stop it: keep Supabase's
+  **Authentication → Rate Limits → anonymous sign-ins** limit enabled (default 30 per hour per IP).
+- A failed nearby notification is logged with `RAISE WARNING` and does not cancel the report.
+  Each affiliate notification runs in its own subtransaction; this is fine for the expected
+  number of affiliates per area in Hermosillo.

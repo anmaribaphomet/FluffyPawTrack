@@ -16,8 +16,8 @@ Branch: `master`. Every unit is a small commit set that goes through native revi
 
 | ID | Specs | Route | Status | Commit |
 |---|---|---|---|---|
-| T1 | S2 | delegated (worktree) — SQL: notify affiliates in radius by priority on new reports, prefs respected | pending | |
-| T2 | S5 | delegated (worktree, parallel with T1) — polish | pending | |
+| T1 | S2 | delegated (worktree) — SQL: notify affiliates in radius by priority on new reports, prefs respected | done — reviewed (approved) + follow-ups 0900/1000 reviewed (approved) | 75c6a72, 919c3c9, 4ddefdf |
+| T2 | S5 | delegated (worktree) — polish | done — reviewed (approved); Home fix partial (button ~10 dp under the wave), emulator check pending | 1299afc..06cd3be |
 | T3 | S3 | delegated after T1 — Realtime notifications in the app | pending | |
 | T4 | S4 | delegated after T3 — FCM client: tokens, permission screen, tap opens report | pending | |
 | T5 | S4 | delegated after T4 — Edge Function + trigger to send pushes | pending | |
@@ -29,3 +29,4 @@ Route evidence: T1 (`supabase/`) and T2 (`ui/`) are independent with disjoint su
 
 - L1 (2026-11-22, user): "1.- y 2.- Si estoy de acuerdo, 3.- Si quiero que envie un motivo de porque el rechazo. En la fase 4 quiero que si dejes que te chequen absolutamente todo, pero antes de iniciar la fase 4 arregla lo que dije del punto 3 y esperas mi respuesta o confirmacion"
 - L2 (2026-11-22, user): "Ya ejecute el archivo, puedes seguir con la fase 4"
+- L3: Reviews: T1 approved (lineage review-cb51ab19a084440e); 0900+polish approved (review-5d61d4f46b353b65); 1000 approved (review-4a431e4b65287616). Follow-ups applied: exception-safe nearby notify, per-reporter rate limit serialized with advisory lock, server-set created_at. Documented: anonymous-session rotation relies on Supabase anonymous sign-in rate limit. User must apply migrations 0800, 0900, 1000.
