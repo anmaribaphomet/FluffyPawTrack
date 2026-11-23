@@ -17,6 +17,7 @@ can be run again safely.
 | 4 | `20261122000400_storage.sql` | Buckets `report-photos`, `adoption-photos`, `place-photos` and their policies |
 | 5 | `20261122000500_seed.sql` | Optional demo content (organizations, listings, reports) |
 | 6 | `20261122000600_review_fixes.sql` | Fixes from the security review (close rejects pending contact requests; organization delete) |
+| 7 | `20261122000700_affiliation_rejection_reason.sql` | `organizations.rejection_reason`; `review_affiliation(org, approve, reason)` requires a reason when rejecting and sends it to the requester |
 
 ## Dashboard settings
 
