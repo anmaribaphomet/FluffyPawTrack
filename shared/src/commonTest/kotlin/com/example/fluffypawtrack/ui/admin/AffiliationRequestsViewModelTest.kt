@@ -14,6 +14,7 @@ import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
@@ -70,12 +71,62 @@ class AffiliationRequestsViewModelTest {
         val vm = AffiliationRequestsViewModel(fixture.auth, fixture.organizations)
 
         vm.requestReview("org-norte", approve = false)
+        vm.onReasonChange("Faltan datos de contacto")
         vm.confirmReview()
 
+        assertNull(vm.uiState.value.confirming)
         assertTrue(vm.uiState.value.pending.isEmpty())
         assertEquals("Se rechazó la solicitud de Rescate Animal Norte.", vm.uiState.value.notice)
-        assertEquals(OrganizationStatus.Rejected, fixture.organizations.getOrganization("org-norte")?.status)
+        val rejected = fixture.organizations.getOrganization("org-norte")
+        assertEquals(OrganizationStatus.Rejected, rejected?.status)
+        assertEquals("Faltan datos de contacto", rejected?.rejectionReason)
         assertTrue(fixture.organizations.observeActiveOrganizations().first().none { it.id == "org-norte" })
+    }
+
+    @Test
+    fun rejectingCannotBeConfirmedWithoutAReason() = runTest {
+        val fixture = AdminFixture()
+        val vm = AffiliationRequestsViewModel(fixture.auth, fixture.organizations)
+
+        vm.requestReview("org-norte", approve = false)
+        assertFalse(assertNotNull(vm.uiState.value.confirming).canConfirm)
+        vm.onReasonChange("   ")
+        assertFalse(assertNotNull(vm.uiState.value.confirming).canConfirm)
+        vm.confirmReview()
+
+        assertNotNull(vm.uiState.value.confirming)
+        assertEquals(OrganizationStatus.Pending, fixture.organizations.getOrganization("org-norte")?.status)
+        vm.onReasonChange("Faltan datos")
+        assertTrue(assertNotNull(vm.uiState.value.confirming).canConfirm)
+    }
+
+    @Test
+    fun theReasonStopsAt500Characters() = runTest {
+        val fixture = AdminFixture()
+        val vm = AffiliationRequestsViewModel(fixture.auth, fixture.organizations)
+
+        vm.requestReview("org-norte", approve = false)
+        vm.onReasonChange("a".repeat(501))
+
+        assertEquals(500, vm.uiState.value.confirming?.reason?.length)
+    }
+
+    @Test
+    fun aFailedRejectionKeepsTheDialogOpenWithTheError() = runTest {
+        val fixture = AdminFixture()
+        val vm = AffiliationRequestsViewModel(fixture.auth, fixture.organizations)
+
+        vm.requestReview("org-norte", approve = false)
+        vm.onReasonChange("Faltan datos")
+        fixture.organizations.reviewAffiliation("org-norte", approve = true)
+        vm.confirmReview()
+
+        val dialog = assertNotNull(vm.uiState.value.confirming)
+        assertEquals("Esta solicitud de afiliación ya fue revisada", dialog.error)
+        assertEquals("Faltan datos", dialog.reason)
+        assertFalse(vm.uiState.value.isWorking)
+        vm.onReasonChange("Faltan datos de contacto")
+        assertNull(vm.uiState.value.confirming?.error)
     }
 
     @Test
@@ -96,7 +147,7 @@ class AffiliationRequestsViewModelTest {
         val vm = AffiliationRequestsViewModel(fixture.auth, fixture.organizations)
 
         vm.requestReview("org-norte", approve = true)
-        fixture.organizations.reviewAffiliation("org-norte", approve = false)
+        fixture.organizations.reviewAffiliation("org-norte", approve = false, reason = "Faltan datos")
         vm.confirmReview()
 
         assertEquals("Esta solicitud de afiliación ya fue revisada", vm.uiState.value.message)

@@ -1,11 +1,14 @@
 package com.example.fluffypawtrack.ui.admin
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
@@ -19,6 +22,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.fluffypawtrack.data.fake.SampleData
 import com.example.fluffypawtrack.di.LocalAppContainer
 import com.example.fluffypawtrack.domain.model.Organization
+import com.example.fluffypawtrack.domain.model.OrganizationRules
 import com.example.fluffypawtrack.domain.model.OrganizationStatus
 import com.example.fluffypawtrack.ui.account.AccountCard
 import com.example.fluffypawtrack.ui.account.AccountScaffold
@@ -30,6 +34,7 @@ import com.example.fluffypawtrack.ui.common.emailUri
 import com.example.fluffypawtrack.ui.common.label
 import com.example.fluffypawtrack.ui.common.phoneUri
 import com.example.fluffypawtrack.ui.contact.CardActionButton
+import com.example.fluffypawtrack.ui.contact.MultilineField
 import com.example.fluffypawtrack.ui.theme.FluffyColors
 import com.example.fluffypawtrack.ui.theme.FluffyPawTrackTheme
 import com.example.fluffypawtrack.ui.theme.FluffyShapes
@@ -47,6 +52,7 @@ fun AffiliationRequestsRoute(onBack: () -> Unit, modifier: Modifier = Modifier) 
         onBack = onBack,
         onApprove = { viewModel.requestReview(it, approve = true) },
         onReject = { viewModel.requestReview(it, approve = false) },
+        onReasonChange = viewModel::onReasonChange,
         onConfirm = viewModel::confirmReview,
         onDismissConfirm = viewModel::dismissReview,
         onDismissMessage = viewModel::dismissMessage,
@@ -60,6 +66,7 @@ fun AffiliationRequestsScreen(
     onBack: () -> Unit,
     onApprove: (String) -> Unit,
     onReject: (String) -> Unit,
+    onReasonChange: (String) -> Unit,
     onConfirm: () -> Unit,
     onDismissConfirm: () -> Unit,
     onDismissMessage: () -> Unit,
@@ -100,15 +107,51 @@ fun AffiliationRequestsScreen(
                 onDismiss = onDismissConfirm,
             )
         } else {
-            ConfirmDialog(
-                title = "Rechazar afiliación",
-                text = "$name no aparecerá en el mapa. Se avisará a quien la solicitó.",
-                confirmText = "Rechazar",
+            RejectAffiliationDialog(
+                review = review,
+                enabled = !state.isWorking,
+                onReasonChange = onReasonChange,
                 onConfirm = onConfirm,
                 onDismiss = onDismissConfirm,
             )
         }
     }
+}
+
+@Composable
+private fun RejectAffiliationDialog(
+    review: AffiliationReview,
+    enabled: Boolean,
+    onReasonChange: (String) -> Unit,
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit,
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Rechazar afiliación", color = FluffyColors.Brown900) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text(
+                    "${review.organization.name} no aparecerá en el mapa. Quien la solicitó recibirá este motivo.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = FluffyColors.Brown900,
+                )
+                MultilineField(
+                    value = review.reason,
+                    onValueChange = onReasonChange,
+                    label = "Motivo del rechazo",
+                    supportingText = "Obligatorio. ${review.reason.length}/${OrganizationRules.MAX_REJECTION_REASON_LENGTH}",
+                    error = review.error,
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onConfirm, enabled = enabled && review.canConfirm) {
+                Text("Rechazar", color = FluffyColors.Brown900)
+            }
+        },
+        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancelar", color = FluffyColors.Brown900) } },
+    )
 }
 
 @Composable
@@ -161,6 +204,7 @@ private fun AffiliationRequestsScreenPreview() {
             onBack = {},
             onApprove = {},
             onReject = {},
+            onReasonChange = {},
             onConfirm = {},
             onDismissConfirm = {},
             onDismissMessage = {},
