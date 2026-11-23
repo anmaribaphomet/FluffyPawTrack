@@ -40,6 +40,8 @@ class CaseViewModelsTest {
 
     private fun AffiliateFakes.detail(reportId: String) = CaseDetailViewModel(reportId, auth, reports, organizations)
 
+    private fun AffiliateFakes.myCases() = MyCasesViewModel(auth, reports)
+
     // --- Bandeja de reportes ---
 
     @Test
@@ -184,5 +186,25 @@ class CaseViewModelsTest {
 
         assertNull(state.report)
         assertNotNull(state.message)
+    }
+
+    // --- Mis casos ---
+
+    @Test
+    fun myCasesListsOpenCasesOfTheOrganizationOnly() = runTest {
+        val state = collecting(AffiliateFakes().myCases().uiState).value
+
+        assertEquals(listOf("report-7"), state.cases.map { it.id })
+    }
+
+    @Test
+    fun closedCasesLeaveMyCases() = runTest {
+        val fakes = AffiliateFakes()
+        val state = collecting(fakes.myCases().uiState)
+
+        fakes.reports.setStatus("report-7", ReportStatus.Closed)
+
+        assertTrue(state.value.cases.isEmpty())
+        assertTrue(state.value.loaded)
     }
 }
