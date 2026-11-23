@@ -25,5 +25,15 @@ interface NotificationPermissionController {
     fun dismiss()
 }
 
+/**
+ * Android only lets an app show the system dialog twice; after a second denial it no longer appears.
+ * A dismissed dialog also reports "denied" without counting for the system, so [denials] alone
+ * overcounts: the rationale flag ([showRationale], true after a real first denial) breaks the tie.
+ */
+fun isNotificationPermissionPermanentlyDenied(granted: Boolean, denials: Int, showRationale: Boolean): Boolean =
+    !granted && denials >= PERMANENT_DENIAL_COUNT && !showRationale
+
+private const val PERMANENT_DENIAL_COUNT = 2
+
 @Composable
 expect fun rememberNotificationPermissionController(): NotificationPermissionController

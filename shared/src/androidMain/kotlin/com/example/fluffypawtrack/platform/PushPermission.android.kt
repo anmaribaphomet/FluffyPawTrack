@@ -20,15 +20,15 @@ import androidx.lifecycle.compose.LifecycleResumeEffect
 
 private const val PREFS = "push_permission"
 private const val KEY_DISMISSED = "explainer_dismissed"
-private const val KEY_REQUESTED = "permission_requested"
+private const val KEY_DENIALS = "permission_denials"
 
 @Composable
 actual fun rememberNotificationPermissionController(): NotificationPermissionController {
     val context = LocalContext.current
     val activity = LocalActivity.current
     val controller = remember(context, activity) { AndroidNotificationPermission(context, activity) }
-    val launcher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {
-        controller.onRequestResult()
+    val launcher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+        controller.onRequestResult(granted)
     }
     controller.launcher = launcher
     // The user may grant or revoke it in system settings while the app is in the background.
@@ -60,10 +60,9 @@ private class AndroidNotificationPermission(
         refresh()
     }
 
-    fun onRequestResult() {
-        prefs.edit().putBoolean(KEY_REQUESTED, true).apply()
-        // After one answer the explainer waits for the next launch; Android lets the app ask
-        // once more after a first denial, and never after a second one (permanently denied).
+    fun onRequestResult(granted: Boolean) {
+        if (!granted) prefs.edit().putInt(KEY_DENIALS, prefs.getInt(KEY_DENIALS, 0) + 1).apply()
+        // After one answer the explainer waits for the next launch.
         answeredThisSession = true
         refresh()
     }
@@ -77,9 +76,14 @@ private class AndroidNotificationPermission(
         val granted = apiLevel < Build.VERSION_CODES.TIRAMISU ||
             ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) ==
             PackageManager.PERMISSION_GRANTED
-        val requested = prefs.getBoolean(KEY_REQUESTED, false)
-        val permanentlyDenied = !granted && requested && apiLevel >= Build.VERSION_CODES.TIRAMISU &&
-            activity?.shouldShowRequestPermissionRationale(Manifest.permission.POST_NOTIFICATIONS) == false
+        val permanentlyDenied = apiLevel >= Build.VERSION_CODES.TIRAMISU &&
+            isNotificationPermissionPermanentlyDenied(
+                granted = granted,
+                denials = prefs.getInt(KEY_DENIALS, 0),
+                showRationale = activity?.shouldShowRequestPermissionRationale(
+                    Manifest.permission.POST_NOTIFICATIONS,
+                ) == true,
+            )
         return NotificationPermissionStatus(
             apiLevel = apiLevel,
             granted = granted,
