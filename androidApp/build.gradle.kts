@@ -6,6 +6,14 @@ plugins {
     alias(libs.plugins.composeCompiler)
 }
 
+// google-services.json is gitignored. Without it the app still builds, but push is disabled
+// because Firebase is never initialized.
+if (file("google-services.json").exists()) {
+    apply(plugin = libs.plugins.googleServices.get().pluginId)
+} else {
+    logger.warn("w: androidApp/google-services.json is missing; FCM push notifications are disabled in this build.")
+}
+
 kotlin {
     compilerOptions {
         jvmTarget = JvmTarget.JVM_11
@@ -32,6 +40,8 @@ dependencies {
     implementation(project(":shared"))
 
     implementation(libs.androidx.activity.compose)
+    implementation(project.dependencies.platform(libs.firebase.bom))
+    implementation(libs.firebase.messaging)
 
     implementation(libs.compose.uiToolingPreview)
     debugImplementation(libs.compose.uiTooling)
