@@ -18,9 +18,9 @@ Branch: `master`, small commits (each unit reviewable on its own), push at phase
 | ID | Specs | Route | Status | Commit |
 |---|---|---|---|---|
 | T1 | S3–S7 contract | delegated (worktree) — repository additions in domain, fake and Supabase | done — 288 tests | 29e9264..8862c40 |
-| T2 | S3, S5, S6 | delegated (worktree, parallel with T3) — affiliate screens | in progress | |
-| T3 | S4 | delegated (worktree, parallel with T2) — admin screens | in progress | |
-| T4 | S2 | inline/delegated after T2+T3 — role-based home and navigation wiring | pending | |
+| T2 | S3, S5, S6 | delegated (worktree) — affiliate screens | done — 319 tests | 1b53243..b6385ec |
+| T3 | S4 | delegated (worktree) — admin screens | done — 317 tests | 06445e3..43e311a |
+| T4 | S2 | delegated — role-based start and wiring | done — 356 tests | 3c3f0bb |
 | T5 | S1 | emulator check against Supabase (needs patitas affiliate + an admin account), push | pending | |
 
 Route evidence: T1 is the shared contract both screen units need; T2 and T3 are independent units with disjoint surfaces (`ui/affiliate` vs `ui/admin`), each several files → parallel writers after T1. Navigation is owned by T4 to avoid conflicts.
@@ -29,3 +29,4 @@ Route evidence: T1 is the shared contract both screen units need; T2 and T3 are 
 
 - L1 (2026-11-22, user): "Empieza con la siguiente fase"
 - L2: T1 merged. Deviations: reviewAffiliation has no reason (RPC/table have none); prefs update takes userId; status-history responsible shows the org name or "Administración" because other profiles are private under RLS. Demo: admin@correo.com, patitas@correo.com (case report-7, request-3), carlos@correo.com requester of Rescate Animal Norte.
+- L3: T2-T4 merged. Choices to confirm with user: admin place editor requires phone (10 digits), email, schedule, description; affiliate prefs require at least one priority, radius 1-20 km; Cuenta for affiliate/admin shows Información personal + Ajustes. User asked to register patitas/admin and run the promotion SQL.
