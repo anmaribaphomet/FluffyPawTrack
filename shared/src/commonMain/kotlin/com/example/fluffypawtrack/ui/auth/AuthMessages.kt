@@ -21,3 +21,9 @@ internal fun Throwable.authErrorMessage(): String = when (this) {
     is EmailConfirmationRequiredException -> EMAIL_CONFIRMATION_MESSAGE
     else -> CONNECTION_ERROR_MESSAGE
 }
+
+/** Account the fake repositories accept; it does not exist in Supabase. */
+const val DEMO_ACCOUNT_HINT = "Cuenta de prueba: demo@correo.com / demo1234"
+
+/** The demo-account hint, only while the app runs on the fake repositories. */
+internal fun demoAccountHint(usesSupabase: Boolean): String? = if (usesSupabase) null else DEMO_ACCOUNT_HINT
