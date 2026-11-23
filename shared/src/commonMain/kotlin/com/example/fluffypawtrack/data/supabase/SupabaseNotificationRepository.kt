@@ -40,7 +40,7 @@ internal class SupabaseNotificationRepository(
      * never outlive their screen.
      */
     override fun observeNotifications(userId: String): Flow<List<AppNotification>> {
-        val key = "notifications:$userId"
+        val key = key(userId)
         val rows = queries.observe(key, emptyList()) {
             client.from(TABLE).select {
                 filter { eq("user_id", userId) }
@@ -62,6 +62,12 @@ internal class SupabaseNotificationRepository(
             rows.collect { send(it) }
         }
     }
+
+    override fun observeLoadFailed(userId: String): Flow<Boolean> = queries.failed(key(userId))
+
+    override suspend fun reload(userId: String) = queries.refresh(key(userId))
+
+    private fun key(userId: String) = "notifications:$userId"
 
     /** Subscribes one channel to the rows of [userId] and applies changes until cancelled. */
     private suspend fun liveChanges(

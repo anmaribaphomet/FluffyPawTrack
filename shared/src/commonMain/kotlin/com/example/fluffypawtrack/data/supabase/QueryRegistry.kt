@@ -1,9 +1,14 @@
 package com.example.fluffypawtrack.data.supabase
 
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.updateAndGet
 import kotlinx.coroutines.sync.Mutex
@@ -24,6 +29,9 @@ internal class QueryRegistry {
     private class Query<T>(private val fallback: T, private val load: suspend () -> T) {
         val state = MutableStateFlow<T?>(null)
 
+        /** Whether the last load failed; the next successful load clears it. */
+        val failed = MutableStateFlow(false)
+
         /**
          * Orders loads and live changes of this query: a change waits for a running load and is
          * applied on top of its result, so a load that started before the change cannot drop it.
@@ -34,9 +42,11 @@ internal class QueryRegistry {
         suspend fun refresh(): Unit = lock.withLock {
             try {
                 state.value = load()
+                failed.value = false
             } catch (e: CancellationException) {
                 throw e
             } catch (_: Throwable) {
+                failed.value = true
                 if (state.value == null) state.value = fallback
             }
         }
@@ -58,6 +68,11 @@ internal class QueryRegistry {
         }.getValue(key) as Query<T>
         return query.state.onStart { query.refresh() }.filterNotNull()
     }
+
+    /** Whether the last load of [key] failed; false until the query is observed. */
+    @OptIn(ExperimentalCoroutinesApi::class)
+    fun failed(key: String): Flow<Boolean> =
+        queries.map { it[key] }.distinctUntilChanged().flatMapLatest { it?.failed ?: flowOf(false) }
 
     /** Reloads the query [key], if it was ever observed. */
     suspend fun refresh(key: String) {

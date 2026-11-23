@@ -5,6 +5,7 @@ import com.example.fluffypawtrack.domain.model.NotificationType
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.launch
@@ -125,6 +126,26 @@ class LiveNotificationsTest {
         advanceUntilIdle()
 
         assertEquals(1, attempts)
+    }
+
+    @Test
+    fun failedLoadIsReportedUntilAReloadSucceeds() = runTest {
+        var offline = true
+        val queries = QueryRegistry()
+        val flow = queries.observe("notifications:u1", emptyList<String>()) {
+            if (offline) error("offline") else listOf("a")
+        }
+        val failed = queries.failed("notifications:u1")
+        assertEquals(false, failed.first())
+
+        assertEquals(emptyList(), flow.first())
+        assertEquals(true, failed.first())
+
+        offline = false
+        queries.refresh("notifications:u1")
+
+        assertEquals(false, failed.first())
+        assertEquals(listOf("a"), flow.first())
     }
 
     @Test
