@@ -7,6 +7,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
+import com.example.fluffypawtrack.di.LocalAppContainer
 import com.example.fluffypawtrack.ui.auth.LoginRoute
 import com.example.fluffypawtrack.ui.auth.RegisterRoute
 import com.example.fluffypawtrack.ui.components.HomeDestination
@@ -40,11 +41,14 @@ import com.example.fluffypawtrack.ui.settings.SettingsTopic
 
 @Composable
 fun AppNavHost(navController: NavHostController = rememberNavController()) {
+    val authRepository = LocalAppContainer.current.authRepository
+    // Read when the user gets in, not at composition: the role picks each account's home.
+    val startRoute = { startRouteFor(authRepository.currentUser.value) }
     NavHost(navController = navController, startDestination = Route.Splash) {
         composable<Route.Splash> {
             SplashRoute(
                 onFinished = { isSignedIn ->
-                    navController.navigate(if (isSignedIn) Route.Home else Route.Login) {
+                    navController.navigate(if (isSignedIn) startRoute() else Route.Login) {
                         popUpTo<Route.Splash> { inclusive = true }
                     }
                 },
@@ -52,7 +56,7 @@ fun AppNavHost(navController: NavHostController = rememberNavController()) {
         }
         composable<Route.Login> {
             LoginRoute(
-                onSignedIn = { navController.navigateClearingStack(Route.Home) },
+                onSignedIn = { navController.navigateClearingStack(startRoute()) },
                 onCreateAccount = dropUnlessResumed { navController.navigate(Route.Register) },
                 onReportAnonymously = { navController.navigateClearingStack(Route.NewReport) },
                 onRequestAffiliation = dropUnlessResumed { navController.navigate(Route.AffiliationRequest) },
@@ -61,7 +65,7 @@ fun AppNavHost(navController: NavHostController = rememberNavController()) {
         composable<Route.Register> {
             RegisterRoute(
                 onBack = dropUnlessResumed { navController.popBackStack() },
-                onRegistered = { navController.navigateClearingStack(Route.Home) },
+                onRegistered = { navController.navigateClearingStack(startRoute()) },
             )
         }
         composable<Route.Home> {
@@ -91,7 +95,7 @@ fun AppNavHost(navController: NavHostController = rememberNavController()) {
                 onFavorites = dropUnlessResumed { navController.navigate(Route.Favorites) },
                 onContactRequests = dropUnlessResumed { navController.navigate(Route.ContactRequests) },
                 onMyAdoptionRequests = dropUnlessResumed { navController.navigate(Route.MyAdoptionRequests) },
-                onCenterAdoptionRequests = dropUnlessResumed { navController.navigate(Route.CenterAdoptionRequests) },
+                onSettings = dropUnlessResumed { navController.navigate(Route.Settings) { launchSingleTop = true } },
             )
         }
         composable<Route.PersonalInfo> {
@@ -199,6 +203,8 @@ fun AppNavHost(navController: NavHostController = rememberNavController()) {
         composable<Route.CenterAdoptionRequests> {
             CenterAdoptionRequestsRoute(onBack = dropUnlessResumed { navController.popBackStack() })
         }
+        affiliateScreens(navController)
+        adminScreens(navController)
         composable<Route.Notifications> {
             NotificationsRoute(onBack = dropUnlessResumed { navController.popBackStack() })
         }

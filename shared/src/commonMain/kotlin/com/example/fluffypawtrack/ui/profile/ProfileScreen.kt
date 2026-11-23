@@ -25,6 +25,7 @@ import androidx.compose.runtime.getValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.fluffypawtrack.di.LocalAppContainer
+import com.example.fluffypawtrack.domain.model.Role
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.dropShadow
@@ -44,10 +45,10 @@ import com.example.fluffypawtrack.ui.theme.FluffyShadows
 import com.example.fluffypawtrack.ui.theme.FluffyShapes
 import fluffypawtrack.shared.generated.resources.Res
 import fluffypawtrack.shared.generated.resources.ic_heart
-import fluffypawtrack.shared.generated.resources.ic_home
 import fluffypawtrack.shared.generated.resources.ic_person_outline
 import fluffypawtrack.shared.generated.resources.ic_notification
 import fluffypawtrack.shared.generated.resources.ic_report
+import fluffypawtrack.shared.generated.resources.ic_settings
 import fluffypawtrack.shared.generated.resources.ic_star
 import fluffypawtrack.shared.generated.resources.ic_user
 import org.jetbrains.compose.resources.painterResource
@@ -65,6 +66,24 @@ data class ProfileUser(
     }
 }
 
+/** Rows of the Cuenta screen. */
+enum class ProfileOption { PersonalInfo, MyReports, Favorites, ContactRequests, MyAdoptionRequests, Settings }
+
+/**
+ * Users keep every account row. Affiliates and admins reach their tools from their own home,
+ * so Cuenta only offers their personal data and Ajustes (which holds sign-out).
+ */
+fun profileOptionsFor(role: Role): List<ProfileOption> = when (role) {
+    Role.User -> listOf(
+        ProfileOption.PersonalInfo,
+        ProfileOption.MyReports,
+        ProfileOption.Favorites,
+        ProfileOption.ContactRequests,
+        ProfileOption.MyAdoptionRequests,
+    )
+    Role.Affiliate, Role.Admin -> listOf(ProfileOption.PersonalInfo, ProfileOption.Settings)
+}
+
 /** Account screen wired to the signed-in user's data. */
 @Composable
 fun ProfileRoute(
@@ -75,13 +94,14 @@ fun ProfileRoute(
     modifier: Modifier = Modifier,
     onContactRequests: () -> Unit = {},
     onMyAdoptionRequests: () -> Unit = {},
-    onCenterAdoptionRequests: () -> Unit = {},
+    onSettings: () -> Unit = {},
 ) {
     val container = LocalAppContainer.current
     val viewModel = viewModel {
         ProfileViewModel(container.authRepository, container.reportRepository, container.favoritesRepository)
     }
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val currentUser by container.authRepository.currentUser.collectAsStateWithLifecycle()
     ProfileScreen(
         onBack = onBack,
         modifier = modifier,
@@ -90,9 +110,9 @@ fun ProfileRoute(
         onMyReports = onMyReports,
         onFavorites = onFavorites,
         onContactRequests = onContactRequests,
-        isAffiliate = state.isAffiliate,
+        role = currentUser?.role ?: Role.User,
         onMyAdoptionRequests = onMyAdoptionRequests,
-        onCenterAdoptionRequests = onCenterAdoptionRequests,
+        onSettings = onSettings,
     )
 }
 
@@ -106,9 +126,9 @@ fun ProfileScreen(
     onMyReports: () -> Unit = {},
     onFavorites: () -> Unit = {},
     onContactRequests: () -> Unit = {},
-    isAffiliate: Boolean = false,
+    role: Role = Role.User,
     onMyAdoptionRequests: () -> Unit = {},
-    onCenterAdoptionRequests: () -> Unit = {},
+    onSettings: () -> Unit = {},
 ) {
     Box(modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
         ProfileBackdrop()
@@ -130,53 +150,56 @@ fun ProfileScreen(
             )
             Text(user.email, style = MaterialTheme.typography.bodyMedium, color = FluffyColors.Brown900)
             Spacer(Modifier.height(20.dp))
-            Row(Modifier.width(310.dp), horizontalArrangement = Arrangement.SpaceBetween) {
-                ProfileStatCard(user.reports.twoDigits(), "Reportes")
-                ProfileStatCard(user.attended.twoDigits(), "Atendidos")
-                ProfileStatCard(user.favorites.twoDigits(), "Favoritos")
+            if (role == Role.User) {
+                Row(Modifier.width(310.dp), horizontalArrangement = Arrangement.SpaceBetween) {
+                    ProfileStatCard(user.reports.twoDigits(), "Reportes")
+                    ProfileStatCard(user.attended.twoDigits(), "Atendidos")
+                    ProfileStatCard(user.favorites.twoDigits(), "Favoritos")
+                }
+                Spacer(Modifier.height(17.dp))
             }
-            Spacer(Modifier.height(17.dp))
             Column(verticalArrangement = Arrangement.spacedBy(18.dp)) {
-                ProfileOptionRow(
-                    icon = painterResource(Res.drawable.ic_person_outline),
-                    title = "Información Personal",
-                    subtitle = "Nombre, Correo y Teléfono",
-                    onClick = onPersonalInfo,
-                    iconSize = 22.dp,
-                )
-                ProfileOptionRow(
-                    icon = painterResource(Res.drawable.ic_report),
-                    title = "Mis reportes",
-                    subtitle = "Consulta el estado de tus casos",
-                    onClick = onMyReports,
-                )
-                ProfileOptionRow(
-                    icon = painterResource(Res.drawable.ic_star),
-                    title = "Mis Favoritos",
-                    subtitle = "Animales y publicaciones guardados",
-                    onClick = onFavorites,
-                    iconSize = 25.dp,
-                )
-                ProfileOptionRow(
-                    icon = painterResource(Res.drawable.ic_notification),
-                    title = "Solicitudes de contacto",
-                    subtitle = "Enviadas y recibidas",
-                    onClick = onContactRequests,
-                )
-                if (isAffiliate) {
-                    ProfileOptionRow(
-                        icon = painterResource(Res.drawable.ic_home),
-                        title = "Solicitudes de adopción",
-                        subtitle = "Aprueba o rechaza las de tus animales",
-                        onClick = onCenterAdoptionRequests,
-                    )
-                } else {
-                    ProfileOptionRow(
-                        icon = painterResource(Res.drawable.ic_heart),
-                        title = "Mis solicitudes de adopción",
-                        subtitle = "Consulta su estado",
-                        onClick = onMyAdoptionRequests,
-                    )
+                profileOptionsFor(role).forEach { option ->
+                    when (option) {
+                        ProfileOption.PersonalInfo -> ProfileOptionRow(
+                            icon = painterResource(Res.drawable.ic_person_outline),
+                            title = "Información Personal",
+                            subtitle = "Nombre, Correo y Teléfono",
+                            onClick = onPersonalInfo,
+                            iconSize = 22.dp,
+                        )
+                        ProfileOption.MyReports -> ProfileOptionRow(
+                            icon = painterResource(Res.drawable.ic_report),
+                            title = "Mis reportes",
+                            subtitle = "Consulta el estado de tus casos",
+                            onClick = onMyReports,
+                        )
+                        ProfileOption.Favorites -> ProfileOptionRow(
+                            icon = painterResource(Res.drawable.ic_star),
+                            title = "Mis Favoritos",
+                            subtitle = "Animales y publicaciones guardados",
+                            onClick = onFavorites,
+                            iconSize = 25.dp,
+                        )
+                        ProfileOption.ContactRequests -> ProfileOptionRow(
+                            icon = painterResource(Res.drawable.ic_notification),
+                            title = "Solicitudes de contacto",
+                            subtitle = "Enviadas y recibidas",
+                            onClick = onContactRequests,
+                        )
+                        ProfileOption.MyAdoptionRequests -> ProfileOptionRow(
+                            icon = painterResource(Res.drawable.ic_heart),
+                            title = "Mis solicitudes de adopción",
+                            subtitle = "Consulta su estado",
+                            onClick = onMyAdoptionRequests,
+                        )
+                        ProfileOption.Settings -> ProfileOptionRow(
+                            icon = painterResource(Res.drawable.ic_settings),
+                            title = "Ajustes",
+                            subtitle = "Preferencias y cerrar sesión",
+                            onClick = onSettings,
+                        )
+                    }
                 }
             }
         }

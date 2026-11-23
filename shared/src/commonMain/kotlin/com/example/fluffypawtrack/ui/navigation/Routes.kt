@@ -71,4 +71,54 @@ sealed interface Route {
     /** [topic] is a `SettingsTopic` name. */
     @Serializable
     data class SettingsInfo(val topic: String) : Route
+
+    /** Home of role `affiliate`. */
+    @Serializable
+    data object AffiliateHome : Route
+
+    @Serializable
+    data object ReportInbox : Route
+
+    @Serializable
+    data class CaseDetail(val reportId: String) : Route
+
+    @Serializable
+    data object MyCases : Route
+
+    /** Contact requests opened on the "Recibidas" tab (affiliates). */
+    @Serializable
+    data object ReceivedContactRequests : Route
+
+    @Serializable
+    data object MyListings : Route
+
+    /** A null [listingId] creates a new listing. */
+    @Serializable
+    data class ListingEditor(val listingId: String? = null) : Route
+
+    @Serializable
+    data object OrganizationProfile : Route
+
+    @Serializable
+    data object NotificationPreferences : Route
+
+    /** Home of role `admin`. */
+    @Serializable
+    data object AdminHome : Route
+
+    @Serializable
+    data object AffiliationRequests : Route
+
+    @Serializable
+    data object PlacesDirectory : Route
+
+    /** A null [organizationId] creates a new place. */
+    @Serializable
+    data class PlaceEditor(val organizationId: String? = null) : Route
+
+    @Serializable
+    data object ReportSupervision : Route
+
+    @Serializable
+    data class AdminReportDetail(val reportId: String) : Route
 }
