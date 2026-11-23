@@ -1,5 +1,6 @@
 package com.example.fluffypawtrack.ui.push
 
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -17,28 +18,63 @@ import com.example.fluffypawtrack.domain.repository.ReportRepository
 import com.example.fluffypawtrack.ui.account.AccountCard
 import com.example.fluffypawtrack.ui.account.AccountScaffold
 import com.example.fluffypawtrack.ui.auth.AuthErrorMessage
+import com.example.fluffypawtrack.ui.contact.CardActionButton
 import com.example.fluffypawtrack.ui.map.ReportDetailSheetContent
 import com.example.fluffypawtrack.ui.theme.FluffyColors
 import com.example.fluffypawtrack.ui.theme.FluffyPawTrackTheme
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeout
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
 
 data class ReportDetailUiState(
     val report: Report? = null,
     val loaded: Boolean = false,
+    /** Readable message when loading failed or timed out; the screen offers "Reintentar". */
+    val error: String? = null,
 )
 
 /** Loads the report a push notification points to (role `user`). */
-class ReportDetailViewModel(reportId: String, reportRepository: ReportRepository) : ViewModel() {
+class ReportDetailViewModel(
+    private val reportId: String,
+    private val reportRepository: ReportRepository,
+    private val loadTimeout: Duration = 15.seconds,
+) : ViewModel() {
     private val state = MutableStateFlow(ReportDetailUiState())
     val uiState: StateFlow<ReportDetailUiState> = state.asStateFlow()
 
     init {
+        load()
+    }
+
+    fun onRetry() {
+        state.value = ReportDetailUiState()
+        load()
+    }
+
+    private fun load() {
         viewModelScope.launch {
-            state.value = ReportDetailUiState(report = reportRepository.getReport(reportId), loaded = true)
+            state.value = try {
+                val report = withTimeout(loadTimeout) { reportRepository.getReport(reportId) }
+                ReportDetailUiState(report = report, loaded = true)
+            } catch (e: TimeoutCancellationException) {
+                ReportDetailUiState(loaded = true, error = LOAD_ERROR)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                ReportDetailUiState(loaded = true, error = LOAD_ERROR)
+            }
         }
+    }
+
+    companion object {
+        const val LOAD_ERROR = "No pudimos cargar el reporte. Revisa tu conexión e intenta de nuevo."
+        const val NOT_AVAILABLE = "El reporte ya no está disponible."
     }
 }
 
@@ -48,16 +84,25 @@ fun ReportDetailRoute(reportId: String, onBack: () -> Unit, modifier: Modifier =
     val container = LocalAppContainer.current
     val viewModel = viewModel(key = "report-$reportId") { ReportDetailViewModel(reportId, container.reportRepository) }
     val state by viewModel.uiState.collectAsStateWithLifecycle()
-    ReportDetailScreen(state = state, onBack = onBack, modifier = modifier)
+    ReportDetailScreen(state = state, onBack = onBack, onRetry = viewModel::onRetry, modifier = modifier)
 }
 
 @Composable
-fun ReportDetailScreen(state: ReportDetailUiState, onBack: () -> Unit, modifier: Modifier = Modifier) {
+fun ReportDetailScreen(
+    state: ReportDetailUiState,
+    onBack: () -> Unit,
+    onRetry: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
     AccountScaffold(title = "Detalle del reporte", onBack = onBack, modifier = modifier) {
         val report = state.report
         when {
             report != null -> AccountCard { ReportDetailSheetContent(report) }
-            state.loaded -> AuthErrorMessage("No encontramos este reporte. Es posible que se haya eliminado.")
+            state.error != null -> {
+                AuthErrorMessage(state.error)
+                CardActionButton("Reintentar", onClick = onRetry, modifier = Modifier.fillMaxWidth())
+            }
+            state.loaded -> AuthErrorMessage(ReportDetailViewModel.NOT_AVAILABLE)
             else -> Text("Cargando…", style = MaterialTheme.typography.bodyMedium, color = FluffyColors.Brown900)
         }
     }
@@ -67,6 +112,6 @@ fun ReportDetailScreen(state: ReportDetailUiState, onBack: () -> Unit, modifier:
 @Composable
 private fun ReportDetailScreenPreview() {
     FluffyPawTrackTheme {
-        ReportDetailScreen(ReportDetailUiState(report = SampleData.reports.first(), loaded = true), onBack = {})
+        ReportDetailScreen(ReportDetailUiState(report = SampleData.reports.first(), loaded = true), onBack = {}, onRetry = {})
     }
 }

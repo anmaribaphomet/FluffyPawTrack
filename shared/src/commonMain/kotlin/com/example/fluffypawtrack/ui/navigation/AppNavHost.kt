@@ -65,7 +65,7 @@ fun AppNavHost(
     val startRoute = { startRouteFor(authRepository.currentUser.value) }
     val user by authRepository.currentUser.collectAsStateWithLifecycle()
     val backStackEntry by navController.currentBackStackEntryAsState()
-    val reportOpened by rememberUpdatedState(onReportOpened)
+    val currentOnReportOpened by rememberUpdatedState(onReportOpened)
     // The splash and auth screens replace the whole stack when they finish; wait for them.
     val pastAuthScreens = backStackEntry?.destination?.let { !it.isAuthScreen() } == true
     LaunchedEffect(pendingReportId, user, pastAuthScreens) {
@@ -73,7 +73,7 @@ fun AppNavHost(
         if (!pastAuthScreens) return@LaunchedEffect
         val route = reportRouteFor(user, reportId) ?: return@LaunchedEffect
         navController.navigate(route) { launchSingleTop = true }
-        reportOpened()
+        currentOnReportOpened()
     }
     Box {
         AppNavGraph(navController, startRoute)
