@@ -16,8 +16,12 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
+
+/** Below the UI's own bound, so the local cleanup still runs before the app leaves to the login. */
+private const val REMOTE_SIGN_OUT_TIMEOUT_MILLIS = 2_500L
 
 /**
  * Email and anonymous sign-in with Supabase Auth. [currentUser] follows the library's session
@@ -105,17 +109,28 @@ internal class SupabaseAuthRepository(
             .also { session.value = it }
     }
 
+    /** Never throws and never hangs: offline, the local session is forgotten anyway. */
     override suspend fun signOut() {
-        try {
-            client.auth.signOut()
+        val remoteDone = try {
+            withTimeoutOrNull(REMOTE_SIGN_OUT_TIMEOUT_MILLIS) { client.auth.signOut() } != null
         } catch (e: CancellationException) {
             throw e
         } catch (_: Throwable) {
-            // Offline: forget the local session anyway so the user is signed out of the app.
-            client.auth.clearSession()
+            false
         }
+        if (!remoteDone) localOnly { client.auth.clearSession() }
         session.value = null
-        queries.refreshAll()
+        localOnly { queries.refreshAll() }
+    }
+
+    /** Local cleanup after a sign-out; a failure here must not keep the user signed in. */
+    private suspend fun localOnly(block: suspend () -> Unit) {
+        try {
+            block()
+        } catch (e: CancellationException) {
+            throw e
+        } catch (_: Throwable) {
+        }
     }
 
     private suspend fun signedInProfile(): UserProfile {

@@ -11,6 +11,7 @@ import com.example.fluffypawtrack.domain.model.ReportRules
 import com.example.fluffypawtrack.domain.repository.AuthRepository
 import com.example.fluffypawtrack.domain.repository.ReportRepository
 import com.example.fluffypawtrack.platform.ReverseGeocoder
+import com.example.fluffypawtrack.ui.auth.signOutBounded
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -183,9 +184,14 @@ class NewReportViewModel(
         state.update { it.copy(exitedToLogin = false) }
     }
 
+    /** Set on the first tap so repeated taps never start a second sign-out. */
+    private var isLeaving = false
+
     private fun signOutToLogin() {
+        if (isLeaving) return
+        isLeaving = true
         viewModelScope.launch {
-            authRepository.signOut()
+            authRepository.signOutBounded()
             state.update { it.copy(showDiscardDialog = false, exitedToLogin = true) }
         }
     }

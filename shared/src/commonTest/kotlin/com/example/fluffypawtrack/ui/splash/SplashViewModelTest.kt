@@ -1,6 +1,8 @@
 package com.example.fluffypawtrack.ui.splash
 
 import com.example.fluffypawtrack.data.fake.FakeAuthRepository
+import com.example.fluffypawtrack.ui.auth.BrokenSignOutAuthRepository
+import com.example.fluffypawtrack.ui.auth.SignOutFailure
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -77,5 +79,17 @@ class SplashViewModelTest {
 
         assertNull(repository.currentUser.value)
         assertEquals(false, viewModel.uiState.value.isSignedIn)
+    }
+
+    @Test
+    fun aFailingOrHangingSignOutNeverBlocksStartup() = runTest {
+        SignOutFailure.entries.forEach { failure ->
+            val auth = BrokenSignOutAuthRepository(failure).also { it.signInAnonymously() }
+            val viewModel = SplashViewModel(auth, minDurationMillis = 1_500)
+
+            advanceUntilIdle()
+
+            assertEquals(false, viewModel.uiState.value.isSignedIn, "sign-out $failure")
+        }
     }
 }

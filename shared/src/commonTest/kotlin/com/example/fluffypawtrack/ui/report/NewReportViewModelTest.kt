@@ -7,10 +7,13 @@ import com.example.fluffypawtrack.domain.model.GeoPoint
 import com.example.fluffypawtrack.domain.model.Priority
 import com.example.fluffypawtrack.domain.model.ReportCategory
 import com.example.fluffypawtrack.platform.ReverseGeocoder
+import com.example.fluffypawtrack.ui.auth.BrokenSignOutAuthRepository
+import com.example.fluffypawtrack.ui.auth.SignOutFailure
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
@@ -263,6 +266,49 @@ class NewReportViewModelTest {
         vm.onBackToStart()
 
         assertNull(auth.currentUser.value)
+        assertTrue(vm.uiState.value.exitedToLogin)
+    }
+
+    private suspend fun brokenSignOutViewModel(auth: BrokenSignOutAuthRepository): NewReportViewModel {
+        auth.signInAnonymously()
+        return NewReportViewModel(reportRepository = reports, authRepository = auth)
+    }
+
+    @Test
+    fun aFailedSignOutStillLeavesToLogin() = runTest {
+        val vm = brokenSignOutViewModel(BrokenSignOutAuthRepository(SignOutFailure.Throws))
+        vm.back()
+
+        vm.onDiscard()
+
+        assertFalse(vm.uiState.value.showDiscardDialog)
+        assertTrue(vm.uiState.value.exitedToLogin)
+    }
+
+    @Test
+    fun aHangingSignOutLeavesToLoginAfterTheTimeout() = runTest {
+        val vm = brokenSignOutViewModel(BrokenSignOutAuthRepository(SignOutFailure.Hangs))
+        fillAndSubmit(vm)
+
+        vm.onBackToStart()
+        assertFalse(vm.uiState.value.exitedToLogin)
+
+        advanceTimeBy(3_001)
+        assertTrue(vm.uiState.value.exitedToLogin)
+    }
+
+    @Test
+    fun repeatedTapsSignOutOnlyOnce() = runTest {
+        val auth = BrokenSignOutAuthRepository(SignOutFailure.Hangs)
+        val vm = brokenSignOutViewModel(auth)
+        vm.back()
+
+        vm.onDiscard()
+        vm.onDiscard()
+        vm.onBackToStart()
+        advanceTimeBy(3_001)
+
+        assertEquals(1, auth.signOutCalls)
         assertTrue(vm.uiState.value.exitedToLogin)
     }
 
