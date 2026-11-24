@@ -28,12 +28,14 @@ import com.example.fluffypawtrack.di.LocalAppContainer
 import com.example.fluffypawtrack.domain.model.Role
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.dropShadow
 import androidx.compose.ui.draw.innerShadow
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.fluffypawtrack.ui.common.AppImage
 import com.example.fluffypawtrack.ui.components.DesignFrame
 import com.example.fluffypawtrack.ui.components.ProfileHeader
 import com.example.fluffypawtrack.ui.components.ProfileOptionRow
@@ -60,6 +62,8 @@ data class ProfileUser(
     val reports: Int,
     val attended: Int,
     val favorites: Int,
+    /** Profile photo; null shows the default icon. */
+    val avatarUrl: String? = null,
 ) {
     companion object {
         val Placeholder = ProfileUser("Nombre de Usuario", "usuario@correo.com", reports = 1, attended = 0, favorites = 1)
@@ -140,7 +144,7 @@ fun ProfileScreen(
                 .padding(top = 168.dp, bottom = 220.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            ProfileAvatar()
+            ProfileAvatar(user.avatarUrl)
             Spacer(Modifier.height(9.dp))
             Text(
                 text = user.name,
@@ -244,7 +248,11 @@ private fun ProfileBackdrop() {
 }
 
 @Composable
-private fun ProfileAvatar() {
+private fun ProfileAvatar(avatarUrl: String?) {
+    if (!avatarUrl.isNullOrBlank()) {
+        AppImage(avatarUrl, contentDescription = "Foto de perfil", modifier = Modifier.size(80.dp, 85.dp).clip(FluffyShapes.Ellipse))
+        return
+    }
     Box(
         Modifier
             .size(80.dp, 85.dp)
