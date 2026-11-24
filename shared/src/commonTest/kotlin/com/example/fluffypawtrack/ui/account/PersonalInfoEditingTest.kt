@@ -8,10 +8,12 @@ import com.example.fluffypawtrack.domain.model.UserProfile
 import com.example.fluffypawtrack.domain.repository.AuthRepository
 import com.example.fluffypawtrack.ui.auth.FailingAuthRepository
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
@@ -159,6 +161,31 @@ class PersonalInfoEditingTest {
         assertEquals("Sin conexión. Intenta de nuevo.", state.value.message)
         assertEquals("Ana", state.value.draft?.firstName)
         assertFalse(state.value.saved)
+    }
+
+    @Test
+    fun aHangingSaveEndsWithAMessageAndUnlocksCancel() = runTest {
+        val fake = FakeAuthRepository(initialUser = demo)
+        val hanging = object : AuthRepository by fake {
+            override suspend fun updateProfile(
+                firstName: String,
+                lastName: String,
+                phone: String?,
+                photoRef: String?,
+            ): Result<UserProfile> = awaitCancellation()
+        }
+        val vm = PersonalInfoViewModel(hanging)
+        val state = collecting(vm.uiState)
+
+        vm.onEdit()
+        vm.onSave()
+        assertTrue(state.value.isSaving)
+        advanceTimeBy(PROFILE_SAVE_TIMEOUT_MILLIS + 1)
+
+        assertFalse(state.value.isSaving)
+        assertEquals(PROFILE_SAVE_TIMEOUT_MESSAGE, state.value.message)
+        vm.onCancel()
+        assertNull(state.value.draft)
     }
 
     @Test

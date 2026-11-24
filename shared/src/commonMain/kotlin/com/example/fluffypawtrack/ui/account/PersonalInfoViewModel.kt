@@ -11,9 +11,15 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 
 /** Confirmation shown after a successful save. */
 const val PERSONAL_INFO_SAVED = "Cambios guardados"
+
+/** Longest wait for the photo upload plus the profile update before Save gives up (never stuck loading). */
+internal const val PROFILE_SAVE_TIMEOUT_MILLIS = 20_000L
+
+internal const val PROFILE_SAVE_TIMEOUT_MESSAGE = "No pudimos guardar los cambios. Revisa tu conexión e intenta de nuevo."
 
 /** The editable fields while "Editar" is open. The email is not one of them. */
 data class PersonalInfoDraft(
@@ -110,7 +116,10 @@ class PersonalInfoViewModel(private val authRepository: AuthRepository) : ViewMo
         }
         edit.update { it.copy(isSaving = true, message = null) }
         viewModelScope.launch {
-            authRepository.updateProfile(draft.firstName, draft.lastName, draft.phone, draft.photoRef)
+            val result = withTimeoutOrNull(PROFILE_SAVE_TIMEOUT_MILLIS) {
+                authRepository.updateProfile(draft.firstName, draft.lastName, draft.phone, draft.photoRef)
+            } ?: Result.failure(IllegalStateException(PROFILE_SAVE_TIMEOUT_MESSAGE))
+            result
                 .onSuccess { edit.value = EditState(saved = true) }
                 .onFailure { error ->
                     edit.update {

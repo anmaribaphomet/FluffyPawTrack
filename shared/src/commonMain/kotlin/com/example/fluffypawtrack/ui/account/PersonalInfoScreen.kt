@@ -109,7 +109,7 @@ private fun PersonalInfoForm(state: PersonalInfoUiState, draft: PersonalInfoDraf
     if (photo != null) {
         Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) { ProfilePhoto(photo) }
         TextButton(onClick = actions.onPhotoRemoved) {
-            Text("Cambiar foto", style = MaterialTheme.typography.labelLarge, color = FluffyColors.Brown900)
+            Text("Quitar foto", style = MaterialTheme.typography.labelLarge, color = FluffyColors.Brown900)
         }
     } else {
         PillActionButton("Tomar foto", painterResource(Res.drawable.ic_camera), onClick = launchers.takePhoto)
