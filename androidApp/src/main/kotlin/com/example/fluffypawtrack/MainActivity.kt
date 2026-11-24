@@ -34,7 +34,12 @@ class MainActivity : ComponentActivity() {
             publishableKey = BuildConfig.SUPABASE_PUBLISHABLE_KEY,
         )
         setContent {
-            App(config = config, openReportId = openReportId, onReportOpened = { openReportId = null })
+            App(
+                config = config,
+                openReportId = openReportId,
+                onReportOpened = { openReportId = null },
+                onExitApp = ::finish,
+            )
         }
     }
 

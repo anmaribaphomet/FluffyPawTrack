@@ -203,6 +203,69 @@ class NewReportViewModelTest {
         assertNull(published.reporterId)
     }
 
+    private suspend fun anonymousViewModel(auth: FakeAuthRepository) = auth.also { it.signInAnonymously() }.let {
+        NewReportViewModel(reportRepository = reports, authRepository = it)
+    }
+
+    @Test
+    fun anonymousBackOnTheFirstStepAsksToDiscardTheReport() = runTest {
+        val vm = anonymousViewModel(FakeAuthRepository())
+        assertTrue(vm.uiState.value.isAnonymous)
+
+        assertTrue(vm.back())
+        assertTrue(vm.uiState.value.showDiscardDialog)
+
+        vm.onKeepReporting()
+        assertFalse(vm.uiState.value.showDiscardDialog)
+        assertEquals(ReportStep.Category, vm.uiState.value.step)
+        assertFalse(vm.uiState.value.exitedToLogin)
+    }
+
+    @Test
+    fun anonymousBackOnALaterStepGoesToThePreviousStep() = runTest {
+        val vm = anonymousViewModel(FakeAuthRepository())
+        vm.selectCategory(ReportCategory.Street)
+        vm.next()
+
+        assertTrue(vm.back())
+        assertEquals(ReportStep.Category, vm.uiState.value.step)
+        assertFalse(vm.uiState.value.showDiscardDialog)
+    }
+
+    @Test
+    fun discardSignsOutTheAnonymousSessionAndLeavesToLogin() = runTest {
+        val auth = FakeAuthRepository()
+        val vm = anonymousViewModel(auth)
+        vm.back()
+
+        vm.onDiscard()
+
+        assertNull(auth.currentUser.value)
+        assertFalse(vm.uiState.value.showDiscardDialog)
+        assertTrue(vm.uiState.value.exitedToLogin)
+    }
+
+    @Test
+    fun signedInBackOnTheFirstStepNeverShowsTheDiscardDialog() {
+        val vm = viewModel(signedIn = true)
+        assertFalse(vm.uiState.value.isAnonymous)
+        assertFalse(vm.back())
+        assertFalse(vm.uiState.value.showDiscardDialog)
+    }
+
+    @Test
+    fun anonymousPublishBackToStartSignsOutAndLeavesToLogin() = runTest {
+        val auth = FakeAuthRepository()
+        val vm = anonymousViewModel(auth)
+        fillAndSubmit(vm)
+        assertNotNull(vm.uiState.value.publishedReport)
+
+        vm.onBackToStart()
+
+        assertNull(auth.currentUser.value)
+        assertTrue(vm.uiState.value.exitedToLogin)
+    }
+
     private fun goToDetails(vm: NewReportViewModel) {
         vm.selectCategory(ReportCategory.Injured)
         vm.next() // photo

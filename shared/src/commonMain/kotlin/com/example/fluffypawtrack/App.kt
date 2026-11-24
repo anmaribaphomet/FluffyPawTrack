@@ -30,13 +30,19 @@ fun App() {
 
 /**
  * [config] null or blank keeps the app on the fake repositories. [openReportId] is the report of a
- * tapped push notification; [onReportOpened] runs once the app navigated to it.
+ * tapped push notification; [onReportOpened] runs once the app navigated to it. [onExitApp]
+ * finishes the activity when back runs on the only screen left.
  */
 @Composable
-fun App(config: SupabaseConfig?, openReportId: String? = null, onReportOpened: () -> Unit = {}) {
+fun App(
+    config: SupabaseConfig?,
+    openReportId: String? = null,
+    onReportOpened: () -> Unit = {},
+    onExitApp: () -> Unit = {},
+) {
     CompositionLocalProvider(LocalAppContainer provides appContainer(config)) {
         FluffyPawTrackTheme {
-            AppNavHost(pendingReportId = openReportId, onReportOpened = onReportOpened)
+            AppNavHost(pendingReportId = openReportId, onReportOpened = onReportOpened, onExitApp = onExitApp)
         }
     }
 }

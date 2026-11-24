@@ -21,9 +21,11 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -62,17 +64,24 @@ import com.example.fluffypawtrack.ui.theme.FluffySemanticColors
 import com.example.fluffypawtrack.ui.theme.FluffyShadows
 import com.example.fluffypawtrack.ui.theme.FluffyShapes
 import fluffypawtrack.shared.generated.resources.Res
+import fluffypawtrack.shared.generated.resources.ic_home
 import fluffypawtrack.shared.generated.resources.ic_map
 import fluffypawtrack.shared.generated.resources.img_cat_phone
 import org.jetbrains.compose.resources.painterResource
 
 /**
  * New-report flow (RF-01, Figma screens 10–16): category → photo → location → description and
- * priority → summary → "¡Reporte publicado!". System back moves to the previous step and leaves
- * the flow through [onBack] on the first one.
+ * priority → summary → "¡Reporte publicado!". System back moves to the previous step; on the first
+ * one a signed-in user leaves through [onBack] and an anonymous one gets the discard dialog.
+ * [onExitToLogin] runs once the anonymous session was closed (discard or "Volver al inicio").
  */
 @Composable
-fun NewReportRoute(onBack: () -> Unit, onSeeMap: () -> Unit, modifier: Modifier = Modifier) {
+fun NewReportRoute(
+    onBack: () -> Unit,
+    onSeeMap: () -> Unit,
+    onExitToLogin: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
     val container = LocalAppContainer.current
     val reverseGeocoder = rememberReverseGeocoder()
     val viewModel = viewModel {
@@ -85,11 +94,21 @@ fun NewReportRoute(onBack: () -> Unit, onSeeMap: () -> Unit, modifier: Modifier 
     val currentOnBack by rememberUpdatedState(onBack)
     val goBack = remember(viewModel) { { if (!viewModel.back()) currentOnBack() } }
 
+    // Only while it handles the event: on a signed-in first step the NavHost pops (or the app closes).
     NavigationBackHandler(
         state = rememberNavigationEventState(NavigationEventInfo.None),
-        isBackEnabled = state.publishedReport == null,
+        isBackEnabled = state.publishedReport == null && !state.showDiscardDialog &&
+            (state.step != ReportStep.Category || state.isAnonymous),
         onBackCompleted = goBack,
     )
+
+    val exitToLogin by rememberUpdatedState(onExitToLogin)
+    LaunchedEffect(state.exitedToLogin) {
+        if (state.exitedToLogin) {
+            exitToLogin()
+            viewModel.onExitHandled()
+        }
+    }
 
     // Ask for the GPS position the first time the location step opens.
     LaunchedEffect(state.step) {
@@ -115,6 +134,9 @@ fun NewReportRoute(onBack: () -> Unit, onSeeMap: () -> Unit, modifier: Modifier 
             onReferenceChange = viewModel::onReferenceChange,
             onDescriptionChange = viewModel::onDescriptionChange,
             onSubmit = viewModel::submit,
+            onKeepReporting = viewModel::onKeepReporting,
+            onDiscard = viewModel::onDiscard,
+            onBackToStart = viewModel::onBackToStart,
         )
     }
     NewReportScreen(state = state, actions = actions, onSeeMap = onSeeMap, modifier = modifier)
@@ -133,6 +155,9 @@ internal class NewReportActions(
     val onReferenceChange: (String) -> Unit,
     val onDescriptionChange: (String) -> Unit,
     val onSubmit: () -> Unit,
+    val onKeepReporting: () -> Unit = {},
+    val onDiscard: () -> Unit = {},
+    val onBackToStart: () -> Unit = {},
 )
 
 @Composable
@@ -164,12 +189,47 @@ internal fun NewReportScreen(
             BottomActionRow(state, actions)
             StepIndicator(current = state.stepNumber, total = ReportStep.entries.size)
         }
-        ProfileHeader(onBack = actions.onBack, showLogoBadge = false, modifier = Modifier.align(Alignment.TopCenter))
+        ProfileHeader(
+            // Anonymous reporting has no "Regresar": back moves between steps only.
+            onBack = if (state.isAnonymous) null else actions.onBack,
+            showLogoBadge = false,
+            modifier = Modifier.align(Alignment.TopCenter),
+        )
     }
 
-    if (state.publishedReport != null) {
-        PublishedDialog(onSeeMap = onSeeMap)
+    if (state.showDiscardDialog) {
+        DiscardReportDialog(onKeepReporting = actions.onKeepReporting, onDiscard = actions.onDiscard)
     }
+    if (state.publishedReport != null) {
+        if (state.isAnonymous) {
+            PublishedDialog(onDismiss = actions.onBackToStart, anonymous = true) {
+                PillActionButton(
+                    text = "Volver al inicio",
+                    icon = painterResource(Res.drawable.ic_home),
+                    onClick = actions.onBackToStart,
+                )
+            }
+        } else {
+            PublishedDialog(onDismiss = onSeeMap, anonymous = false) {
+                PillActionButton(text = "Ver mapa", icon = painterResource(Res.drawable.ic_map), onClick = onSeeMap)
+            }
+        }
+    }
+}
+
+@Composable
+private fun DiscardReportDialog(onKeepReporting: () -> Unit, onDiscard: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onKeepReporting,
+        title = { Text("¿Descartar reporte?") },
+        text = { Text("Se perderá la información que ingresaste.") },
+        confirmButton = {
+            TextButton(onClick = onDiscard) { Text("Descartar", color = FluffyColors.Brown900) }
+        },
+        dismissButton = {
+            TextButton(onClick = onKeepReporting) { Text("Seguir reportando", color = FluffyColors.Brown900) }
+        },
+    )
 }
 
 private val ReportStep.title: String
@@ -306,11 +366,11 @@ private fun StepIndicator(current: Int, total: Int) {
     }
 }
 
-/** Modal "¡Reporte publicado!" (Figma "Final", 183:378). */
+/** Modal "¡Reporte publicado!" (Figma "Final", 183:378); [action] is "Ver mapa" or "Volver al inicio". */
 @Composable
-private fun PublishedDialog(onSeeMap: () -> Unit) {
+private fun PublishedDialog(onDismiss: () -> Unit, anonymous: Boolean, action: @Composable () -> Unit) {
     Dialog(
-        onDismissRequest = onSeeMap,
+        onDismissRequest = onDismiss,
         properties = DialogProperties(dismissOnClickOutside = false),
     ) {
         Column(
@@ -340,9 +400,18 @@ private fun PublishedDialog(onSeeMap: () -> Unit) {
                 color = FluffyColors.Brown900,
                 textAlign = TextAlign.Center,
             )
+            if (anonymous) {
+                Spacer(Modifier.height(8.dp))
+                Text(
+                    text = "Para ver el mapa y el seguimiento del reporte, inicia sesión.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = FluffyColors.Brown900,
+                    textAlign = TextAlign.Center,
+                )
+            }
             Spacer(Modifier.height(20.dp))
             Box(Modifier.background(FluffyColors.Orange500, FluffyShapes.Pill).padding(12.dp)) {
-                PillActionButton(text = "Ver mapa", icon = painterResource(Res.drawable.ic_map), onClick = onSeeMap)
+                action()
             }
         }
     }

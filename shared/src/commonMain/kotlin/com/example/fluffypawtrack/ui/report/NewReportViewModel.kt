@@ -39,6 +39,11 @@ data class NewReportUiState(
     val isSubmitting: Boolean = false,
     val errorMessage: String? = null,
     val publishedReport: Report? = null,
+    /** Reporting without an account (REQUIREMENTS §4): no header back, discard dialog, sign out at the end. */
+    val isAnonymous: Boolean = false,
+    val showDiscardDialog: Boolean = false,
+    /** The anonymous session was closed; the route returns to the login. */
+    val exitedToLogin: Boolean = false,
 ) {
     val isPriorityLocked: Boolean get() = category?.let(ReportRules::isPriorityLocked) ?: false
 
@@ -63,7 +68,9 @@ class NewReportViewModel(
     private val reverseGeocoder: ReverseGeocoder = ReverseGeocoder { null },
 ) : ViewModel() {
 
-    private val state = MutableStateFlow(NewReportUiState())
+    private val state = MutableStateFlow(
+        NewReportUiState(isAnonymous = authRepository.currentUser.value?.isAnonymous == true),
+    )
     val uiState: StateFlow<NewReportUiState> = state.asStateFlow()
 
     fun selectCategory(category: ReportCategory) {
@@ -144,14 +151,43 @@ class NewReportViewModel(
         }
     }
 
-    /** Moves to the previous step; returns false on the first step so the caller can leave the flow. */
+    /**
+     * Moves to the previous step. On the first step an anonymous session asks to discard the
+     * report; otherwise it returns false so the caller can leave the flow.
+     */
     fun back(): Boolean {
         val current = state.value
-        if (current.step == ReportStep.Category) return false
+        if (current.step == ReportStep.Category) {
+            if (!current.isAnonymous) return false
+            state.update { it.copy(showDiscardDialog = true) }
+            return true
+        }
         // Stay on the summary while the upload runs; the back press is still consumed.
         if (current.isSubmitting) return true
         state.update { it.copy(step = ReportStep.entries[it.step.ordinal - 1], errorMessage = null) }
         return true
+    }
+
+    fun onKeepReporting() {
+        state.update { it.copy(showDiscardDialog = false) }
+    }
+
+    /** "Descartar": closes the anonymous session and returns to the login. */
+    fun onDiscard() = signOutToLogin()
+
+    /** "Volver al inicio" after an anonymous report was published. */
+    fun onBackToStart() = signOutToLogin()
+
+    /** Called by the route once it has navigated to the login. */
+    fun onExitHandled() {
+        state.update { it.copy(exitedToLogin = false) }
+    }
+
+    private fun signOutToLogin() {
+        viewModelScope.launch {
+            authRepository.signOut()
+            state.update { it.copy(showDiscardDialog = false, exitedToLogin = true) }
+        }
     }
 
     fun submit() {

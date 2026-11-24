@@ -52,13 +52,15 @@ import com.example.fluffypawtrack.ui.settings.SettingsTopic
 /**
  * [pendingReportId] comes from a tapped push notification; once an account is signed in and past
  * the splash and sign-in screens it opens that report and calls [onReportOpened]. At that point
- * the POST_NOTIFICATIONS explainer may also show over the app (Android 13+).
+ * the POST_NOTIFICATIONS explainer may also show over the app (Android 13+). [onExitApp] closes
+ * the app when a back action runs on the only screen left, so the NavHost is never emptied.
  */
 @Composable
 fun AppNavHost(
     navController: NavHostController = rememberNavController(),
     pendingReportId: String? = null,
     onReportOpened: () -> Unit = {},
+    onExitApp: () -> Unit = {},
 ) {
     val authRepository = LocalAppContainer.current.authRepository
     // Read when the user gets in, not at composition: the role picks each account's home.
@@ -76,7 +78,7 @@ fun AppNavHost(
         currentOnReportOpened()
     }
     Box {
-        AppNavGraph(navController, startRoute)
+        AppNavGraph(navController, startRoute, onExitApp)
         NotificationPermissionGate(active = pastAuthScreens && user?.isAnonymous == false)
     }
 }
@@ -85,7 +87,7 @@ private fun NavDestination.isAuthScreen(): Boolean =
     hasRoute(Route.Splash::class) || hasRoute(Route.Login::class) || hasRoute(Route.Register::class)
 
 @Composable
-private fun AppNavGraph(navController: NavHostController, startRoute: () -> Route) {
+private fun AppNavGraph(navController: NavHostController, startRoute: () -> Route, onExitApp: () -> Unit) {
     NavHost(navController = navController, startDestination = Route.Splash) {
         composable<Route.Splash> {
             SplashRoute(
@@ -100,13 +102,14 @@ private fun AppNavGraph(navController: NavHostController, startRoute: () -> Rout
             LoginRoute(
                 onSignedIn = { navController.navigateClearingStack(startRoute()) },
                 onCreateAccount = dropUnlessResumed { navController.navigate(Route.Register) },
-                onReportAnonymously = { navController.navigateClearingStack(Route.NewReport) },
+                // Over the login (not clearing it): discarding or finishing returns there.
+                onReportAnonymously = { navController.navigate(Route.NewReport) { launchSingleTop = true } },
                 onRequestAffiliation = dropUnlessResumed { navController.navigate(Route.AffiliationRequest) },
             )
         }
         composable<Route.Register> {
             RegisterRoute(
-                onBack = dropUnlessResumed { navController.popBackStack() },
+                onBack = dropUnlessResumed { navController.popOrExit(onExitApp) },
                 onRegistered = { navController.navigateClearingStack(startRoute()) },
             )
         }
@@ -131,7 +134,7 @@ private fun AppNavGraph(navController: NavHostController, startRoute: () -> Rout
         }
         composable<Route.Profile> {
             ProfileRoute(
-                onBack = dropUnlessResumed { navController.popBackStack() },
+                onBack = dropUnlessResumed { navController.popOrExit(onExitApp) },
                 onPersonalInfo = dropUnlessResumed { navController.navigate(Route.PersonalInfo) },
                 onMyReports = dropUnlessResumed { navController.navigate(Route.MyReports) },
                 onFavorites = dropUnlessResumed { navController.navigate(Route.Favorites) },
@@ -141,30 +144,31 @@ private fun AppNavGraph(navController: NavHostController, startRoute: () -> Rout
             )
         }
         composable<Route.PersonalInfo> {
-            PersonalInfoRoute(onBack = dropUnlessResumed { navController.popBackStack() })
+            PersonalInfoRoute(onBack = dropUnlessResumed { navController.popOrExit(onExitApp) })
         }
         composable<Route.MyReports> {
-            MyReportsRoute(onBack = dropUnlessResumed { navController.popBackStack() })
+            MyReportsRoute(onBack = dropUnlessResumed { navController.popOrExit(onExitApp) })
         }
         composable<Route.Favorites> {
             FavoritesRoute(
-                onBack = dropUnlessResumed { navController.popBackStack() },
+                onBack = dropUnlessResumed { navController.popOrExit(onExitApp) },
                 onListingClick = { id -> navController.navigate(Route.AnimalDetail(id)) },
             )
         }
         composable<Route.NewReport> {
             NewReportRoute(
-                onBack = dropUnlessResumed { navController.popBackStack() },
+                onBack = dropUnlessResumed { navController.popOrExit(onExitApp) },
                 onSeeMap = {
                     navController.navigate(Route.Map()) {
                         popUpTo<Route.NewReport> { inclusive = true }
                     }
                 },
+                onExitToLogin = { navController.navigateClearingStack(Route.Login) },
             )
         }
         composable<Route.Settings> {
             SettingsRoute(
-                onBack = dropUnlessResumed { navController.popBackStack() },
+                onBack = dropUnlessResumed { navController.popOrExit(onExitApp) },
                 onSignedOut = { navController.navigateClearingStack(Route.Login) },
                 onTopicClick = { topic -> navController.navigate(Route.SettingsInfo(topic.name)) },
             )
@@ -172,13 +176,13 @@ private fun AppNavGraph(navController: NavHostController, startRoute: () -> Rout
         composable<Route.SettingsInfo> { entry ->
             SettingsInfoRoute(
                 topic = SettingsTopic.valueOf(entry.toRoute<Route.SettingsInfo>().topic),
-                onBack = dropUnlessResumed { navController.popBackStack() },
+                onBack = dropUnlessResumed { navController.popOrExit(onExitApp) },
             )
         }
         composable<Route.Map> { entry ->
             val route = entry.toRoute<Route.Map>()
             MapRoute(
-                onBack = dropUnlessResumed { navController.popBackStack() },
+                onBack = dropUnlessResumed { navController.popOrExit(onExitApp) },
                 initialFilter = if (route.adoptionsOnly) MapFilter.Adoptions else MapFilter.All,
                 reportActions = { report ->
                     ContactRequestAction(
@@ -200,7 +204,7 @@ private fun AppNavGraph(navController: NavHostController, startRoute: () -> Rout
         composable<Route.ContactRequestForm> { entry ->
             ContactRequestFormRoute(
                 reportId = entry.toRoute<Route.ContactRequestForm>().reportId,
-                onBack = dropUnlessResumed { navController.popBackStack() },
+                onBack = dropUnlessResumed { navController.popOrExit(onExitApp) },
                 onSent = {
                     navController.navigate(Route.ContactRequests) {
                         popUpTo<Route.ContactRequestForm> { inclusive = true }
@@ -209,25 +213,25 @@ private fun AppNavGraph(navController: NavHostController, startRoute: () -> Rout
             )
         }
         composable<Route.ContactRequests> {
-            ContactRequestsRoute(onBack = dropUnlessResumed { navController.popBackStack() })
+            ContactRequestsRoute(onBack = dropUnlessResumed { navController.popOrExit(onExitApp) })
         }
         composable<Route.AffiliationRequest> {
             AffiliationRequestRoute(
-                onBack = dropUnlessResumed { navController.popBackStack() },
-                onDone = { navController.popBackStack() },
+                onBack = dropUnlessResumed { navController.popOrExit(onExitApp) },
+                onDone = { navController.popOrExit(onExitApp) },
             )
         }
         composable<Route.CenterDetail> { entry ->
             CenterDetailRoute(
                 organizationId = entry.toRoute<Route.CenterDetail>().organizationId,
-                onBack = dropUnlessResumed { navController.popBackStack() },
+                onBack = dropUnlessResumed { navController.popOrExit(onExitApp) },
                 onListingClick = { id -> navController.navigate(Route.AnimalDetail(id)) },
             )
         }
         composable<Route.AnimalDetail> { entry ->
             AnimalDetailRoute(
                 listingId = entry.toRoute<Route.AnimalDetail>().listingId,
-                onBack = dropUnlessResumed { navController.popBackStack() },
+                onBack = dropUnlessResumed { navController.popOrExit(onExitApp) },
                 onCenterClick = { orgId -> navController.navigate(Route.CenterDetail(orgId)) },
                 onAdopt = { listingId -> navController.navigate(Route.AdoptionForm(listingId)) },
             )
@@ -235,26 +239,26 @@ private fun AppNavGraph(navController: NavHostController, startRoute: () -> Rout
         composable<Route.AdoptionForm> { entry ->
             AdoptionFormRoute(
                 listingId = entry.toRoute<Route.AdoptionForm>().listingId,
-                onBack = dropUnlessResumed { navController.popBackStack() },
-                onDone = { navController.popBackStack() },
+                onBack = dropUnlessResumed { navController.popOrExit(onExitApp) },
+                onDone = { navController.popOrExit(onExitApp) },
             )
         }
         composable<Route.MyAdoptionRequests> {
-            MyAdoptionRequestsRoute(onBack = dropUnlessResumed { navController.popBackStack() })
+            MyAdoptionRequestsRoute(onBack = dropUnlessResumed { navController.popOrExit(onExitApp) })
         }
         composable<Route.CenterAdoptionRequests> {
-            CenterAdoptionRequestsRoute(onBack = dropUnlessResumed { navController.popBackStack() })
+            CenterAdoptionRequestsRoute(onBack = dropUnlessResumed { navController.popOrExit(onExitApp) })
         }
         composable<Route.ReportDetail> { entry ->
             ReportDetailRoute(
                 reportId = entry.toRoute<Route.ReportDetail>().reportId,
-                onBack = dropUnlessResumed { navController.popBackStack() },
+                onBack = dropUnlessResumed { navController.popOrExit(onExitApp) },
             )
         }
-        affiliateScreens(navController)
-        adminScreens(navController)
+        affiliateScreens(navController, onExitApp)
+        adminScreens(navController, onExitApp)
         composable<Route.Notifications> {
-            NotificationsRoute(onBack = dropUnlessResumed { navController.popBackStack() })
+            NotificationsRoute(onBack = dropUnlessResumed { navController.popOrExit(onExitApp) })
         }
     }
 }

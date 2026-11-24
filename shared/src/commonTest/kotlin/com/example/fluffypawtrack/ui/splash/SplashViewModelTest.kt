@@ -67,4 +67,15 @@ class SplashViewModelTest {
 
         assertEquals(false, viewModel.uiState.value.isSignedIn)
     }
+
+    @Test
+    fun aRestoredAnonymousSessionIsSignedOutBeforeTheLogin() = runTest {
+        repository.signInAnonymously()
+        val viewModel = SplashViewModel(repository, minDurationMillis = 1_500)
+
+        advanceUntilIdle()
+
+        assertNull(repository.currentUser.value)
+        assertEquals(false, viewModel.uiState.value.isSignedIn)
+    }
 }

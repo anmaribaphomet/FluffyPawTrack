@@ -35,10 +35,11 @@ internal val ProfileHeaderHeight = 150.dp
 /**
  * Cabecera crema de pantallas secundarias: logotipo a la izquierda y botón "Regresar" a la derecha.
  *
+ * @param onBack null oculta "Regresar" (reporte sin cuenta: el retroceso es entre pasos).
  * @param showLogoBadge círculo naranja detrás del pin (Perfil lo muestra, Notificaciones no).
  */
 @Composable
-fun ProfileHeader(onBack: () -> Unit, modifier: Modifier = Modifier, showLogoBadge: Boolean = true) {
+fun ProfileHeader(onBack: (() -> Unit)?, modifier: Modifier = Modifier, showLogoBadge: Boolean = true) {
     DesignFrame(height = ProfileHeaderHeight, modifier = modifier) {
         Box(
             Modifier
@@ -71,7 +72,9 @@ fun ProfileHeader(onBack: () -> Unit, modifier: Modifier = Modifier, showLogoBad
             contentDescription = "Fluffy PawTrack",
             modifier = Modifier.placeAt(70.dp, 72.dp, 185.dp, 42.dp),
         )
-        HeaderBackButton(onClick = onBack, modifier = Modifier.placeAt(341.dp, 52.dp, 48.dp, 56.dp))
+        if (onBack != null) {
+            HeaderBackButton(onClick = onBack, modifier = Modifier.placeAt(341.dp, 52.dp, 48.dp, 56.dp))
+        }
     }
 }
 

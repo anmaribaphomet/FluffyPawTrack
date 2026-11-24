@@ -27,7 +27,7 @@ import com.example.fluffypawtrack.ui.contact.ContactRequestsTab
 private fun NavHostController.open(route: Route) = navigate(route) { launchSingleTop = true }
 
 /** Screens of role `affiliate` (§6 Afiliado). `CenterAdoptionRequests` lives in the main graph. */
-internal fun NavGraphBuilder.affiliateScreens(navController: NavHostController) {
+internal fun NavGraphBuilder.affiliateScreens(navController: NavHostController, onExitApp: () -> Unit) {
     composable<Route.AffiliateHome> {
         AffiliateHomeRoute(
             navigation = AffiliateHomeNavigation(
@@ -44,31 +44,31 @@ internal fun NavGraphBuilder.affiliateScreens(navController: NavHostController) 
     }
     composable<Route.ReportInbox> {
         ReportInboxRoute(
-            onBack = dropUnlessResumed { navController.popBackStack() },
+            onBack = dropUnlessResumed { navController.popOrExit(onExitApp) },
             onReportClick = { id -> navController.open(Route.CaseDetail(id)) },
         )
     }
     composable<Route.CaseDetail> { entry ->
         CaseDetailRoute(
             reportId = entry.toRoute<Route.CaseDetail>().reportId,
-            onBack = dropUnlessResumed { navController.popBackStack() },
+            onBack = dropUnlessResumed { navController.popOrExit(onExitApp) },
         )
     }
     composable<Route.MyCases> {
         MyCasesRoute(
-            onBack = dropUnlessResumed { navController.popBackStack() },
+            onBack = dropUnlessResumed { navController.popOrExit(onExitApp) },
             onCaseClick = { id -> navController.open(Route.CaseDetail(id)) },
         )
     }
     composable<Route.ReceivedContactRequests> {
         ContactRequestsRoute(
-            onBack = dropUnlessResumed { navController.popBackStack() },
+            onBack = dropUnlessResumed { navController.popOrExit(onExitApp) },
             initialTab = ContactRequestsTab.Received,
         )
     }
     composable<Route.MyListings> {
         MyListingsRoute(
-            onBack = dropUnlessResumed { navController.popBackStack() },
+            onBack = dropUnlessResumed { navController.popOrExit(onExitApp) },
             onCreateListing = dropUnlessResumed { navController.open(Route.ListingEditor()) },
             onEditListing = { id -> navController.open(Route.ListingEditor(id)) },
         )
@@ -76,20 +76,20 @@ internal fun NavGraphBuilder.affiliateScreens(navController: NavHostController) 
     composable<Route.ListingEditor> { entry ->
         ListingEditorRoute(
             listingId = entry.toRoute<Route.ListingEditor>().listingId,
-            onBack = dropUnlessResumed { navController.popBackStack() },
-            onSaved = { navController.popBackStack() },
+            onBack = dropUnlessResumed { navController.popOrExit(onExitApp) },
+            onSaved = { navController.popOrExit(onExitApp) },
         )
     }
     composable<Route.OrganizationProfile> {
-        OrganizationProfileRoute(onBack = dropUnlessResumed { navController.popBackStack() })
+        OrganizationProfileRoute(onBack = dropUnlessResumed { navController.popOrExit(onExitApp) })
     }
     composable<Route.NotificationPreferences> {
-        NotificationPreferencesRoute(onBack = dropUnlessResumed { navController.popBackStack() })
+        NotificationPreferencesRoute(onBack = dropUnlessResumed { navController.popOrExit(onExitApp) })
     }
 }
 
 /** Screens of role `admin` (§6 Administrador). */
-internal fun NavGraphBuilder.adminScreens(navController: NavHostController) {
+internal fun NavGraphBuilder.adminScreens(navController: NavHostController, onExitApp: () -> Unit) {
     composable<Route.AdminHome> {
         AdminHomeRoute(
             onProfileClick = dropUnlessResumed { navController.open(Route.Profile) },
@@ -99,11 +99,11 @@ internal fun NavGraphBuilder.adminScreens(navController: NavHostController) {
         )
     }
     composable<Route.AffiliationRequests> {
-        AffiliationRequestsRoute(onBack = dropUnlessResumed { navController.popBackStack() })
+        AffiliationRequestsRoute(onBack = dropUnlessResumed { navController.popOrExit(onExitApp) })
     }
     composable<Route.PlacesDirectory> {
         PlacesDirectoryRoute(
-            onBack = dropUnlessResumed { navController.popBackStack() },
+            onBack = dropUnlessResumed { navController.popOrExit(onExitApp) },
             onAddPlace = dropUnlessResumed { navController.open(Route.PlaceEditor()) },
             onEditPlace = { id -> navController.open(Route.PlaceEditor(id)) },
         )
@@ -111,20 +111,20 @@ internal fun NavGraphBuilder.adminScreens(navController: NavHostController) {
     composable<Route.PlaceEditor> { entry ->
         PlaceEditorRoute(
             organizationId = entry.toRoute<Route.PlaceEditor>().organizationId,
-            onBack = dropUnlessResumed { navController.popBackStack() },
-            onSaved = { navController.popBackStack() },
+            onBack = dropUnlessResumed { navController.popOrExit(onExitApp) },
+            onSaved = { navController.popOrExit(onExitApp) },
         )
     }
     composable<Route.ReportSupervision> {
         ReportSupervisionRoute(
-            onBack = dropUnlessResumed { navController.popBackStack() },
+            onBack = dropUnlessResumed { navController.popOrExit(onExitApp) },
             onReportClick = { id -> navController.open(Route.AdminReportDetail(id)) },
         )
     }
     composable<Route.AdminReportDetail> { entry ->
         AdminReportDetailRoute(
             reportId = entry.toRoute<Route.AdminReportDetail>().reportId,
-            onBack = dropUnlessResumed { navController.popBackStack() },
+            onBack = dropUnlessResumed { navController.popOrExit(onExitApp) },
         )
     }
 }

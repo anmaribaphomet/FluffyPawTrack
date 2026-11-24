@@ -24,7 +24,8 @@ class SplashViewModel(
         viewModelScope.launch {
             delay(minDurationMillis)
             val user = authRepository.currentUser.value
-            // An anonymous session only exists to submit reports, so it still goes through login.
+            // An anonymous session only exists to submit one report: close it and go through login.
+            if (user?.isAnonymous == true) authRepository.signOut()
             state.value = SplashUiState(isSignedIn = user != null && !user.isAnonymous)
         }
     }
