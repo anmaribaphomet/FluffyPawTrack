@@ -30,6 +30,7 @@ Units: `dp` for sizes, `sp` for text (Compose Multiplatform).
 | `sage-400` | `#BFC98D` | `#C4CD93` | Settings rows, green buttons |
 | `sage-700` | `#7A8542` | — | Toggles, green outlines |
 | `pink-400` | `#FF8F9E` | — | Accent icons (heart, favorites) |
+| `red-700` | `#9E2A2B` | — | Inline link text ("Solicita tu afiliación"), underlined |
 | `neutral-300` | `#D9D9D9` | — | Image placeholders, disabled state |
 | `neutral-900` | `#2D2D2D` | `#000000` | System dialogs (location permission) |
 
@@ -55,6 +56,7 @@ Discarded as non-brand or stray values: `#204B38` (logo asset), `#E9D77B`,
 | `secondary` | `sage-400` |
 | `on-secondary` | `brown-900` |
 | `accent` | `pink-400` |
+| `link` | `red-700` |
 | `outline` | `sage-700` |
 | `disabled` | `neutral-300` |
 
@@ -72,6 +74,8 @@ AA requires 4.5:1 for normal text and 3:1 for large text (≥ 18.66 sp bold or �
 | `brown-900` / `orange-500` | 5.04 | ✅ AA |
 | `brown-900` / `brown-300` | 4.13 | ⚠️ Large text only |
 | `brown-900` / `orange-700` | 3.85 | ⚠️ Large text only |
+| `red-700` / `peach-200` | 5.34 | ✅ AA |
+| `red-700` / `cream-50` | 6.73 | ✅ AA |
 | `white` / `sage-400` | 1.76 | ❌ Fails |
 | `white` / `orange-500` | 1.89 | ❌ Fails |
 | `white` / `brown-300` | 2.30 | ❌ Fails |

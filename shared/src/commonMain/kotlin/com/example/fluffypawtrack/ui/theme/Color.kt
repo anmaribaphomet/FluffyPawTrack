@@ -20,6 +20,7 @@ object FluffyColors {
     val Sage400 = Color(0xFFBFC98D)
     val Sage700 = Color(0xFF7A8542)
     val Pink400 = Color(0xFFFF8F9E)
+    val Red700 = Color(0xFF9E2A2B)
     val Neutral300 = Color(0xFFD9D9D9)
     val Neutral900 = Color(0xFF2D2D2D)
 }
@@ -35,6 +36,8 @@ object FluffySemanticColors {
     val PrimaryStrong = FluffyColors.Orange700
     val OnSurfaceMuted = FluffyColors.Brown600
     val Accent = FluffyColors.Pink400
+    /** Inline link text on light backgrounds (5.34:1 on peach-200). */
+    val Link = FluffyColors.Red700
     val Disabled = FluffyColors.Neutral300
 }
 

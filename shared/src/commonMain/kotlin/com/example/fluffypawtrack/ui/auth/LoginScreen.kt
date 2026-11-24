@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
@@ -27,6 +28,11 @@ import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
@@ -174,9 +180,14 @@ fun LoginScreen(
                 icon = painterResource(Res.drawable.ic_camera),
                 onClick = { if (!state.isLoading) onReportAnonymously() },
             )
-            TextButton(onClick = onRequestAffiliation, enabled = !state.isLoading) {
+            // The whole line is the tap target (48 dp); only the action reads as a link.
+            TextButton(
+                onClick = onRequestAffiliation,
+                enabled = !state.isLoading,
+                modifier = Modifier.heightIn(min = 48.dp),
+            ) {
                 Text(
-                    text = "¿Eres un albergue o centro de adopción? Solicita tu afiliación",
+                    text = affiliationLinkText(),
                     style = MaterialTheme.typography.labelLarge,
                     color = FluffyColors.Brown900,
                     textAlign = TextAlign.Center,
@@ -193,6 +204,14 @@ fun LoginScreen(
                 )
             }
         }
+    }
+}
+
+/** "¿Eres un albergue…? Solicita tu afiliación" with the action in the link color, underlined. */
+internal fun affiliationLinkText(): AnnotatedString = buildAnnotatedString {
+    append("¿Eres un albergue o centro de adopción? ")
+    withStyle(SpanStyle(color = FluffySemanticColors.Link, textDecoration = TextDecoration.Underline)) {
+        append("Solicita tu afiliación")
     }
 }
 
