@@ -46,7 +46,9 @@ import fluffypawtrack.shared.generated.resources.Res
 import fluffypawtrack.shared.generated.resources.ic_camera
 import fluffypawtrack.shared.generated.resources.ic_heart
 import fluffypawtrack.shared.generated.resources.img_cat_phone
+import fluffypawtrack.shared.generated.resources.ic_map
 import fluffypawtrack.shared.generated.resources.img_dog_adopt
+import fluffypawtrack.shared.generated.resources.img_logo_pin
 import org.jetbrains.compose.resources.painterResource
 
 /** Home wired to [HomeViewModel] (fakes or Supabase, per AppContainer) for the unread badge. */
@@ -57,6 +59,7 @@ fun HomeRoute(
     onReportAnimal: () -> Unit = {},
     onSeeAdoptions: () -> Unit = {},
     onNavigate: (HomeDestination) -> Unit = {},
+    onSeeSupportPlaces: () -> Unit = {},
 ) {
     val container = LocalAppContainer.current
     val viewModel = viewModel { HomeViewModel(container.notificationRepository, container.authRepository) }
@@ -68,6 +71,7 @@ fun HomeRoute(
         onSeeAdoptions = onSeeAdoptions,
         onNavigate = onNavigate,
         unreadNotifications = state.unreadNotifications,
+        onSeeSupportPlaces = onSeeSupportPlaces,
     )
 }
 
@@ -80,6 +84,7 @@ fun HomeScreen(
     onSeeAdoptions: () -> Unit = {},
     onNavigate: (HomeDestination) -> Unit = {},
     unreadNotifications: Int = 0,
+    onSeeSupportPlaces: () -> Unit = {},
 ) {
     var selected by remember { mutableStateOf(HomeDestination.Inicio) }
     // The grass block may slide down into its own bottom margin, never below the system navigation bar.
@@ -103,6 +108,9 @@ fun HomeScreen(
             ReportAnimalCard(onReportAnimal)
             Spacer(Modifier.height(CardGap))
             AdoptionCard(onSeeAdoptions)
+            // Third card sits below the fold; the bottom padding lets its button scroll above the bar.
+            Spacer(Modifier.height(CardGap))
+            SupportPlacesCard(onSeeSupportPlaces)
         }
 
         HomeHeader(onProfileClick = onProfileClick, modifier = Modifier.align(Alignment.TopCenter))
@@ -165,6 +173,30 @@ private fun AdoptionCard(onClick: () -> Unit) {
             actionText = "Ver adopciones",
             actionIcon = painterResource(Res.drawable.ic_heart),
             actionIconSize = 17.dp,
+            onAction = onClick,
+        )
+    }
+}
+
+/** Copy of the "Lugares de apoyo" card (docs/REQUIREMENTS.md section 6, Inicio). */
+internal object SupportPlacesCardCopy {
+    const val TITLE = "¿Necesitas apoyo cerca?"
+    const val DESCRIPTION = "Encuentra veterinarias, albergues y puntos seguros."
+    const val ACTION = "Ver lugares de apoyo"
+}
+
+@Composable
+private fun SupportPlacesCard(onClick: () -> Unit) {
+    HouseCard(
+        ears = HouseCardEars.Soft,
+        illustration = CardIllustration(painterResource(Res.drawable.img_logo_pin), 6.dp, 120.dp, 94.dp),
+        minBodyHeight = 157.dp,
+    ) {
+        CardCallToAction(
+            title = SupportPlacesCardCopy.TITLE,
+            description = SupportPlacesCardCopy.DESCRIPTION,
+            actionText = SupportPlacesCardCopy.ACTION,
+            actionIcon = painterResource(Res.drawable.ic_map),
             onAction = onClick,
         )
     }

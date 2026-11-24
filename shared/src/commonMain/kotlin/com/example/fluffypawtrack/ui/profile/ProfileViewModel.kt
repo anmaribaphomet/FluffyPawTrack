@@ -24,8 +24,9 @@ data class ProfileUiState(
     val favorites: Int = 0,
     /** Affiliates see their center's "Solicitudes de adopción" instead of the user-only rows. */
     val isAffiliate: Boolean = false,
+    val avatarUrl: String? = null,
 ) {
-    fun toProfileUser() = ProfileUser(name, email, reports, attended, favorites)
+    fun toProfileUser() = ProfileUser(name, email, reports, attended, favorites, avatarUrl)
 }
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -52,6 +53,7 @@ class ProfileViewModel(
                         attended = reports.count { it.status != ReportStatus.Pending },
                         favorites = favorites.size,
                         isAffiliate = user.role == Role.Affiliate,
+                        avatarUrl = user.avatarUrl,
                     )
                 }
             }

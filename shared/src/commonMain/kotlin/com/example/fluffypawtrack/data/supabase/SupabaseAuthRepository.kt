@@ -1,6 +1,7 @@
 package com.example.fluffypawtrack.data.supabase
 
 import com.example.fluffypawtrack.domain.model.EmailConfirmationRequiredException
+import com.example.fluffypawtrack.domain.model.ProfileRules
 import com.example.fluffypawtrack.domain.model.UserProfile
 import com.example.fluffypawtrack.domain.repository.AuthRepository
 import io.github.jan.supabase.SupabaseClient
@@ -27,6 +28,7 @@ internal class SupabaseAuthRepository(
     private val client: SupabaseClient,
     scope: CoroutineScope,
     private val queries: QueryRegistry,
+    private val photos: PhotoUploader,
 ) : AuthRepository {
     private val session = MutableStateFlow<UserProfile?>(null)
 
@@ -81,6 +83,26 @@ internal class SupabaseAuthRepository(
     override suspend fun signInAnonymously(): Result<UserProfile> = remoteAuth {
         client.auth.signInAnonymously()
         signedInProfile()
+    }
+
+    override suspend fun updateProfile(
+        firstName: String,
+        lastName: String,
+        phone: String?,
+        photoRef: String?,
+    ): Result<UserProfile> = remote {
+        ProfileRules.problemOf(firstName, phone)?.let { throw RuleViolation(it) }
+        val user = client.auth.currentUserOrNull()?.takeUnless { it.isAnonymous == true }
+            ?: throw RuleViolation(ProfileRules.SIGN_IN_REQUIRED)
+        val avatar = photoRef?.let { photos.store(it, StoragePaths.AVATAR_PHOTOS, folder = user.id) }
+        val values = profileUpdateOf(firstName.trim(), lastName.trim(), ProfileRules.normalizedPhone(phone), avatar)
+        // RLS (profiles_update_own) limits the row to the caller; no returned row means it refused.
+        val row = client.from("profiles").update(values) {
+            select()
+            filter { eq("id", user.id) }
+        }.decodeList<ProfileDto>().firstOrNull() ?: throw RuleViolation("No pudimos guardar tus datos. Intenta de nuevo.")
+        userProfileOf(user.id, user.email?.takeIf { it.isNotBlank() }, isAnonymous = false, profile = row)
+            .also { session.value = it }
     }
 
     override suspend fun signOut() {

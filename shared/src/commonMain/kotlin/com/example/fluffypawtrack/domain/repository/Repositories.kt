@@ -42,6 +42,18 @@ interface AuthRepository {
     /** Session without an account, used only to submit reports. */
     suspend fun signInAnonymously(): Result<UserProfile>
 
+    /**
+     * RF-08: the signed-in, non-anonymous user edits their own name, phone and photo. Role,
+     * organization and email never change here. [photoRef] is the photo to keep (a local ref
+     * is uploaded first), or null for none. Updates [currentUser] on success.
+     */
+    suspend fun updateProfile(
+        firstName: String,
+        lastName: String,
+        phone: String?,
+        photoRef: String?,
+    ): Result<UserProfile>
+
     suspend fun signOut()
 }
 

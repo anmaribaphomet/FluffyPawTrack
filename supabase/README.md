@@ -21,6 +21,7 @@ can be run again safely.
 | 8 | `20261122000800_nearby_report_notifications.sql` | RF-03: a new report notifies affiliates within their radius who accept its priority; status-change notifications respect the reporter's priorities |
 | 9 | `20261122000900_report_notification_safety.sql` | Nearby notifications never roll back a report; at most 5 reports per reporter every 10 minutes |
 | 10 | `20261122001000_report_rate_limit_hardening.sql` | Rate limit serialized per reporter (advisory lock) and server-set `created_at` |
+| 11 | `20261123000100_profile_editing.sql` | RF-08: bucket `avatar-photos` and its policies; restates the `profiles` column grant (only name, phone and photo are editable) |
 
 ## Dashboard settings
 
@@ -93,6 +94,7 @@ requester automatically.
 | `storage.objects` | `adoption_photos_*_center` | RF-06: affiliates upload into `adoption-photos/<organization_id>/` |
 | `storage.objects` | `place_photos_*_own` | RF-07: requesters upload into `place-photos/<uid>/` (non-anonymous) |
 | `storage.objects` | `app_photos_admin` | RF-07 supervision |
+| `storage.objects` | `avatar_photos_*_own` | RF-08: accounts (non-anonymous) upload their profile photo into `avatar-photos/<uid>/` |
 
 Constraints: contact message 20 to 500 characters, at least one listing photo, required photo
 URLs, "Estado crítico" always `urgent`, one active contact request per (report, requester),
@@ -217,6 +219,11 @@ Run in the SQL Editor as `authenticated` (set `request.jwt.claims`) on a test pr
     → no notification has that `report_id`.
 12. A reporter with `priorities = '{low}'` whose `high` report changes status → no
     "Actualización de tu reporte"; a reporter without prefs row → one.
+13. Profile editing: `update profiles set first_name = 'X', phone = '6620000000', avatar_url = 'https://x'
+    where id = auth.uid()` → 1 row; the same update `where id = <other uid>` → 0 rows;
+    `update profiles set organization_id = <any org> where id = auth.uid()` → permission denied.
+14. Storage: upload to `avatar-photos/<own uid>/a.jpg` → succeeds; to `avatar-photos/<other uid>/a.jpg`
+    → denied; with anonymous claims → denied; a `text/plain` file or one over 5 MB → rejected.
 
 ## Report flood protection (limits)
 

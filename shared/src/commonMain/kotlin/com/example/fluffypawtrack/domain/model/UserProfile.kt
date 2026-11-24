@@ -12,4 +12,6 @@ data class UserProfile(
     val organizationId: String?,
     /** True for Supabase anonymous sign-in sessions. */
     val isAnonymous: Boolean,
+    /** Profile photo reference (Storage URL, or a local ref in fake mode); null shows the default icon. */
+    val avatarUrl: String? = null,
 )

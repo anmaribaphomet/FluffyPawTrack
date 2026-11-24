@@ -20,6 +20,9 @@ internal object StoragePaths {
     const val ADOPTION_PHOTOS = "adoption-photos"
     const val PLACE_PHOTOS = "place-photos"
 
+    /** Profile photos, `avatar-photos/<uid>/<file>` (20261123000100_profile_editing.sql). */
+    const val AVATAR_PHOTOS = "avatar-photos"
+
     fun objectPath(folder: String, fileName: String): String = "$folder/$fileName"
 
     @OptIn(ExperimentalUuidApi::class)

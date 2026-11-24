@@ -28,7 +28,7 @@ class SupabaseRepositories(
     private val queries = QueryRegistry()
     private val photos = PhotoUploader(client)
 
-    val auth: AuthRepository = SupabaseAuthRepository(client, scope, queries)
+    val auth: AuthRepository = SupabaseAuthRepository(client, scope, queries, photos)
     val reports: ReportRepository = SupabaseReportRepository(client, queries, photos)
     val organizations: OrganizationRepository = SupabaseOrganizationRepository(client, queries, photos)
     val adoptions: AdoptionRepository = SupabaseAdoptionRepository(client, queries, photos)
