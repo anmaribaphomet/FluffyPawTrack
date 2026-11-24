@@ -7,11 +7,13 @@ sealed interface Route {
     @Serializable
     data object Splash : Route
 
+    /** [forAffiliation]: after signing in, open the affiliation form (it requires an account). */
     @Serializable
-    data object Login : Route
+    data class Login(val forAffiliation: Boolean = false) : Route
 
+    /** [forAffiliation] shows the account banner and keeps the intent until signed in. */
     @Serializable
-    data object Register : Route
+    data class Register(val forAffiliation: Boolean = false) : Route
 
     @Serializable
     data object Home : Route

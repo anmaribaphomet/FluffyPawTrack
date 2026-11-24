@@ -10,6 +10,9 @@ import com.example.fluffypawtrack.domain.model.InvalidAuthDataException
 const val INVALID_DATA_MESSAGE = "Datos inválidos, intenta de nuevo."
 
 /** Shown for any failure that is not invalid data, such as a lost connection or a server error. */
+/** Banner of the registration opened from "Solicita tu afiliación" (RF-08). */
+const val AFFILIATION_ACCOUNT_BANNER = "Crea tu cuenta para solicitar la afiliación."
+
 const val CONNECTION_ERROR_MESSAGE = "No pudimos conectar. Intenta de nuevo más tarde."
 
 /** Shown when the account exists but the email must be confirmed before signing in. */

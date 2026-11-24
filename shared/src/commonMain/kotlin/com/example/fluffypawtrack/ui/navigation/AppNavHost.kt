@@ -25,6 +25,8 @@ import com.example.fluffypawtrack.ui.map.MapFilter
 import com.example.fluffypawtrack.ui.map.MapRoute
 import com.example.fluffypawtrack.ui.notifications.NotificationsRoute
 import com.example.fluffypawtrack.domain.model.OrganizationType
+import com.example.fluffypawtrack.domain.model.UserProfile
+import com.example.fluffypawtrack.ui.auth.AFFILIATION_ACCOUNT_BANNER
 import com.example.fluffypawtrack.ui.account.FavoritesRoute
 import com.example.fluffypawtrack.ui.adoptions.AdoptionFormRoute
 import com.example.fluffypawtrack.ui.affiliation.AffiliationRequestRoute
@@ -64,7 +66,7 @@ fun AppNavHost(
 ) {
     val authRepository = LocalAppContainer.current.authRepository
     // Read when the user gets in, not at composition: the role picks each account's home.
-    val startRoute = { startRouteFor(authRepository.currentUser.value) }
+    val currentUser = { authRepository.currentUser.value }
     val user by authRepository.currentUser.collectAsStateWithLifecycle()
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentOnReportOpened by rememberUpdatedState(onReportOpened)
@@ -78,7 +80,7 @@ fun AppNavHost(
         currentOnReportOpened()
     }
     Box {
-        AppNavGraph(navController, startRoute, onExitApp)
+        AppNavGraph(navController, currentUser, onExitApp)
         NotificationPermissionGate(active = pastAuthScreens && user?.isAnonymous == false)
     }
 }
@@ -87,30 +89,51 @@ private fun NavDestination.isAuthScreen(): Boolean =
     hasRoute(Route.Splash::class) || hasRoute(Route.Login::class) || hasRoute(Route.Register::class)
 
 @Composable
-private fun AppNavGraph(navController: NavHostController, startRoute: () -> Route, onExitApp: () -> Unit) {
+private fun AppNavGraph(
+    navController: NavHostController,
+    currentUser: () -> UserProfile?,
+    onExitApp: () -> Unit,
+) {
+    val startRoute = { startRouteFor(currentUser()) }
     NavHost(navController = navController, startDestination = Route.Splash) {
         composable<Route.Splash> {
             SplashRoute(
                 onFinished = { isSignedIn ->
-                    navController.navigate(if (isSignedIn) startRoute() else Route.Login) {
+                    navController.navigate(if (isSignedIn) startRoute() else Route.Login()) {
                         popUpTo<Route.Splash> { inclusive = true }
                     }
                 },
             )
         }
-        composable<Route.Login> {
+        composable<Route.Login> { entry ->
+            val forAffiliation = entry.toRoute<Route.Login>().forAffiliation
             LoginRoute(
-                onSignedIn = { navController.navigateClearingStack(startRoute()) },
-                onCreateAccount = dropUnlessResumed { navController.navigate(Route.Register) },
+                onSignedIn = { navController.openAfterSignIn(currentUser(), forAffiliation) },
+                onCreateAccount = dropUnlessResumed { navController.navigate(Route.Register(forAffiliation)) },
                 // Over the login (not clearing it): discarding or finishing returns there.
                 onReportAnonymously = { navController.navigate(Route.NewReport) { launchSingleTop = true } },
-                onRequestAffiliation = dropUnlessResumed { navController.navigate(Route.AffiliationRequest) },
+                // The login has no account session: the form needs one, so register (or sign in) first.
+                onRequestAffiliation = dropUnlessResumed {
+                    navController.navigate(Route.Register(forAffiliation = true)) { launchSingleTop = true }
+                },
             )
         }
-        composable<Route.Register> {
+        composable<Route.Register> { entry ->
+            val route = entry.toRoute<Route.Register>()
+            val back = dropUnlessResumed { navController.popOrExit(onExitApp) }
             RegisterRoute(
-                onBack = dropUnlessResumed { navController.popOrExit(onExitApp) },
-                onRegistered = { navController.navigateClearingStack(startRoute()) },
+                onBack = back,
+                onRegistered = { navController.openAfterSignIn(currentUser(), route.forAffiliation) },
+                onHaveAccount = if (route.forAffiliation) {
+                    dropUnlessResumed {
+                        navController.navigate(loginRouteFrom(route)) {
+                            popUpTo<Route.Register> { inclusive = true }
+                        }
+                    }
+                } else {
+                    back
+                },
+                banner = if (route.forAffiliation) AFFILIATION_ACCOUNT_BANNER else null,
             )
         }
         composable<Route.Home> {
@@ -163,13 +186,13 @@ private fun AppNavGraph(navController: NavHostController, startRoute: () -> Rout
                         popUpTo<Route.NewReport> { inclusive = true }
                     }
                 },
-                onExitToLogin = { navController.navigateClearingStack(Route.Login) },
+                onExitToLogin = { navController.navigateClearingStack(Route.Login()) },
             )
         }
         composable<Route.Settings> {
             SettingsRoute(
                 onBack = dropUnlessResumed { navController.popOrExit(onExitApp) },
-                onSignedOut = { navController.navigateClearingStack(Route.Login) },
+                onSignedOut = { navController.navigateClearingStack(Route.Login()) },
                 onTopicClick = { topic -> navController.navigate(Route.SettingsInfo(topic.name)) },
             )
         }
@@ -261,6 +284,13 @@ private fun AppNavGraph(navController: NavHostController, startRoute: () -> Rout
             NotificationsRoute(onBack = dropUnlessResumed { navController.popOrExit(onExitApp) })
         }
     }
+}
+
+/** Replaces the stack with the role home, plus the affiliation form when that was the intent. */
+private fun NavHostController.openAfterSignIn(user: UserProfile?, forAffiliation: Boolean) {
+    val routes = routesAfterSignIn(user, forAffiliation)
+    navigateClearingStack(routes.first())
+    routes.drop(1).forEach { navigate(it) }
 }
 
 /** Navigates to [route] and drops the whole back stack, e.g. after signing in or out. */

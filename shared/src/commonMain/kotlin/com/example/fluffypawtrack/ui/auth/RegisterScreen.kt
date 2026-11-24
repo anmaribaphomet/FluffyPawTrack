@@ -1,6 +1,7 @@
 package com.example.fluffypawtrack.ui.auth
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -40,7 +41,12 @@ import com.example.fluffypawtrack.ui.theme.FluffySemanticColors
 
 /** Registration entry point. [onRegistered] runs once the account exists and the session is open. */
 @Composable
-fun RegisterRoute(onBack: () -> Unit, onRegistered: () -> Unit) {
+fun RegisterRoute(
+    onBack: () -> Unit,
+    onRegistered: () -> Unit,
+    onHaveAccount: () -> Unit = onBack,
+    banner: String? = null,
+) {
     val container = LocalAppContainer.current
     val viewModel = viewModel { RegisterViewModel(container.authRepository) }
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -64,7 +70,9 @@ fun RegisterRoute(onBack: () -> Unit, onRegistered: () -> Unit) {
             onConfirmPasswordChange = viewModel::onConfirmPasswordChange,
             onSubmit = viewModel::onSubmit,
             onBack = onBack,
+            onHaveAccount = onHaveAccount,
         ),
+        banner = banner,
     )
 }
 
@@ -78,11 +86,19 @@ class RegisterActions(
     val onConfirmPasswordChange: (String) -> Unit,
     val onSubmit: () -> Unit,
     val onBack: () -> Unit,
+    /** "Ya tengo cuenta"; defaults to going back to the login. */
+    val onHaveAccount: () -> Unit = onBack,
 )
 
 /** Registration screen (no Figma frame: built with the app's wave header and cream inputs). */
 @Composable
-fun RegisterScreen(state: RegisterUiState, actions: RegisterActions, modifier: Modifier = Modifier) {
+fun RegisterScreen(
+    state: RegisterUiState,
+    actions: RegisterActions,
+    modifier: Modifier = Modifier,
+    /** Why an account is needed, e.g. [AFFILIATION_ACCOUNT_BANNER]. */
+    banner: String? = null,
+) {
     val focusManager = LocalFocusManager.current
     val next = KeyboardActions(onNext = { focusManager.moveFocus(FocusDirection.Down) })
     val enabled = !state.isLoading
@@ -112,6 +128,18 @@ fun RegisterScreen(state: RegisterUiState, actions: RegisterActions, modifier: M
                 style = MaterialTheme.typography.bodyMedium,
                 color = FluffyColors.Brown900,
             )
+            if (banner != null) {
+                Spacer(Modifier.height(12.dp))
+                Text(
+                    text = banner,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(FluffyColors.Cream50, RoundedCornerShape(12.dp))
+                        .padding(horizontal = 14.dp, vertical = 10.dp),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = FluffyColors.Brown900,
+                )
+            }
             Spacer(Modifier.height(16.dp))
             AuthCard {
                 AuthTextField(
@@ -175,7 +203,7 @@ fun RegisterScreen(state: RegisterUiState, actions: RegisterActions, modifier: M
                 Spacer(Modifier.height(16.dp))
                 AuthPrimaryButton(text = "Crear cuenta", onClick = actions.onSubmit, isLoading = state.isLoading)
                 TextButton(
-                    onClick = actions.onBack,
+                    onClick = actions.onHaveAccount,
                     enabled = enabled,
                     modifier = Modifier.align(Alignment.CenterHorizontally).padding(top = 8.dp),
                 ) {

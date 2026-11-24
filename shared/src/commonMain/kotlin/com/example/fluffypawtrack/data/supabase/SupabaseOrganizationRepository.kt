@@ -9,6 +9,7 @@ import com.example.fluffypawtrack.domain.model.OrganizationType
 import com.example.fluffypawtrack.domain.repository.OrganizationRepository
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.auth.auth
+import io.github.jan.supabase.exceptions.RestException
 import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.postgrest.postgrest
 import io.github.jan.supabase.postgrest.query.Order
@@ -18,6 +19,22 @@ import io.github.jan.supabase.postgrest.result.PostgrestResult
 import kotlinx.coroutines.flow.Flow
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
+
+private const val ACCOUNT_REQUIRED = "Necesitas una cuenta para solicitar la afiliación"
+
+/**
+ * Storage (`place_photos_insert_own`) and `request_affiliation` refuse a missing or anonymous
+ * account with 401/403; that is the account rule, not a connection problem. Any other failure is
+ * returned unchanged for [remote] to map (P0001 keeps its Spanish message).
+ */
+internal fun affiliationFailureOf(statusCode: Int?, failure: Throwable): Throwable =
+    if (statusCode == 401 || statusCode == 403) RuleViolation(ACCOUNT_REQUIRED) else failure
+
+private inline fun <T> requiringAccount(block: () -> T): T = try {
+    block()
+} catch (e: RestException) {
+    throw affiliationFailureOf(e.statusCode, e)
+}
 
 /** Map places through PostgREST; affiliation requests through the `request_affiliation` RPC. */
 internal class SupabaseOrganizationRepository(
@@ -55,21 +72,23 @@ internal class SupabaseOrganizationRepository(
             throw RuleViolation("Completa todos los datos de la organización")
         }
         if (photoUrl.isBlank()) throw RuleViolation("Agrega una foto del lugar o su logo")
-        val uid = client.auth.currentUserOrNull()?.id
-            ?: throw RuleViolation("Necesitas una cuenta para solicitar la afiliación")
-        val storedPhoto = photos.store(photoUrl, StoragePaths.PLACE_PHOTOS, folder = uid)
-        client.postgrest.rpc(
-            "request_affiliation",
-            buildJsonObject {
-                put("p_type", type.dbValue)
-                put("p_name", name)
-                put("p_address", address)
-                put("p_phone", phone)
-                put("p_email", email)
-                put("p_description", description)
-                put("p_photo_url", storedPhoto)
-            },
-        ).decodeAs<OrganizationDto>().toDomain()
+        val user = client.auth.currentUserOrNull()
+        if (user == null || user.isAnonymous == true) throw RuleViolation(ACCOUNT_REQUIRED)
+        val storedPhoto = requiringAccount { photos.store(photoUrl, StoragePaths.PLACE_PHOTOS, folder = user.id) }
+        requiringAccount {
+            client.postgrest.rpc(
+                "request_affiliation",
+                buildJsonObject {
+                    put("p_type", type.dbValue)
+                    put("p_name", name)
+                    put("p_address", address)
+                    put("p_phone", phone)
+                    put("p_email", email)
+                    put("p_description", description)
+                    put("p_photo_url", storedPhoto)
+                },
+            ).decodeAs<OrganizationDto>().toDomain()
+        }
     }.thenRefresh(queries)
 
     /** RLS shows pending organizations only to the admin and to their requester. */
