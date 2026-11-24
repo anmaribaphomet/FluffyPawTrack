@@ -141,6 +141,7 @@ private fun AppNavGraph(
                 // dropUnlessResumed ignores taps while a transition is running (double taps).
                 onProfileClick = dropUnlessResumed { navController.navigate(Route.Profile) },
                 onSeeAdoptions = dropUnlessResumed { navController.navigate(Route.Map(adoptionsOnly = true)) },
+                onSeeSupportPlaces = dropUnlessResumed { navController.navigate(Route.Map(supportPlacesOnly = true)) },
                 onReportAnimal = dropUnlessResumed { navController.navigate(Route.NewReport) },
                 onNavigate = { destination ->
                     when (destination) {
@@ -206,7 +207,11 @@ private fun AppNavGraph(
             val route = entry.toRoute<Route.Map>()
             MapRoute(
                 onBack = dropUnlessResumed { navController.popOrExit(onExitApp) },
-                initialFilter = if (route.adoptionsOnly) MapFilter.Adoptions else MapFilter.All,
+                initialFilter = when {
+                    route.adoptionsOnly -> MapFilter.Adoptions
+                    route.supportPlacesOnly -> MapFilter.SupportPlaces
+                    else -> MapFilter.All
+                },
                 reportActions = { report ->
                     ContactRequestAction(
                         report = report,
