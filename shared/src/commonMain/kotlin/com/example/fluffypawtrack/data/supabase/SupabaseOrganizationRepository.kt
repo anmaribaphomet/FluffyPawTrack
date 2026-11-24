@@ -21,20 +21,21 @@ import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 
 private const val ACCOUNT_REQUIRED = "Necesitas una cuenta para solicitar la afiliación"
+private const val SESSION_EXPIRED = "Tu sesión expiró. Inicia sesión de nuevo."
 
 /**
- * Storage (`place_photos_insert_own`) and `request_affiliation` refuse a missing or anonymous
- * account with 401/403; that is the account rule, not a connection problem. Any other failure is
- * returned unchanged for [remote] to map (P0001 keeps its Spanish message).
+ * Storage (`place_photos_insert_own`) and `request_affiliation` refuse with 401/403. Without an
+ * account that is the account rule; with one ([hasAccount]) the session token expired, so the
+ * user must sign in again. Neither is a connection problem. Any other failure is returned
+ * unchanged for [remote] to map (P0001 keeps its Spanish message).
  */
-internal fun affiliationFailureOf(statusCode: Int?, failure: Throwable): Throwable =
-    if (statusCode == 401 || statusCode == 403) RuleViolation(ACCOUNT_REQUIRED) else failure
-
-private inline fun <T> requiringAccount(block: () -> T): T = try {
-    block()
-} catch (e: RestException) {
-    throw affiliationFailureOf(e.statusCode, e)
+internal fun affiliationFailureOf(statusCode: Int?, failure: Throwable, hasAccount: Boolean): Throwable = when {
+    statusCode != 401 && statusCode != 403 -> failure
+    hasAccount -> RuleViolation(SESSION_EXPIRED)
+    else -> RuleViolation(ACCOUNT_REQUIRED)
 }
+
+private fun RestException.isAuthRefusal(): Boolean = statusCode == 401 || statusCode == 403
 
 /** Map places through PostgREST; affiliation requests through the `request_affiliation` RPC. */
 internal class SupabaseOrganizationRepository(
@@ -74,8 +75,8 @@ internal class SupabaseOrganizationRepository(
         if (photoUrl.isBlank()) throw RuleViolation("Agrega una foto del lugar o su logo")
         val user = client.auth.currentUserOrNull()
         if (user == null || user.isAnonymous == true) throw RuleViolation(ACCOUNT_REQUIRED)
-        val storedPhoto = requiringAccount { photos.store(photoUrl, StoragePaths.PLACE_PHOTOS, folder = user.id) }
-        requiringAccount {
+        val storedPhoto = refreshingSessionOnce { photos.store(photoUrl, StoragePaths.PLACE_PHOTOS, folder = user.id) }
+        refreshingSessionOnce {
             client.postgrest.rpc(
                 "request_affiliation",
                 buildJsonObject {
@@ -90,6 +91,26 @@ internal class SupabaseOrganizationRepository(
             ).decodeAs<OrganizationDto>().toDomain()
         }
     }.thenRefresh(queries)
+
+    /**
+     * Runs [block] for a signed-in account. A 401/403 usually means the access token expired while
+     * the app was idle: refresh the session once and retry, so only a dead session reaches the user.
+     */
+    private suspend fun <T> refreshingSessionOnce(block: suspend () -> T): T = try {
+        block()
+    } catch (e: RestException) {
+        if (!e.isAuthRefusal()) throw e
+        try {
+            client.auth.refreshCurrentSession()
+        } catch (refused: RestException) {
+            throw affiliationFailureOf(e.statusCode, refused, hasAccount = true)
+        }
+        try {
+            block()
+        } catch (retry: RestException) {
+            throw affiliationFailureOf(retry.statusCode, retry, hasAccount = true)
+        }
+    }
 
     /** RLS shows pending organizations only to the admin and to their requester. */
     override fun observePendingAffiliations(): Flow<List<Organization>> =

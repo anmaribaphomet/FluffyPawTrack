@@ -6,9 +6,13 @@ import com.example.fluffypawtrack.domain.model.UserProfile
 /**
  * Screens opened after signing in or registering, bottom first. With the affiliation intent the
  * form opens over the role home, so leaving it goes back to the home instead of closing the app.
+ * Only a `user` can request an affiliation; affiliates and admins just land on their home.
  */
 fun routesAfterSignIn(user: UserProfile?, forAffiliation: Boolean): List<Route> =
-    listOfNotNull(startRouteFor(user), Route.AffiliationRequest.takeIf { forAffiliation })
+    listOfNotNull(
+        startRouteFor(user),
+        Route.AffiliationRequest.takeIf { forAffiliation && user?.role == Role.User },
+    )
 
 /** "Ya tengo cuenta" keeps the affiliation intent of the registration it comes from. */
 fun loginRouteFrom(register: Route.Register): Route.Login = Route.Login(forAffiliation = register.forAffiliation)

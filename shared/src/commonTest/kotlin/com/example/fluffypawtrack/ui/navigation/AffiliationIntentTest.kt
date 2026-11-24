@@ -25,4 +25,10 @@ class AffiliationIntentTest {
         assertEquals(Route.Login(forAffiliation = true), loginRouteFrom(register))
         assertEquals(Route.Login(), loginRouteFrom(Route.Register()))
     }
+
+    @Test
+    fun theIntentIsIgnoredForAffiliatesAndAdmins() {
+        assertEquals(listOf(Route.AffiliateHome), routesAfterSignIn(SampleData.demoAffiliate, forAffiliation = true))
+        assertEquals(listOf(Route.AdminHome), routesAfterSignIn(SampleData.demoAdmin, forAffiliation = true))
+    }
 }
