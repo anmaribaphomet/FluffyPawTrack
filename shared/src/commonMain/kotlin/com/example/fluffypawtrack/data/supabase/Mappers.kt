@@ -41,7 +41,17 @@ internal fun ProfileDto.toDomain(email: String?, isAnonymous: Boolean): UserProf
     role = fromDb<Role>(role),
     organizationId = organizationId,
     isAnonymous = isAnonymous,
+    avatarUrl = avatarUrl,
 )
+
+/** RF-08: the only `profiles` columns a client may change (the grants allow no others). */
+internal fun profileUpdateOf(firstName: String, lastName: String, phone: String?, avatarUrl: String?): JsonObject =
+    buildJsonObject {
+        put("first_name", firstName)
+        put("last_name", lastName)
+        put("phone", phone)
+        put("avatar_url", avatarUrl)
+    }
 
 /** The signed-in user; a session whose profile row could not be read is a plain `user`. */
 internal fun userProfileOf(id: String, email: String?, isAnonymous: Boolean, profile: ProfileDto?): UserProfile =

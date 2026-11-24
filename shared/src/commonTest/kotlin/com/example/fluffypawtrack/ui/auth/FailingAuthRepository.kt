@@ -23,5 +23,12 @@ class FailingAuthRepository(
 
     override suspend fun signInAnonymously(): Result<UserProfile> = Result.failure(error)
 
+    override suspend fun updateProfile(
+        firstName: String,
+        lastName: String,
+        phone: String?,
+        photoRef: String?,
+    ): Result<UserProfile> = Result.failure(error)
+
     override suspend fun signOut() = Unit
 }

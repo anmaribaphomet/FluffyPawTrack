@@ -131,6 +131,23 @@ class MappersTest {
     }
 
     @Test
+    fun profileUpdateWritesOnlyTheEditableColumns() {
+        val row = profileUpdateOf(firstName = "Ana", lastName = "López", phone = null, avatarUrl = "https://x/a.jpg")
+
+        assertEquals(setOf("first_name", "last_name", "phone", "avatar_url"), row.keys)
+        assertEquals("Ana", row["first_name"]?.jsonPrimitive?.content)
+        assertEquals(JsonNull, row["phone"])
+        assertEquals("https://x/a.jpg", row["avatar_url"]?.jsonPrimitive?.content)
+    }
+
+    @Test
+    fun profileMapsTheAvatarUrl() {
+        val user = ProfileDto(id = "u1", avatarUrl = "https://x/a.jpg").toDomain(email = null, isAnonymous = false)
+
+        assertEquals("https://x/a.jpg", user.avatarUrl)
+    }
+
+    @Test
     fun sessionWithoutProfileIsAPlainUser() {
         val user = userProfileOf(id = "anon", email = null, isAnonymous = true, profile = null)
 

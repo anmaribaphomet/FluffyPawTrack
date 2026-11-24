@@ -26,6 +26,7 @@ import com.example.fluffypawtrack.domain.model.ReportStatusRules
 import com.example.fluffypawtrack.domain.model.StatusHistoryEntry
 import com.example.fluffypawtrack.domain.model.contactRecipient
 import com.example.fluffypawtrack.domain.model.isActive
+import com.example.fluffypawtrack.domain.model.ProfileRules
 import com.example.fluffypawtrack.domain.model.Role
 import com.example.fluffypawtrack.domain.model.UserProfile
 import com.example.fluffypawtrack.domain.repository.AdoptionRepository
@@ -123,6 +124,25 @@ class FakeAuthRepository(
         )
         session.value = user
         return Result.success(user)
+    }
+
+    override suspend fun updateProfile(
+        firstName: String,
+        lastName: String,
+        phone: String?,
+        photoRef: String?,
+    ): Result<UserProfile> {
+        val user = session.value?.takeUnless { it.isAnonymous }
+            ?: return Result.failure(IllegalStateException(ProfileRules.SIGN_IN_REQUIRED))
+        ProfileRules.problemOf(firstName, phone)?.let { return Result.failure(IllegalArgumentException(it)) }
+        val updated = user.copy(
+            firstName = firstName.trim(),
+            lastName = lastName.trim(),
+            phone = ProfileRules.normalizedPhone(phone),
+            avatarUrl = photoRef,
+        )
+        updateUsers { if (it.id == user.id) updated else it }
+        return Result.success(updated)
     }
 
     override suspend fun signOut() {

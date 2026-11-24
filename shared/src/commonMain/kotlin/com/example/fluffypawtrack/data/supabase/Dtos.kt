@@ -14,6 +14,7 @@ internal data class ProfileDto(
     val phone: String? = null,
     val role: String = "user",
     @SerialName("organization_id") val organizationId: String? = null,
+    @SerialName("avatar_url") val avatarUrl: String? = null,
 )
 
 @Serializable
