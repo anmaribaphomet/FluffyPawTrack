@@ -60,6 +60,11 @@ Al iniciar sesión, el **rol** asociado a la cuenta decide qué pantallas y acci
 | `admin` | Administrador de la plataforma | Se asigna manualmente en la base de datos |
 
 - **Reporte anónimo:** se permite reportar sin cuenta (Supabase *anonymous sign-in*). Para dar seguimiento, enviar solicitudes de contacto o tener favoritos sí hace falta cuenta.
+  - En el login, "Reportar sin cuenta" abre directamente el flujo de reporte (categoría → foto → ubicación → descripción y prioridad → resumen), **sin** botón "Regresar" en el encabezado.
+  - El retroceso es entre pasos. En el **primer paso**, el gesto o botón de atrás muestra el diálogo *"¿Descartar reporte? Se perderá la información que ingresaste."* con **[Seguir reportando]** y **[Descartar]**. Descartar regresa al login y cierra la sesión anónima.
+  - Al publicar: modal *"¡Reporte publicado!"* con, abajo, el texto pequeño *"Para ver el mapa y el seguimiento del reporte, inicia sesión."* y el botón **"Volver al inicio"**, que regresa al login y cierra la sesión anónima.
+  - El usuario anónimo no tiene barra de navegación inferior ni acceso a otras pantallas.
+- **Navegación:** en ninguna pantalla la interfaz puede quedar bloqueada; el gesto de atrás siempre regresa a la pantalla anterior o, en la primera, sale de la app.
 - La seguridad se aplica con **Row Level Security (RLS)** en Supabase, no solo ocultando botones en la app.
 
 ## 5. Requisitos funcionales
@@ -202,6 +207,9 @@ Las solicitudes aceptadas, rechazadas o canceladas **ya no cambian de estado**.
 ### RF-08 Cuenta y ajustes
 - Registro e inicio de sesión con correo y contraseña. *No hay pantalla en Figma: se diseña con el mismo estilo.*
 - Si un dato es inválido, el login y el registro muestran **solo** el mensaje *"Datos inválidos, intenta de nuevo."* Nunca se indica si el correo no existe o si la contraseña está mal.
+- En el login, el enlace de afiliación se resalta: en *"¿Eres un albergue o centro de adopción? Solicita tu afiliación"*, la parte *"Solicita tu afiliación"* va en un tono rojizo y subrayada, para que se entienda que lleva a un registro.
+- **Solicitud de afiliación:** requiere una cuenta (la persona que la envía se vuelve afiliada al aprobarse). Si no hay sesión, primero se pide crear la cuenta o iniciar sesión y después se abre el formulario. Se guarda con estado `pending` y aparece en el panel del administrador.
+- **Información personal editable** (usuario, afiliado y administrador): nombre, apellido, teléfono y foto de perfil se editan con **"Editar"** → **"Guardar cambios"** / **"Cancelar"**; el correo se muestra pero no se edita. Validaciones: nombre obligatorio y teléfono de 10 dígitos. Al guardar se muestra una confirmación. Cada usuario solo puede actualizar su propio perfil y nunca su rol.
 - Gestión de cuenta: información personal, **Mis reportes** (historial con Editar y Eliminar, pantallas 17–18), Favoritos, y contadores de Reportes, Atendidos y Favoritos.
 - Ajustes: idioma (ES), modo oscuro, notificaciones, accesibilidad, permisos, FAQ y Contáctanos.
 
@@ -210,7 +218,7 @@ Las solicitudes aceptadas, rechazadas o canceladas **ya no cambian de estado**.
 **Común:** carga o splash con el logo, inicio de sesión, registro y solicitud de afiliación.
 
 **Usuario** (barra inferior: Inicio, Mapa, Nuevo, Notificaciones, Ajustes)
-- Inicio ✅ *ya implementado*
+- Inicio ✅ *ya implementado*. Tercera tarjeta (casita, debajo de las existentes): *"¿Necesitas apoyo cerca?"*, *"Encuentra veterinarias, albergues y puntos seguros."*, botón **"Ver lugares de apoyo"** que abre el mapa con el filtro "Lugares de apoyo". Las tarjetas existentes no cambian.
 - Mapa con filtros y hoja de detalle del pin
 - Flujo de nuevo reporte: categoría → foto → ubicación → descripción y prioridad → resumen → publicado
 - Adopciones: mapa de centros → ficha del centro → ficha del animal → formulario
@@ -240,7 +248,7 @@ Las solicitudes aceptadas, rechazadas o canceladas **ya no cambian de estado**.
 | Tabla | Campos principales |
 |---|---|
 | `profiles` | id (= auth.users), first_name, last_name, phone (obligatorio para las solicitudes de contacto), avatar_url, **role** (`user` / `affiliate` / `admin`), organization_id |
-| `organizations` | id, **type** (`shelter` / `adoption_center` / `vet` / `safe_point`), name, description, **photo_url (obligatoria: foto del lugar o logo)**, lat, lng, address, schedule, capacity, contact, social, **status** (`pending` / `approved` / `rejected`), active |
+| `organizations` | id, **type** (`shelter` / `adoption_center` / `vet` / `safe_point`; en la app el tipo `vet` se muestra como "Veterinaria"), name, description, **photo_url (obligatoria: foto del lugar o logo)**, lat, lng, address, schedule, capacity, contact, social, **status** (`pending` / `approved` / `rejected`), active |
 | `reports` | id, reporter_id (nullable si es anónimo), **category**, **priority**, description, **photo_url (obligatoria)**, lat, lng, address (nullable: dirección del Geocoder), reference, **status**, assigned_org_id, hidden, created_at |
 | `report_status_history` | id, report_id, status, changed_by, created_at |
 | `adoption_listings` | id, organization_id, name, species, breed, age, vaccination, description, **photos[] (al menos 1)**, status (`available` / `adopted`) |
