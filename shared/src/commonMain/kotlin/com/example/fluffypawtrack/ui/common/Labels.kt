@@ -64,7 +64,7 @@ val OrganizationType.label: String
     get() = when (this) {
         OrganizationType.Shelter -> "Albergue"
         OrganizationType.AdoptionCenter -> "Centro de adopción"
-        OrganizationType.Vet -> "Veterinaria aliada"
+        OrganizationType.Vet -> "Veterinaria"
         OrganizationType.SafePoint -> "Punto seguro"
     }
 

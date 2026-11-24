@@ -1,5 +1,6 @@
 package com.example.fluffypawtrack.ui.common
 
+import com.example.fluffypawtrack.domain.model.OrganizationType
 import com.example.fluffypawtrack.domain.model.ReportCategory
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -28,6 +29,11 @@ class LabelsTest {
     @Test
     fun criticalCategoryIsShownAsEstadoCritico() {
         assertEquals("Estado crítico", ReportCategory.Critical.label)
+    }
+
+    @Test
+    fun vetTypeIsShownAsVeterinaria() {
+        assertEquals("Veterinaria", OrganizationType.Vet.label)
     }
 
     @Test

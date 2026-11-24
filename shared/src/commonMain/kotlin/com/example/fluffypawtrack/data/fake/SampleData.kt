@@ -116,7 +116,7 @@ object SampleData {
             id = "org-petcare",
             type = OrganizationType.Vet,
             name = "Pet Care Center",
-            description = "Veterinaria aliada con consulta de urgencias.",
+            description = "Veterinaria con consulta de urgencias.",
             location = GeoPoint(29.0905, -110.9455),
             address = "Blvd. Kino 820, Hermosillo, Son.",
             schedule = "Todos los días, 9:00 a 21:00",

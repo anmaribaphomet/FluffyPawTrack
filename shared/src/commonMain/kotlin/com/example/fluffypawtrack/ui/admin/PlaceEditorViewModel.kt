@@ -62,7 +62,7 @@ data class PlaceEditorUiState(
     /** The stored place once it was saved. */
     val saved: Organization? = null,
 ) {
-    /** RF-07: albergues, centros de adopción, veterinarias aliadas y puntos seguros. */
+    /** RF-07: albergues, centros de adopción, veterinarias y puntos seguros. */
     val typeOptions: List<OrganizationType> get() = OrganizationType.entries
 }
 
